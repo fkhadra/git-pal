@@ -25,6 +25,12 @@ pub fn run() {
 
             Ok(())
         })
+        .plugin(tauri_plugin_single_instance::init(|app, _, __| {
+            let _ = app
+                .get_webview_window("main")
+                .expect("no main window")
+                .set_focus();
+        }))
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             commands::authenticate,
