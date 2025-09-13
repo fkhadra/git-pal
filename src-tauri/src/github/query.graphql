@@ -1,0 +1,140 @@
+fragment PullRequest on PullRequest {
+  id
+  number
+  title
+  url
+  isDraft
+  isInMergeQueue
+  mergeable
+  state
+  reviewDecision
+  totalCommentsCount
+  statusCheckRollup {
+    state
+    commit {
+      status {
+        state
+        contexts {
+          state
+          context
+          description
+          targetUrl
+        }
+      }
+    }
+  }
+  autoMergeRequest {
+    enabledAt
+  }
+  author {
+    __typename
+    login
+    url
+    avatarUrl
+  }
+  repository {
+    owner {
+      __typename
+      login
+    }
+    name
+    url
+  }
+  baseRefName
+  headRefName
+  createdAt
+  mergedAt
+}
+
+# fragment Issue on Issue {
+#   id
+#   url
+#   title
+#   number
+#   state
+#   comments {
+#     totalCount
+#   }
+#   author {
+#     __typename
+#     login
+#     url
+#     avatarUrl
+#   }
+#   repository {
+#     owner {
+#       __typename
+#       login
+#       avatarUrl
+#     }
+#     name
+#     url
+#   }
+#   createdAt
+#   updatedAt
+# }
+
+query UserProfile {
+  viewer {
+    login
+    avatarUrl
+    email
+    url
+    organizations(first: 5) {
+      nodes {
+        login
+        name
+        avatarUrl
+        url
+      }
+    }
+  }
+}
+
+query Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {
+  viewer {
+    pullRequests(
+      states: OPEN
+      first: $pullRequestCount
+      orderBy: { direction: DESC, field: CREATED_AT }
+    ) {
+      nodes {
+        __typename
+        ...PullRequest
+      }
+    }
+    topRepositories(
+      first: $topRepositoryCount
+      orderBy: { field: STARGAZERS, direction: DESC }
+    ) {
+      nodes {
+        id
+        name
+        url
+        isPrivate
+        isInOrganization
+        stargazerCount
+        pullRequests(states: OPEN) {
+          totalCount
+        }
+        issues(states: OPEN) {
+          totalCount
+        }
+        owner {
+          __typename
+          login
+          avatarUrl
+        }
+      }
+    }
+  }
+}
+
+query SearchPullRequest($count: Int!, $query: String!) {
+  search(first: $count, query: $query, type: ISSUE) {
+    nodes {
+      __typename
+      ...PullRequest
+    }
+  }
+}
