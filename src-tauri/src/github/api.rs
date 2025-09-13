@@ -1,5 +1,3 @@
-use std::fmt;
-
 use reqwest::{header::HeaderMap, Client as HttpClient};
 
 use graphql_client::{GraphQLQuery, QueryBody, Response};
