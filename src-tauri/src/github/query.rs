@@ -1,4 +1,5 @@
 #![allow(clippy::all, warnings)]
+use ts_rs::TS;
 pub struct UserProfile;
 pub mod user_profile {
     #![allow(dead_code)]
@@ -18,11 +19,13 @@ pub mod user_profile {
     type URI = crate::github::custom_scalars::URI;
     #[derive(Serialize)]
     pub struct Variables;
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct ResponseData {
         pub viewer: UserProfileViewer,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct UserProfileViewer {
         pub login: String,
         #[serde(rename = "avatarUrl")]
@@ -31,11 +34,13 @@ pub mod user_profile {
         pub url: URI,
         pub organizations: UserProfileViewerOrganizations,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct UserProfileViewerOrganizations {
         pub nodes: Option<Vec<Option<UserProfileViewerOrganizationsNodes>>>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct UserProfileViewerOrganizationsNodes {
         pub login: String,
         pub name: Option<String>,
@@ -73,7 +78,8 @@ pub mod homepage {
     type ID = String;
     type DateTime = crate::github::custom_scalars::DateTime;
     type URI = crate::github::custom_scalars::URI;
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, TS)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub enum MergeableState {
         CONFLICTING,
         MERGEABLE,
@@ -101,7 +107,8 @@ pub mod homepage {
             }
         }
     }
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, TS)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub enum PullRequestReviewDecision {
         APPROVED,
         CHANGES_REQUESTED,
@@ -129,7 +136,8 @@ pub mod homepage {
             }
         }
     }
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, TS)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub enum PullRequestState {
         CLOSED,
         MERGED,
@@ -157,7 +165,8 @@ pub mod homepage {
             }
         }
     }
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, TS)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub enum StatusState {
         ERROR,
         EXPECTED,
@@ -199,7 +208,8 @@ pub mod homepage {
         pub top_repository_count: Int,
     }
     impl Variables {}
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequest {
         pub id: ID,
         pub number: Int,
@@ -230,21 +240,25 @@ pub mod homepage {
         #[serde(rename = "mergedAt")]
         pub merged_at: Option<DateTime>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestStatusCheckRollup {
         pub state: StatusState,
         pub commit: Option<PullRequestStatusCheckRollupCommit>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestStatusCheckRollupCommit {
         pub status: Option<PullRequestStatusCheckRollupCommitStatus>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestStatusCheckRollupCommitStatus {
         pub state: StatusState,
         pub contexts: Vec<PullRequestStatusCheckRollupCommitStatusContexts>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestStatusCheckRollupCommitStatusContexts {
         pub state: StatusState,
         pub context: String,
@@ -252,12 +266,14 @@ pub mod homepage {
         #[serde(rename = "targetUrl")]
         pub target_url: Option<URI>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestAutoMergeRequest {
         #[serde(rename = "enabledAt")]
         pub enabled_at: Option<DateTime>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestAuthor {
         pub login: String,
         pub url: URI,
@@ -266,7 +282,8 @@ pub mod homepage {
         #[serde(flatten)]
         pub on: PullRequestAuthorOn,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     #[serde(tag = "__typename")]
     pub enum PullRequestAuthorOn {
         Bot,
@@ -275,49 +292,58 @@ pub mod homepage {
         Organization,
         User,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestRepository {
         pub owner: PullRequestRepositoryOwner,
         pub name: String,
         pub url: URI,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestRepositoryOwner {
         pub login: String,
         #[serde(flatten)]
         pub on: PullRequestRepositoryOwnerOn,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     #[serde(tag = "__typename")]
     pub enum PullRequestRepositoryOwnerOn {
         Organization,
         User,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct ResponseData {
         pub viewer: HomepageViewer,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct HomepageViewer {
         #[serde(rename = "pullRequests")]
         pub pull_requests: HomepageViewerPullRequests,
         #[serde(rename = "topRepositories")]
         pub top_repositories: HomepageViewerTopRepositories,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct HomepageViewerPullRequests {
         pub nodes: Option<Vec<Option<HomepageViewerPullRequestsNodes>>>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct HomepageViewerPullRequestsNodes {
         #[serde(flatten)]
         pub pull_request: PullRequest,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct HomepageViewerTopRepositories {
         pub nodes: Option<Vec<Option<HomepageViewerTopRepositoriesNodes>>>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct HomepageViewerTopRepositoriesNodes {
         pub id: ID,
         pub name: String,
@@ -333,17 +359,20 @@ pub mod homepage {
         pub issues: HomepageViewerTopRepositoriesNodesIssues,
         pub owner: HomepageViewerTopRepositoriesNodesOwner,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct HomepageViewerTopRepositoriesNodesPullRequests {
         #[serde(rename = "totalCount")]
         pub total_count: Int,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct HomepageViewerTopRepositoriesNodesIssues {
         #[serde(rename = "totalCount")]
         pub total_count: Int,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct HomepageViewerTopRepositoriesNodesOwner {
         pub login: String,
         #[serde(rename = "avatarUrl")]
@@ -351,7 +380,8 @@ pub mod homepage {
         #[serde(flatten)]
         pub on: HomepageViewerTopRepositoriesNodesOwnerOn,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     #[serde(tag = "__typename")]
     pub enum HomepageViewerTopRepositoriesNodesOwnerOn {
         Organization,
@@ -387,7 +417,8 @@ pub mod search_pull_request {
     type ID = String;
     type DateTime = crate::github::custom_scalars::DateTime;
     type URI = crate::github::custom_scalars::URI;
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, TS)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub enum MergeableState {
         CONFLICTING,
         MERGEABLE,
@@ -415,7 +446,8 @@ pub mod search_pull_request {
             }
         }
     }
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, TS)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub enum PullRequestReviewDecision {
         APPROVED,
         CHANGES_REQUESTED,
@@ -443,7 +475,8 @@ pub mod search_pull_request {
             }
         }
     }
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, TS)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub enum PullRequestState {
         CLOSED,
         MERGED,
@@ -471,7 +504,8 @@ pub mod search_pull_request {
             }
         }
     }
-    #[derive(Clone, Debug)]
+    #[derive(Clone, Debug, TS)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub enum StatusState {
         ERROR,
         EXPECTED,
@@ -511,7 +545,8 @@ pub mod search_pull_request {
         pub query: String,
     }
     impl Variables {}
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequest {
         pub id: ID,
         pub number: Int,
@@ -542,21 +577,25 @@ pub mod search_pull_request {
         #[serde(rename = "mergedAt")]
         pub merged_at: Option<DateTime>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestStatusCheckRollup {
         pub state: StatusState,
         pub commit: Option<PullRequestStatusCheckRollupCommit>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestStatusCheckRollupCommit {
         pub status: Option<PullRequestStatusCheckRollupCommitStatus>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestStatusCheckRollupCommitStatus {
         pub state: StatusState,
         pub contexts: Vec<PullRequestStatusCheckRollupCommitStatusContexts>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestStatusCheckRollupCommitStatusContexts {
         pub state: StatusState,
         pub context: String,
@@ -564,12 +603,14 @@ pub mod search_pull_request {
         #[serde(rename = "targetUrl")]
         pub target_url: Option<URI>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestAutoMergeRequest {
         #[serde(rename = "enabledAt")]
         pub enabled_at: Option<DateTime>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestAuthor {
         pub login: String,
         pub url: URI,
@@ -578,7 +619,8 @@ pub mod search_pull_request {
         #[serde(flatten)]
         pub on: PullRequestAuthorOn,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     #[serde(tag = "__typename")]
     pub enum PullRequestAuthorOn {
         Bot,
@@ -587,33 +629,39 @@ pub mod search_pull_request {
         Organization,
         User,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestRepository {
         pub owner: PullRequestRepositoryOwner,
         pub name: String,
         pub url: URI,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct PullRequestRepositoryOwner {
         pub login: String,
         #[serde(flatten)]
         pub on: PullRequestRepositoryOwnerOn,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     #[serde(tag = "__typename")]
     pub enum PullRequestRepositoryOwnerOn {
         Organization,
         User,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct ResponseData {
         pub search: SearchPullRequestSearch,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     pub struct SearchPullRequestSearch {
         pub nodes: Option<Vec<Option<SearchPullRequestSearchNodes>>>,
     }
-    #[derive(Deserialize, Debug, Clone, Serialize)]
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models.ts")]
     #[serde(tag = "__typename")]
     pub enum SearchPullRequestSearchNodes {
         App,
