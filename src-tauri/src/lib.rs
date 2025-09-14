@@ -2,7 +2,11 @@ mod commands;
 mod github;
 mod vault;
 
+use log::debug;
+use std::env;
 use tauri::{tray::TrayIconBuilder, Manager, WindowEvent};
+use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
+use tauri_plugin_log::{Target, TargetKind};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -23,6 +27,23 @@ pub fn run() {
                 }
             });
 
+            let hotkey = Shortcut::new(Some(Modifiers::SUPER), Code::KeyG);
+
+            app.handle().plugin(
+                tauri_plugin_global_shortcut::Builder::new()
+                    .with_shortcut(hotkey)?
+                    .with_handler(|app, _shortcut, event| {
+                        debug!("Global shortcut triggered !");
+
+                        if event.state() == ShortcutState::Pressed {
+                            if let Some(w) = app.get_webview_window("main") {
+                                w.set_focus().unwrap();
+                            }
+                        }
+                    })
+                    .build(),
+            )?;
+
             Ok(())
         })
         .plugin(tauri_plugin_single_instance::init(|app, _, __| {
@@ -31,6 +52,14 @@ pub fn run() {
                 .expect("no main window")
                 .set_focus();
         }))
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .target(Target::new(TargetKind::Folder {
+                    path: env::current_dir().unwrap(),
+                    file_name: Some(String::from("git-pal")),
+                }))
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             commands::authenticate,
