@@ -73,6 +73,33 @@ fragment PullRequest on PullRequest {
 #   createdAt
 #   updatedAt
 # }
+#
+fragment Repository on Repository {
+  id
+  name
+  url
+  isPrivate
+  isInOrganization
+  stargazerCount
+  pullRequests(states: OPEN) {
+    totalCount
+  }
+  issues(states: OPEN) {
+    totalCount
+  }
+  owner {
+    __typename
+    login
+    avatarUrl
+  }
+}
+
+fragment Organization on Organization {
+  login
+  name
+  avatarUrl
+  url
+}
 
 query UserProfile {
   viewer {
@@ -82,10 +109,8 @@ query UserProfile {
     url
     organizations(first: 5) {
       nodes {
-        login
-        name
-        avatarUrl
-        url
+        __typename
+        ...Organization
       }
     }
   }
@@ -108,23 +133,8 @@ query Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {
       orderBy: { field: STARGAZERS, direction: DESC }
     ) {
       nodes {
-        id
-        name
-        url
-        isPrivate
-        isInOrganization
-        stargazerCount
-        pullRequests(states: OPEN) {
-          totalCount
-        }
-        issues(states: OPEN) {
-          totalCount
-        }
-        owner {
-          __typename
-          login
-          avatarUrl
-        }
+        __typename
+        ...Repository
       }
     }
   }

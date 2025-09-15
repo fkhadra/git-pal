@@ -1,7 +1,9 @@
+use log::debug;
 use reqwest::{header::HeaderMap, Client as HttpClient};
 
 use graphql_client::{GraphQLQuery, QueryBody, Response};
 use serde::{self, de::DeserializeOwned, Deserialize, Serialize};
+use ts_rs::TS;
 
 use crate::github::query::user_profile;
 
@@ -9,7 +11,8 @@ use super::query;
 
 type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/models/api.ts")]
 pub struct ApiResponse<T> {
     pub rate_limit: RateLimit,
     pub data: T,
@@ -41,7 +44,7 @@ impl serde::Serialize for Error {
 }
 
 const API_URL: &str = "https://api.github.com/graphql";
-const SUPPORTED_FILTER: [&str; 2] = ["mentions", "review-requests"];
+const SUPPORTED_FILTER: [&str; 2] = ["mentions", "review-requested"];
 
 pub type UserProfile = ApiResponse<query::user_profile::ResponseData>;
 pub type Homepage = ApiResponse<query::homepage::ResponseData>;
@@ -77,6 +80,8 @@ impl Client {
         let res: UserProfile = self.send_graphql(&q).await?;
 
         self.user = Some(res.data.viewer.clone());
+
+        debug!("User profile loaded {:?}", res);
 
         Ok(res)
     }
@@ -150,7 +155,8 @@ impl Client {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/models/api.ts")]
 pub struct RateLimit {
     pub limit: u32,
     pub remaining: u32,

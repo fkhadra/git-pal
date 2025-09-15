@@ -18,7 +18,8 @@
         "height": 600,
         "decorations": false,
         "transparent": true,
-        "shadow": true
+        "shadow": true,
+        "url": "palette"
       }
     ],
     "security": {

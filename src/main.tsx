@@ -1,9 +1,32 @@
-import React from "react";
+import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
+import {
+  RouterProvider,
+  createMemoryHistory,
+  createRouter,
+} from "@tanstack/react-router";
+import "./style.css";
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
+import { routeTree } from "./routeTree.gen";
+
+const router = createRouter({
+  routeTree,
+  history: createMemoryHistory({
+    initialEntries: ["/palette"],
+  }),
+});
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}
+
+const rootElement = document.getElementById("root")!;
+
+const root = ReactDOM.createRoot(rootElement);
+root.render(
+  <StrictMode>
+    <RouterProvider router={router} />
+  </StrictMode>,
 );
