@@ -8,7 +8,7 @@ use std::{
 use clap::{Parser, Subcommand};
 
 const QUERY_PATH: &str = "../src-tauri/src/github/query.rs";
-const BINDING_PATH: &str = "../../src/models.ts";
+const BINDING_PATH: &str = "../../src/models/";
 const TAURI_PATH: &str = "../src-tauri";
 
 #[derive(Debug, Parser)]
@@ -47,21 +47,30 @@ fn generate_bindings() -> CmdResult {
     let lines = read_lines(QUERY_PATH)?;
     let mut output: Vec<String> = Vec::new();
     let mut is_first = true;
+    let mut current_mod: Option<String> = None;
 
     for line in lines.map_while(Result::ok) {
         output.push(line.clone());
 
-        if is_first {
+        if line.starts_with("pub mod") {
+            if let Some(el) = line.split_whitespace().nth(2) {
+                let mut m = el.to_owned().replace("_", "-");
+                m.push_str(".ts");
+
+                current_mod = Some(m);
+            }
+        } else if is_first {
             output.push("use ts_rs::TS;".into());
             is_first = false;
-        }
-
-        if line.contains("TS") {
-            output.push(format!("#[ts(export, export_to = \"{}\")]", BINDING_PATH));
+        } else if let Some(m) = current_mod.as_ref() {
+            if line.contains("TS") {
+                output.push(format!(
+                    "#[ts(export, export_to = \"{}{}\")]",
+                    BINDING_PATH, m
+                ));
+            }
         }
     }
-
-    println!("Generated bindings");
 
     fs::write(QUERY_PATH, output.join("\n"))?;
 
@@ -69,8 +78,6 @@ fn generate_bindings() -> CmdResult {
         .arg("test")
         .current_dir(TAURI_PATH)
         .status()?;
-
-    println!("cargo test maybe?");
 
     Ok(())
 }
