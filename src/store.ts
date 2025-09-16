@@ -15,7 +15,7 @@ export function useSelectedItem() {
   return {
     value: commandValue,
     get isPage() {
-      return commandValue.startsWith("page");
+      return !!commandValue?.startsWith("page");
     },
     item: selectedItem,
     supportGithubSearch:

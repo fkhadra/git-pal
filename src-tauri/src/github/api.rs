@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use log::debug;
 use reqwest::{header::HeaderMap, Client as HttpClient};
 
@@ -81,8 +83,6 @@ impl Client {
 
         self.user = Some(res.data.viewer.clone());
 
-        debug!("User profile loaded {:?}", res);
-
         Ok(res)
     }
 
@@ -103,10 +103,12 @@ impl Client {
         }
 
         let user = self.user.as_ref().ok_or(Error::MissingData)?;
+
         let q = query::SearchPullRequest::build_query(query::search_pull_request::Variables {
             count: 20,
-            query: format!("is:open is:pr archived:false {}:{}", &user.login, filter),
+            query: format!("is:open is:pr archived:false {}:{}", filter, &user.login),
         });
+
         let res: SearchResult = self.send_graphql(&q).await?;
 
         Ok(res)
@@ -115,7 +117,7 @@ impl Client {
     async fn send_graphql<T, R>(&self, body: &QueryBody<T>) -> Result<ApiResponse<R>>
     where
         T: Serialize,
-        R: DeserializeOwned,
+        R: DeserializeOwned + Clone + Debug,
     {
         let token = self.token.as_ref().ok_or(Error::MissingToken)?;
 
@@ -150,6 +152,8 @@ impl Client {
         }
 
         let data = response_body.data.ok_or(Error::MissingData)?;
+
+        debug!("{:?}", data.clone());
 
         Ok(ApiResponse { data, rate_limit })
     }

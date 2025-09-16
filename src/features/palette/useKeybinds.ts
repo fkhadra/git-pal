@@ -1,16 +1,17 @@
-import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useCommandState } from "cmdk";
+import { useState } from "react";
 import { useSelectedItem } from "~/store";
-import { useGhSearchActive } from "./useGhSearchActive";
 
 export function useKeybinds() {
+  const [filter, setFilter] = useState("");
   const navigate = useNavigate();
   const selectedItem = useSelectedItem();
   const router = useRouter();
-  const isGhSearchActive = useGhSearchActive();
   const inputValue = useCommandState((s) => s.search);
 
-  const handler = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyboard = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (router.history.canGoBack() && e.key === "Backspace" && !inputValue) {
       router.history.back();
     }
@@ -37,8 +38,18 @@ export function useKeybinds() {
           },
         });
       }
+    } else if (e.key === "Escape") {
+      if (filter.length === 0) {
+        getCurrentWindow().hide();
+      } else {
+        setFilter("");
+      }
     }
   };
 
-  return handler;
+  return {
+    filter,
+    setFilter,
+    handleKeyboard,
+  };
 }

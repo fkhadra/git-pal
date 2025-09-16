@@ -1,13 +1,11 @@
 import { Command } from "cmdk";
-import { useState } from "react";
+import { Search } from "lucide-react";
 import { useGhSearchActive } from "./useGhSearchActive";
 import { useKeybinds } from "./useKeybinds";
-import { Search } from "lucide-react";
 
 export function CommandInput() {
-  const [filter, setFilter] = useState("");
   const isGhSearchActive = useGhSearchActive();
-  const handleKeyboard = useKeybinds();
+  const { filter, setFilter, handleKeyboard } = useKeybinds();
 
   return (
     <div className="group mb-2 flex w-full items-center gap-1 rounded-none border-b-[1px] border-zinc-800/10 bg-transparent px-3 py-2 dark:border-pink-300/10">
