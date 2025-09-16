@@ -13,7 +13,8 @@ impl Vault {
     }
 
     pub fn get_token(&self) -> Result<String, Error> {
-        self.keyring.get_password()
+        Ok("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".to_string())
+        // self.keyring.get_password()
     }
 
     pub fn save_token(&self, token: &str) -> Result<(), Error> {

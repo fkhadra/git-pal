@@ -50,6 +50,11 @@
   --color-foreground: hsl(0 0% 100%);
 }
 
+:root {
+  background-color: transparent;
+  overflow: hidden;
+}
+
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -58,10 +63,14 @@ body {
   font-style: normal;
   font-variation-settings: "wdth" 100;
   color: var(--color-foreground);
+  background-color: transparent;
+  overflow: hidden;
+  border-radius: 12px;
 }
 
 #root {
   min-height: 100dvh;
+  background-color: var(--body-bg);
 }
 
 html {

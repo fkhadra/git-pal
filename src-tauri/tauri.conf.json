@@ -11,17 +11,6 @@
   },
   "app": {
     "macOSPrivateApi": true,
-    "windows": [
-      {
-        "title": "git-pal",
-        "width": 800,
-        "height": 600,
-        "decorations": false,
-        "transparent": true,
-        "shadow": true,
-        "url": "palette"
-      }
-    ],
     "security": {
       "csp": null
     }

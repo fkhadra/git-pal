@@ -1,12 +1,15 @@
 mod commands;
 mod github;
 mod vault;
+mod window;
 
 use log::debug;
 use std::env;
 use tauri::{tray::TrayIconBuilder, Manager, WindowEvent};
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_log::{Target, TargetKind};
+
+use crate::window::create_main_window;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -17,15 +20,7 @@ pub fn run() {
                 .icon(app.default_window_icon().unwrap().clone())
                 .build(app)?;
 
-            let window = app.get_webview_window("main").unwrap();
-            let cw = window.clone();
-            window.on_window_event(move |e| {
-                if let WindowEvent::CloseRequested { api, .. } = e {
-                    api.prevent_close();
-
-                    cw.hide().unwrap();
-                }
-            });
+            create_main_window(app.handle())?;
 
             let hotkey = Shortcut::new(Some(Modifiers::SUPER), Code::KeyG);
 
@@ -33,11 +28,14 @@ pub fn run() {
                 tauri_plugin_global_shortcut::Builder::new()
                     .with_shortcut(hotkey)?
                     .with_handler(|app, _shortcut, event| {
-                        debug!("Global shortcut triggered !");
-
                         if event.state() == ShortcutState::Pressed {
-                            if let Some(w) = app.get_webview_window("main") {
-                                w.set_focus().unwrap();
+                            if let Some(w) = app.get_webview_window(window::MAIN_WINDOW_LABEL) {
+                                let is_visible = w.is_visible().unwrap();
+
+                                if !is_visible {
+                                    w.show().unwrap();
+                                    w.set_focus().unwrap();
+                                }
                             }
                         }
                     })
