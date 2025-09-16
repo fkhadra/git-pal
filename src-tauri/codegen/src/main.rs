@@ -1,0 +1,140 @@
+use clap::{Parser, Subcommand};
+use std::{
+    env,
+    fs::{self, File},
+    io::{self, BufRead},
+    path::Path,
+    process,
+};
+
+#[derive(Debug, Parser)]
+pub struct App {
+    #[clap(subcommand)]
+    command: Command,
+}
+
+#[derive(Debug, Subcommand)]
+enum Command {
+    /// Generate graphql queries
+    Gql,
+    /// Generate Typescript typings
+    Ts,
+}
+
+fn main() {
+    let args = App::parse();
+
+    match args.command {
+        Command::Gql => {
+            Codegen::init()
+                .gen_graphql()
+                .update_generated_queries()
+                .generate_ts_bindings();
+        }
+        Command::Ts => {
+            Codegen::init().gen_graphql();
+        }
+    }
+}
+
+fn find_tauri_dir() -> String {
+    let current_dir = env::current_dir().expect("unable to get current dir");
+
+    for dir in current_dir.ancestors() {
+        let config = dir.join("tauri.conf.json");
+        if config.exists() {
+            return dir.to_string_lossy().to_string();
+        };
+    }
+
+    Err(()).expect("tauri.conf.json not found in current or parent directories")
+}
+
+struct Codegen {
+    tauri_dir: String,
+    query_filepath: String,
+    models_dir: String,
+}
+
+impl Codegen {
+    fn init() -> Self {
+        let tauri_dir = find_tauri_dir();
+        let query_filepath = Path::new(&tauri_dir)
+            .join("src/github/query.rs")
+            .to_string_lossy()
+            .into_owned();
+
+        println!("tauri_dir: {}", tauri_dir);
+        println!("query_filepath: {}", query_filepath);
+
+        Codegen {
+            tauri_dir,
+            query_filepath,
+            models_dir: String::from("../../src/models/"),
+        }
+    }
+
+    fn gen_graphql(&self) -> &Self {
+        process::Command::new("graphql-client")
+            .args([
+                "generate",
+                "--schema-path",
+                "./src/github/schema.graphql",
+                "./src/github/query.graphql",
+                "-p",
+                "crate::github::custom_scalars",
+                "-O",
+                "TS,Debug,Clone,Serialize",
+            ])
+            .current_dir(&self.tauri_dir)
+            .status()
+            .expect("Failed to generate graphql queries");
+
+        &self
+    }
+
+    fn update_generated_queries(&self) -> &Self {
+        let file = File::open(&self.query_filepath).expect("unable to open file");
+        let lines = io::BufReader::new(file).lines();
+
+        let mut output: Vec<String> = Vec::new();
+        let mut is_first = true;
+        let mut current_mod: Option<String> = None;
+
+        for line in lines.map_while(std::result::Result::ok) {
+            output.push(line.clone());
+
+            if line.starts_with("pub mod") {
+                if let Some(el) = line.split_whitespace().nth(2) {
+                    let mut m = el.to_owned().replace("_", "-");
+                    m.push_str(".ts");
+
+                    current_mod = Some(m);
+                }
+            } else if is_first {
+                output.push("use ts_rs::TS;".into());
+                is_first = false;
+            } else if let Some(m) = current_mod.as_ref() {
+                if line.contains("TS") {
+                    output.push(format!(
+                        "#[ts(export, export_to = \"{}{}\")]",
+                        &self.models_dir, m
+                    ));
+                }
+            }
+        }
+
+        fs::write(&self.query_filepath, output.join("\n")).expect("unable to save file");
+
+        &self
+    }
+
+    fn generate_ts_bindings(&self) -> &Self {
+        process::Command::new("cargo")
+            .arg("test")
+            .current_dir(&self.tauri_dir)
+            .status()
+            .expect("failed to generate bindings");
+        &self
+    }
+}

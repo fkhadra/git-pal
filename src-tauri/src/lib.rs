@@ -3,9 +3,8 @@ mod github;
 mod vault;
 mod window;
 
-use log::debug;
 use std::env;
-use tauri::{tray::TrayIconBuilder, Manager, WindowEvent};
+use tauri::{tray::TrayIconBuilder, Manager};
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_log::{Target, TargetKind};
 
