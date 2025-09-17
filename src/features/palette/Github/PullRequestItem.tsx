@@ -13,6 +13,7 @@ export function PullRequestItem({ pullRequest, hideAvatar }: Props) {
   return (
     <Container>
       <PullRequestStatus pullRequest={pullRequest} />
+
       <div className="flex flex-col">
         <span>{pullRequest.title}</span>
         <div className="flex items-center gap-1 text-xs">
@@ -23,6 +24,7 @@ export function PullRequestItem({ pullRequest, hideAvatar }: Props) {
           <span>{pullRequest.baseRefName}</span>
         </div>
       </div>
+
       <div className="ml-auto flex items-center gap-2">
         <ReviewDecision value={pullRequest.reviewDecision} />
         {!hideAvatar && (

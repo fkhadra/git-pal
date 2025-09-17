@@ -24,7 +24,7 @@ export function CommandItem({
     <div className="cmdk-item-wrapper relative select-none">
       <Command.Item
         className={cn(
-          "data-[selected=true]:bg-opacity-20 flex min-h-12 cursor-pointer items-center gap-2 overflow-hidden rounded-lg px-2 py-0 text-ellipsis whitespace-nowrap select-none data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-40 data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-purple-600/90 data-[selected=true]:via-purple-500/60 data-[selected=true]:to-pink-500/20 data-[selected=true]:text-white dark:text-white [&>img]:size-5 [&>svg]:size-5",
+          "data-[selected=true]:bg-opacity-20 flex min-h-12 cursor-pointer items-center gap-2 overflow-hidden rounded-lg px-2 py-0 select-none data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-40 data-[selected=true]:bg-gradient-to-r data-[selected=true]:from-purple-600/90 data-[selected=true]:via-purple-500/60 data-[selected=true]:to-pink-500/20 data-[selected=true]:text-white dark:text-white [&>img]:size-5 [&>svg]:size-5",
           "pointer-events-none",
           className,
         )}
