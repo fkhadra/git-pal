@@ -43,7 +43,11 @@ function RouteComponent() {
   return Object.keys(data).map((key) => (
     <CommandGroup key={key} heading={key}>
       {data[key].map((v) => (
-        <CommandItem value={v.id} keywords={[v.title, v.repository.name]}>
+        <CommandItem
+          value={v.id}
+          key={v.id}
+          keywords={[v.title, v.repository.name]}
+        >
           <PullRequestItem pullRequest={v} />
         </CommandItem>
       ))}
