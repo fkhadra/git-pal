@@ -1,6 +1,5 @@
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { useCommandState } from "cmdk";
 import { useState } from "react";
 import { useSelectedItem } from "~/store";
 
@@ -9,10 +8,10 @@ export function useKeybinds() {
   const navigate = useNavigate();
   const selectedItem = useSelectedItem();
   const router = useRouter();
-  const inputValue = useCommandState((s) => s.search);
 
   const handleKeyboard = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (router.history.canGoBack() && e.key === "Backspace" && !inputValue) {
+    if (router.history.canGoBack() && e.key === "Backspace" && !filter) {
+      console.log("HERE");
       router.history.back();
     }
 
