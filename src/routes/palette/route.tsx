@@ -4,6 +4,7 @@ import { CommandEmpty } from "~/components/Cmdk";
 import { CommandInput } from "~/features/palette/CommandInput";
 import { Keybinds } from "~/features/palette/Keybinds";
 import { useGhSearchActive } from "~/features/palette/useGhSearchActive";
+import { usePreloadRoutes } from "~/features/palette/usePreloadRoutes";
 import { useFullHeightRef } from "~/libs/useFullHeight";
 import { Navigation } from "./-Navigation";
 
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/palette")({
 function component() {
   const listBox = useFullHeightRef<HTMLDivElement>({ bottomPadding: 52 });
   const isGhSearchActive = useGhSearchActive();
+  usePreloadRoutes();
 
   return (
     <div
