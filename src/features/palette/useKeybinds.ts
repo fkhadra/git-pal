@@ -3,6 +3,11 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useState } from "react";
 import { useSelectedItem } from "~/store";
 
+const Keys = {
+  Backspace: "Backspace",
+  Esc: "Escape",
+};
+
 export function useKeybinds() {
   const [filter, setFilter] = useState("");
   const navigate = useNavigate();
@@ -10,9 +15,13 @@ export function useKeybinds() {
   const router = useRouter();
 
   const handleKeyboard = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (router.history.canGoBack() && e.key === "Backspace" && !filter) {
-      console.log("HERE");
+    if (
+      (e.key === Keys.Backspace || e.key === Keys.Esc) &&
+      router.history.canGoBack() &&
+      !filter
+    ) {
       router.history.back();
+      return;
     }
 
     if (
@@ -37,7 +46,7 @@ export function useKeybinds() {
           },
         });
       }
-    } else if (e.key === "Escape") {
+    } else if (e.key === Keys.Esc) {
       if (filter.length === 0) {
         getCurrentWindow().hide();
       } else {
