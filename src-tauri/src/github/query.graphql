@@ -84,6 +84,11 @@ fragment Repository on Repository {
   pullRequests(states: OPEN) {
     totalCount
   }
+  hasIssuesEnabled
+  hasDiscussionsEnabled
+  hasProjectsEnabled
+  hasWikiEnabled
+  homepageUrl
   issues(states: OPEN) {
     totalCount
   }

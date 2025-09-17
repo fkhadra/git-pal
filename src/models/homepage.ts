@@ -8,7 +8,7 @@ export type HomepageViewerPullRequestsNodes = { id: string, number: bigint, titl
 
 export type HomepageViewerTopRepositories = { nodes: Array<HomepageViewerTopRepositoriesNodes | null> | null, };
 
-export type HomepageViewerTopRepositoriesNodes = { id: string, name: string, url: string, isPrivate: boolean, isInOrganization: boolean, stargazerCount: bigint, pullRequests: RepositoryPullRequests, issues: RepositoryIssues, owner: RepositoryOwner, };
+export type HomepageViewerTopRepositoriesNodes = { id: string, name: string, url: string, isPrivate: boolean, isInOrganization: boolean, stargazerCount: bigint, pullRequests: RepositoryPullRequests, hasIssuesEnabled: boolean, hasDiscussionsEnabled: boolean, hasProjectsEnabled: boolean, hasWikiEnabled: boolean, homepageUrl: string | null, issues: RepositoryIssues, owner: RepositoryOwner, };
 
 export type MergeableState = "CONFLICTING" | "MERGEABLE" | "UNKNOWN" | { "Other": string };
 
@@ -38,7 +38,7 @@ export type PullRequestStatusCheckRollupCommitStatus = { state: StatusState, con
 
 export type PullRequestStatusCheckRollupCommitStatusContexts = { state: StatusState, context: string, description: string | null, targetUrl: string | null, };
 
-export type Repository = { id: string, name: string, url: string, isPrivate: boolean, isInOrganization: boolean, stargazerCount: bigint, pullRequests: RepositoryPullRequests, issues: RepositoryIssues, owner: RepositoryOwner, };
+export type Repository = { id: string, name: string, url: string, isPrivate: boolean, isInOrganization: boolean, stargazerCount: bigint, pullRequests: RepositoryPullRequests, hasIssuesEnabled: boolean, hasDiscussionsEnabled: boolean, hasProjectsEnabled: boolean, hasWikiEnabled: boolean, homepageUrl: string | null, issues: RepositoryIssues, owner: RepositoryOwner, };
 
 export type RepositoryIssues = { totalCount: bigint, };
 
