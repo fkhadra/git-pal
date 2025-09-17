@@ -7,29 +7,32 @@ import {
 import commands from "~/commands";
 import { UserProfileContext } from "~/contexts/user-profile";
 import { useColorScheme } from "~/libs/useColorScheme";
+import { UserProfile } from "~/models";
 import { Store } from "~/store";
 
+let userProfile: UserProfile | undefined;
+
 export const Route = createRootRoute({
-  async beforeLoad(ctx) {
+  async beforeLoad(props) {
     try {
-      if (ctx.location.pathname === "/login") return;
+      if (userProfile) return userProfile;
+      if (props.location.pathname === "/login") return;
 
-      const data = await commands.isAuthenticated();
+      userProfile = await commands.isAuthenticated();
 
-      data.organizations.nodes?.forEach((org) => {
+      userProfile.organizations.nodes?.forEach((org) => {
         if (org && org.name) {
           Store.set(org.name, { kind: "org", data: org });
         }
       });
 
-      return data;
+      return userProfile;
     } catch {
       throw redirect({
         to: "/login",
       });
     }
   },
-
   component() {
     useColorScheme();
     const userProfile = useRouteContext({ from: "__root__" });
