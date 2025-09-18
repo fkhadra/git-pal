@@ -92,6 +92,9 @@ fragment Repository on Repository {
   issues(states: OPEN) {
     totalCount
   }
+  discussions(states: OPEN) {
+    totalCount
+  }
   owner {
     __typename
     login
