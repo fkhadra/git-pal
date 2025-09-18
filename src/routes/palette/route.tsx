@@ -15,6 +15,7 @@ export const Route = createFileRoute("/palette")({
 function component() {
   const listBox = useFullHeightRef<HTMLDivElement>({ bottomPadding: 52 });
   const isGhSearchActive = useGhSearchActive();
+
   usePreloadRoutes();
 
   return (

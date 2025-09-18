@@ -6,6 +6,7 @@ import { useSelectedItem } from "~/store";
 const Keys = {
   Backspace: "Backspace",
   Esc: "Escape",
+  Tab: "Tab",
 };
 
 export function useKeybinds() {
@@ -15,29 +16,31 @@ export function useKeybinds() {
   const router = useRouter();
 
   const handleKeyboard = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (
+    const shouldGoToPreviousPage =
       (e.key === Keys.Backspace || e.key === Keys.Esc) &&
       router.history.canGoBack() &&
-      !filter
-    ) {
-      router.history.back();
-      return;
-    }
-
-    if (
+      !filter;
+    const shouldEnableCodeSearch =
       e.metaKey &&
       e.key === "/" &&
       selectedItem &&
       selectedItem.item &&
-      selectedItem.supportGithubSearch
-    ) {
+      selectedItem.supportGithubSearch;
+    const shouldHideWindowOrClearFilter = e.key === Keys.Esc;
+    const shouldDisplayRepositoryPages =
+      e.key === "Tab" && selectedItem.item?.kind === "repo";
+
+    if (shouldGoToPreviousPage) {
+      router.history.back();
+    } else if (shouldEnableCodeSearch) {
       const owner = selectedItem.owner;
       const repo =
-        selectedItem.item.kind === "repo"
+        selectedItem?.item?.kind === "repo"
           ? selectedItem.item.data.name
           : void 0;
 
       if (owner) {
+        setFilter("");
         navigate({
           to: "/palette/search",
           search: {
@@ -46,12 +49,20 @@ export function useKeybinds() {
           },
         });
       }
-    } else if (e.key === Keys.Esc) {
+    } else if (shouldHideWindowOrClearFilter) {
       if (filter.length === 0) {
         getCurrentWindow().hide();
       } else {
         setFilter("");
       }
+    } else if (shouldDisplayRepositoryPages) {
+      e.preventDefault();
+      navigate({
+        to: "/palette/repository/$id",
+        params: {
+          id: selectedItem.value,
+        },
+      });
     }
   };
 
