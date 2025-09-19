@@ -3,8 +3,9 @@ mod github;
 mod vault;
 mod window;
 
+use log::debug;
 use std::env;
-use tauri::{tray::TrayIconBuilder, Manager};
+use tauri::{menu::MenuBuilder, tray::TrayIconBuilder, Manager};
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_log::{Target, TargetKind};
 
@@ -15,8 +16,31 @@ pub fn run() {
     tauri::Builder::default()
         .manage(commands::AppState::new())
         .setup(|app| {
+            let menu = MenuBuilder::new(app)
+                .text("about", "About")
+                .separator()
+                .text("settings", "Settings")
+                .text("quit", "Quit Git Pal")
+                .build()?;
+
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "about" => {
+                        debug!("about menu item was clicked");
+                    }
+                    "settings" => {
+                        debug!("settings menu item was clicked");
+                    }
+                    "quit" => {
+                        debug!("quit menu item was clicked");
+                        app.exit(0);
+                    }
+                    _ => {
+                        println!("menu item {:?} not handled", event.id);
+                    }
+                })
                 .build(app)?;
 
             create_main_window(app.handle())?;
