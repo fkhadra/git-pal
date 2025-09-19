@@ -1,4 +1,5 @@
 import { createFileRoute, useLoaderData } from "@tanstack/react-router";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import commands from "~/commands";
 import { CommandGroup, CommandItem } from "~/components/Cmdk";
 import { PullRequestItem } from "~/features/palette/Github";
@@ -47,6 +48,9 @@ function RouteComponent() {
           value={v.id}
           key={v.id}
           keywords={[v.title, v.repository.name]}
+          onSelect={() => {
+            openUrl(v.url);
+          }}
         >
           <PullRequestItem pullRequest={v} />
         </CommandItem>
