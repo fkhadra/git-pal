@@ -42,8 +42,7 @@
 .dark {
   --color-background: var(--color-zinc-800);
   --color-alert: hsl(350 87% 59%);
-  --body-bg: oklch(0.18 0.01 268.14);
-  /*hsl(233.33deg 11.69% 15.1%);*/
+  --body-bg: hsl(233.33deg 11.69% 15.1%);
 
   --background: oklch(0.18 0.01 268.14);
   --foreground: oklch(0.985 0 0);
@@ -51,8 +50,6 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.21 0.006 285.885);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.541 0.281 293.009);
-  --primary-foreground: oklch(0.969 0.016 293.756);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.274 0.006 286.033);
@@ -97,6 +94,10 @@ body {
   background-color: transparent;
   overflow: hidden;
   border-radius: var(--body-radius);
+}
+
+body:has(#setting-page) {
+  border-radius: 0;
 }
 
 #root {

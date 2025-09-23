@@ -45,7 +45,6 @@ pub fn create_settings_window<R: Runtime>(handle: &AppHandle<R>) -> Result<(), B
             .initialization_script(
                 r#"
                 window.initialPath = '/settings';
-                document.documentElement.style.setProperty('--body-radius', 0);
                 "#,
             )
             .inner_size(715.0, 600.0)

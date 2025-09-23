@@ -8,8 +8,9 @@ import { Typography } from "~/components/Typography";
 export const Route = createFileRoute("/settings")({
   component() {
     const [theme, setTheme] = useState("light");
+
     return (
-      <section className="flex h-dvh flex-col p-4">
+      <section id="setting-page" className="flex h-dvh flex-col p-4">
         <div className="flex h-full flex-col gap-7">
           <section>
             <Typography.h4 className="mb-2 flex items-center">
