@@ -7,6 +7,7 @@
     "core:default",
     "opener:default",
     "log:default",
-    "core:window:allow-hide"
+    "core:window:allow-hide",
+    "autostart:default"
   ]
 }

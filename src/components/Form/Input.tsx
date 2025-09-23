@@ -1,5 +1,5 @@
-import { motion } from "motion/react";
 import { AlertCircle } from "lucide-react";
+import { motion } from "motion/react";
 import { cn } from "~/libs/utils";
 
 export interface InputProps extends React.ComponentPropsWithRef<"input"> {
@@ -20,13 +20,13 @@ export function Input({
   const hasSlot = !!leftSlot || !!rightSlot;
 
   const baseStyle = cn(
-    `caret-primary ring-primary/50 text-foreground placeholder:text-muted border
-    border-primary/10 disabled:text-opacity-90 bg-background flex items-center h-10 w-full
+    `caret-primary ring-primary/50 text-foreground placeholder:text-muted-foreground border
+    border-primary/10 disabled:text-opacity-90 bg-background dark:bg-input flex items-center h-10 w-full
     rounded-lg border-1 px-3 py-2 transition-colors file:border-0
     file:bg-transparent shadow file:text-sm file:font-medium
     focus-visible:outline-hidden disabled:cursor-not-allowed disabled:border-none
     disabled:bg-zinc-500 disabled:opacity-50 focus-visible:shadow-primary
-    focus-visible:shadow-[0_0_4px_1px] transition-shadow hover:ring-primary
+    focus-visible:shadow-[0_0_4px_1px] transition-shadow hover:ring-primary/70
     hover:ring-1`,
     !!error &&
       `focus-visible:shadow-alert caret-alert ring-1 ring-alert hover:ring-alert
@@ -122,7 +122,7 @@ export function Label({
   return (
     <label
       className={cn(
-        "text-foreground flex items-center gap-1 leading-none font-medium capitalize",
+        "text-foreground flex items-center gap-1 leading-none font-medium",
         {
           "w-fit": !rightSlot,
         },

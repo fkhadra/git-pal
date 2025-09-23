@@ -9,7 +9,7 @@ use tauri::{menu::MenuBuilder, tray::TrayIconBuilder, Manager};
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_log::{Target, TargetKind};
 
-use crate::window::create_main_window;
+use crate::window::{create_main_window, create_settings_window};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -32,6 +32,7 @@ pub fn run() {
                     }
                     "settings" => {
                         debug!("settings menu item was clicked");
+                        create_settings_window(app).unwrap();
                     }
                     "quit" => {
                         debug!("quit menu item was clicked");
@@ -64,6 +65,22 @@ pub fn run() {
                     })
                     .build(),
             )?;
+
+            #[cfg(desktop)]
+            {
+                use tauri_plugin_autostart::MacosLauncher;
+                use tauri_plugin_autostart::ManagerExt;
+
+                let _ = app.handle().plugin(tauri_plugin_autostart::init(
+                    MacosLauncher::LaunchAgent,
+                    None,
+                ));
+
+                debug!(
+                    "autostart enabled: {}",
+                    app.autolaunch().is_enabled().unwrap_or(false)
+                );
+            }
 
             Ok(())
         })

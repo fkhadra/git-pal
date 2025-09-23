@@ -12,7 +12,7 @@ import { routeTree } from "./routeTree.gen";
 const router = createRouter({
   routeTree,
   history: createMemoryHistory({
-    initialEntries: ["/palette"],
+    initialEntries: [`${window.initialPath}`],
   }),
 });
 

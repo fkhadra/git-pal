@@ -39,7 +39,7 @@ impl serde::Serialize for CommandError {
     }
 }
 
-type Result<T> = std::result::Result<T, CommandError>;
+type Result<T, E = CommandError> = std::result::Result<T, E>;
 
 #[tauri::command]
 pub async fn authenticate(

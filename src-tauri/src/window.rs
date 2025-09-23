@@ -10,6 +10,7 @@ pub fn create_main_window<R: Runtime>(handle: &AppHandle<R>) -> Result<(), Box<d
         MAIN_WINDOW_LABEL,
         WebviewUrl::App("palette".into()),
     )
+    .initialization_script(r#"window.initialPath = '/palette';"#)
     .title("Git Pal")
     .inner_size(800.0, 600.0)
     .center()
@@ -33,6 +34,25 @@ pub fn create_main_window<R: Runtime>(handle: &AppHandle<R>) -> Result<(), Box<d
         }
         _ => {}
     });
+
+    Ok(())
+}
+
+pub fn create_settings_window<R: Runtime>(handle: &AppHandle<R>) -> Result<(), Box<dyn Error>> {
+    let _ =
+        tauri::WebviewWindowBuilder::new(handle, "settings", WebviewUrl::App("settings".into()))
+            .title("Settings")
+            .initialization_script(
+                r#"
+                window.initialPath = '/settings';
+                document.documentElement.style.setProperty('--body-radius', 0);
+                "#,
+            )
+            .inner_size(715.0, 600.0)
+            .resizable(false)
+            .minimizable(false)
+            .center()
+            .build()?;
 
     Ok(())
 }
