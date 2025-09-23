@@ -44,7 +44,7 @@ export function ThemePicker() {
                             window.matchMedia("(prefers-color-scheme: dark)")
                               .matches),
                       );
-                      localStorage.setItem("theme", "system");
+                      localStorage.removeItem("theme");
                       break;
                   }
 
