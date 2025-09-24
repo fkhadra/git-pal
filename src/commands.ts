@@ -29,9 +29,24 @@ function searchPullRequests(filter: "mentions" | "review-requested") {
   );
 }
 
+function isAutoStartEnabled() {
+  return invoke<boolean>("is_autostart_enabled");
+}
+
+function enableAutoStart() {
+  return invoke<void>("enable_autostart");
+}
+
+function disableAutoStart() {
+  return invoke<void>("disable_autostart");
+}
+
 export default {
   authenticate,
   homepage,
   isAuthenticated,
   searchPullRequests,
+  isAutoStartEnabled,
+  enableAutoStart,
+  disableAutoStart,
 };

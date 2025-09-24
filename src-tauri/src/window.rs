@@ -42,11 +42,7 @@ pub fn create_settings_window<R: Runtime>(handle: &AppHandle<R>) -> Result<(), B
     let _ =
         tauri::WebviewWindowBuilder::new(handle, "settings", WebviewUrl::App("settings".into()))
             .title("Settings")
-            .initialization_script(
-                r#"
-                window.initialPath = '/settings';
-                "#,
-            )
+            .initialization_script(r#"window.initialPath = '/settings';"#)
             .inner_size(715.0, 600.0)
             .resizable(false)
             .minimizable(false)

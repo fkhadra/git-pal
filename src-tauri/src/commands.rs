@@ -1,4 +1,5 @@
 use tauri::{async_runtime::Mutex, State};
+use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
 
 use crate::{github, vault::Vault};
@@ -99,4 +100,23 @@ pub fn delete_token(state: State<'_, AppState>) -> Result<()> {
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub fn is_autostart_enabled(
+    app_handle: tauri::AppHandle,
+) -> Result<bool, tauri_plugin_autostart::Error> {
+    return app_handle.autolaunch().is_enabled();
+}
+
+#[tauri::command]
+pub fn enable_autostart(app_handle: tauri::AppHandle) -> Result<(), tauri_plugin_autostart::Error> {
+    return app_handle.autolaunch().enable();
+}
+
+#[tauri::command]
+pub fn disable_autostart(
+    app_handle: tauri::AppHandle,
+) -> Result<(), tauri_plugin_autostart::Error> {
+    return app_handle.autolaunch().disable();
 }

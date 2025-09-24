@@ -105,6 +105,9 @@ pub fn run() {
             commands::homepage,
             commands::search_pull_requests,
             commands::delete_token,
+            commands::is_autostart_enabled,
+            commands::enable_autostart,
+            commands::disable_autostart,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
