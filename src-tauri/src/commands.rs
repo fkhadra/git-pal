@@ -1,4 +1,4 @@
-use tauri::{async_runtime::Mutex, State};
+use tauri::{async_runtime::Mutex, Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
 
@@ -119,4 +119,11 @@ pub fn disable_autostart(
     app_handle: tauri::AppHandle,
 ) -> Result<(), tauri_plugin_autostart::Error> {
     return app_handle.autolaunch().disable();
+}
+
+// TODO: refactor this shit
+#[tauri::command]
+pub async fn show_window(w: tauri::Window) {
+    w.show().unwrap();
+    // w.get_webview_window("Settings").unwrap().show().unwrap();
 }

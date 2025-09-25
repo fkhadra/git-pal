@@ -41,6 +41,10 @@ function disableAutoStart() {
   return invoke<void>("disable_autostart");
 }
 
+function showSettings() {
+  return invoke<void>("show_window");
+}
+
 export default {
   authenticate,
   homepage,
@@ -49,4 +53,5 @@ export default {
   isAutoStartEnabled,
   enableAutoStart,
   disableAutoStart,
+  showSettings,
 };

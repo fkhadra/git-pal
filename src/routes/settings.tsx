@@ -8,5 +8,6 @@ export const Route = createFileRoute("/settings")({
       autoStartEnabled: await commands.isAutoStartEnabled(),
     };
   },
+
   component: SettingsPage,
 });

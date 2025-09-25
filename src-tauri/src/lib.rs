@@ -3,39 +3,56 @@ mod github;
 mod vault;
 mod window;
 
-use log::debug;
 use std::env;
-use tauri::{menu::MenuBuilder, tray::TrayIconBuilder, Manager};
+use tauri::{menu::MenuBuilder, tray::TrayIconBuilder};
+use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_log::{Target, TargetKind};
 
-use crate::window::{create_main_window, create_settings_window};
+use crate::window::{create_app_window, show_app, show_settings};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let log_path = {
+        #[cfg(debug_assertions)]
+        {
+            env::current_dir().unwrap_or_else(|_| env::temp_dir())
+        }
+        #[cfg(not(debug_assertions))]
+        {
+            env::home_dir().unwrap_or_else(|| env::temp_dir())
+        }
+    };
+
     tauri::Builder::default()
         .manage(commands::AppState::new())
         .setup(|app| {
+            create_app_window(&app.handle())?;
+
             let menu = MenuBuilder::new(app)
+                .text("show", "Show Git Pal")
                 .text("about", "About")
                 .separator()
                 .text("settings", "Settings")
                 .text("quit", "Quit Git Pal")
                 .build()?;
 
-            let _tray = TrayIconBuilder::new()
+            let _ = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
-                    "about" => {
-                        debug!("about menu item was clicked");
+                    "show" => {
+                        show_app(app).unwrap_or_else(|err| {
+                            log::error!("Tray -> failed to show app. {}", err)
+                        });
                     }
+                    "about" => {}
                     "settings" => {
-                        debug!("settings menu item was clicked");
-                        create_settings_window(app).unwrap();
+                        show_settings(app).unwrap_or_else(|err| {
+                            log::error!("Tray -> failed to show settings. {}", err)
+                        });
                     }
                     "quit" => {
-                        debug!("quit menu item was clicked");
                         app.exit(0);
                     }
                     _ => {
@@ -44,56 +61,35 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            create_main_window(app.handle())?;
-
             let hotkey = Shortcut::new(Some(Modifiers::SUPER), Code::KeyG);
-
             app.handle().plugin(
                 tauri_plugin_global_shortcut::Builder::new()
                     .with_shortcut(hotkey)?
                     .with_handler(|app, _shortcut, event| {
                         if event.state() == ShortcutState::Pressed {
-                            if let Some(w) = app.get_webview_window(window::MAIN_WINDOW_LABEL) {
-                                let is_visible = w.is_visible().unwrap();
-
-                                if !is_visible {
-                                    w.show().unwrap();
-                                    w.set_focus().unwrap();
-                                }
-                            }
+                            show_app(app).unwrap_or_else(|err| {
+                                log::error!("Hotkey -> failed to show app. {}", err)
+                            });
                         }
                     })
                     .build(),
             )?;
 
-            #[cfg(desktop)]
-            {
-                use tauri_plugin_autostart::MacosLauncher;
-                use tauri_plugin_autostart::ManagerExt;
-
-                let _ = app.handle().plugin(tauri_plugin_autostart::init(
-                    MacosLauncher::LaunchAgent,
-                    None,
-                ));
-
-                debug!(
-                    "autostart enabled: {}",
-                    app.autolaunch().is_enabled().unwrap_or(false)
-                );
-            }
-
             Ok(())
         })
         .plugin(tauri_plugin_single_instance::init(|app, _, __| {
-            let _ = app
-                .get_webview_window("main")
-                .expect("no main window")
-                .set_focus();
+            show_app(app).unwrap_or_else(|err| {
+                log::error!("Single Instance -> failed to show app. {}", err)
+            });
         }))
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            None,
+        ))
         .plugin(
             tauri_plugin_log::Builder::new()
                 .target(Target::new(TargetKind::Folder {
-                    path: env::current_dir().unwrap(),
+                    path: log_path,
                     file_name: Some(String::from("git-pal")),
                 }))
                 .build(),
@@ -108,6 +104,7 @@ pub fn run() {
             commands::is_autostart_enabled,
             commands::enable_autostart,
             commands::disable_autostart,
+            commands::show_window
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
