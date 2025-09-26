@@ -1,4 +1,4 @@
-use tauri::{async_runtime::Mutex, Manager, State};
+use tauri::{async_runtime::Mutex, State};
 use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
 

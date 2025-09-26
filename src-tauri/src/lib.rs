@@ -6,6 +6,7 @@ mod window;
 use std::env;
 use tauri::{menu::MenuBuilder, tray::TrayIconBuilder};
 use tauri_plugin_autostart::MacosLauncher;
+use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_log::{Target, TargetKind};
 
@@ -26,8 +27,38 @@ pub fn run() {
 
     tauri::Builder::default()
         .manage(commands::AppState::new())
+        .plugin(tauri_plugin_single_instance::init(|app, _, __| {
+            show_app(app).unwrap_or_else(|err| {
+                log::error!("Single Instance -> failed to show app. {}", err)
+            });
+        }))
+        .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            None,
+        ))
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .target(Target::new(TargetKind::Folder {
+                    path: log_path,
+                    file_name: Some(String::from("git-pal")),
+                }))
+                .build(),
+        )
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             create_app_window(&app.handle())?;
+
+            // Note that get_current's return value will also get updated every time on_open_url gets triggered.
+            let start_urls = app.deep_link().get_current()?;
+            if let Some(urls) = start_urls {
+                // app was likely started by a deep link
+                log::info!("deep link URLs: {:?}", urls);
+            }
+
+            app.deep_link().on_open_url(|event| {
+                log::info!("deep link URLs: {:?}", event.urls());
+            });
 
             let menu = MenuBuilder::new(app)
                 .text("show", "Show Git Pal")
@@ -77,24 +108,6 @@ pub fn run() {
 
             Ok(())
         })
-        .plugin(tauri_plugin_single_instance::init(|app, _, __| {
-            show_app(app).unwrap_or_else(|err| {
-                log::error!("Single Instance -> failed to show app. {}", err)
-            });
-        }))
-        .plugin(tauri_plugin_autostart::init(
-            MacosLauncher::LaunchAgent,
-            None,
-        ))
-        .plugin(
-            tauri_plugin_log::Builder::new()
-                .target(Target::new(TargetKind::Folder {
-                    path: log_path,
-                    file_name: Some(String::from("git-pal")),
-                }))
-                .build(),
-        )
-        .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
             commands::authenticate,
             commands::is_authenticated,

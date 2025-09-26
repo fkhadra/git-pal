@@ -15,6 +15,13 @@
       "csp": null
     }
   },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["git-pal"]
+      }
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",
