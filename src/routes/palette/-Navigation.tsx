@@ -1,5 +1,5 @@
 import { Link, LinkComponentProps, useNavigate } from "@tanstack/react-router";
-import { House, GitPullRequestArrow, MessageCircleMore } from "lucide-react";
+import { GitPullRequestArrow, House, MessageCircleMore } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 interface LinkItem {
@@ -28,7 +28,7 @@ const links: LinkItem[] = [
     icon: MessageCircleMore,
     label: "Mentioned",
     search: {
-      filter: "mentioned",
+      filter: "mentions",
     },
   },
 ];
