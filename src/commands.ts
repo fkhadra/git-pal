@@ -45,6 +45,10 @@ function showSettings() {
   return invoke<void>("show_window");
 }
 
+function startAuthFlow() {
+  return invoke<void>("start_oauth_flow");
+}
+
 export default {
   authenticate,
   homepage,
@@ -54,4 +58,5 @@ export default {
   enableAutoStart,
   disableAutoStart,
   showSettings,
+  startAuthFlow,
 };

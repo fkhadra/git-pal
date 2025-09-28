@@ -2,7 +2,7 @@ import { useLoaderData } from "@tanstack/react-router";
 import { Keyboard, Palette, Power } from "lucide-react";
 import { useEffect } from "react";
 import commands from "~/commands";
-import { Hr, ThemePicker } from "~/components";
+import { Button, Hr, ThemePicker } from "~/components";
 import { AutoStart } from "./AutoStart";
 import { HotKey } from "./HotKey";
 import { Section } from "./Section";
@@ -27,6 +27,17 @@ export function SettingsPage() {
       <Section icon={Keyboard} title="Hotkey">
         <HotKey />
       </Section>
+
+      <div>
+        <span>Test Auth</span>
+        <Button
+          onClick={() => {
+            commands.startAuthFlow();
+          }}
+        >
+          Authorize
+        </Button>
+      </div>
     </main>
   );
 }

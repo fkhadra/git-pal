@@ -7,6 +7,7 @@ use crate::{github, vault::Vault};
 pub struct AppState {
     client: Mutex<github::Client>,
     vault: Vault,
+    pub oauth_client: Mutex<github::OAuth2Client>,
 }
 
 impl AppState {
@@ -17,6 +18,7 @@ impl AppState {
         AppState {
             vault,
             client: Mutex::new(github::Client::new(token)),
+            oauth_client: Mutex::new(github::OAuth2Client::new()),
         }
     }
 }
@@ -126,4 +128,14 @@ pub fn disable_autostart(
 pub async fn show_window(w: tauri::Window) {
     w.show().unwrap();
     // w.get_webview_window("Settings").unwrap().show().unwrap();
+}
+
+#[tauri::command]
+pub async fn start_oauth_flow(state: State<'_, AppState>) -> Result<()> {
+    state
+        .oauth_client
+        .lock()
+        .await
+        .start_auth_flow()
+        .map_err(|_| CommandError::UnableToDeleteToken)
 }

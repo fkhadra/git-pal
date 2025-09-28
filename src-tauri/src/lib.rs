@@ -4,7 +4,8 @@ mod vault;
 mod window;
 
 use std::env;
-use tauri::{menu::MenuBuilder, tray::TrayIconBuilder};
+
+use tauri::{menu::MenuBuilder, tray::TrayIconBuilder, Manager};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
@@ -47,17 +48,31 @@ pub fn run() {
         )
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            create_app_window(&app.handle())?;
+            create_app_window(app.handle())?;
+            let app_handle = app.handle().clone();
 
-            // Note that get_current's return value will also get updated every time on_open_url gets triggered.
-            let start_urls = app.deep_link().get_current()?;
-            if let Some(urls) = start_urls {
-                // app was likely started by a deep link
-                log::info!("deep link URLs: {:?}", urls);
-            }
+            app.deep_link().on_open_url(move |event| {
+                let app_handle = app_handle.clone();
 
-            app.deep_link().on_open_url(|event| {
-                log::info!("deep link URLs: {:?}", event.urls());
+                tauri::async_runtime::spawn(async move {
+                    for url in event.urls() {
+                        match url.host() {
+                            Some(host) => {
+                                if host.to_string() == "github" && url.path() == "/auth-callback" {
+                                    log::info!("deep link URLs: {:?}", url);
+                                    let state = app_handle.state::<commands::AppState>();
+
+                                    if let Err(err) =
+                                        state.oauth_client.lock().await.exchange_code(url).await
+                                    {
+                                        log::error!("NANI ????? {:?}", err);
+                                    };
+                                }
+                            }
+                            None => {}
+                        }
+                    }
+                });
             });
 
             let menu = MenuBuilder::new(app)
@@ -117,7 +132,8 @@ pub fn run() {
             commands::is_autostart_enabled,
             commands::enable_autostart,
             commands::disable_autostart,
-            commands::show_window
+            commands::show_window,
+            commands::start_oauth_flow
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
