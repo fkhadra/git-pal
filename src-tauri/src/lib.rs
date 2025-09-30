@@ -1,11 +1,13 @@
+mod app_state;
 mod commands;
 mod github;
 mod vault;
 mod window;
 
+use app_state::{handle_deeplink, AppState};
 use std::env;
 
-use tauri::{menu::MenuBuilder, tray::TrayIconBuilder, Manager};
+use tauri::{menu::MenuBuilder, tray::TrayIconBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
@@ -27,7 +29,7 @@ pub fn run() {
     };
 
     tauri::Builder::default()
-        .manage(commands::AppState::new())
+        .manage(AppState::new())
         .plugin(tauri_plugin_single_instance::init(|app, _, __| {
             show_app(app).unwrap_or_else(|err| {
                 log::error!("Single Instance -> failed to show app. {}", err)
@@ -52,27 +54,7 @@ pub fn run() {
             let app_handle = app.handle().clone();
 
             app.deep_link().on_open_url(move |event| {
-                let app_handle = app_handle.clone();
-
-                tauri::async_runtime::spawn(async move {
-                    for url in event.urls() {
-                        match url.host() {
-                            Some(host) => {
-                                if host.to_string() == "github" && url.path() == "/auth-callback" {
-                                    log::info!("deep link URLs: {:?}", url);
-                                    let state = app_handle.state::<commands::AppState>();
-
-                                    if let Err(err) =
-                                        state.oauth_client.lock().await.exchange_code(url).await
-                                    {
-                                        log::error!("NANI ????? {:?}", err);
-                                    };
-                                }
-                            }
-                            None => {}
-                        }
-                    }
-                });
+                handle_deeplink(&app_handle, event.urls());
             });
 
             let menu = MenuBuilder::new(app)

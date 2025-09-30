@@ -1,27 +1,8 @@
-use tauri::{async_runtime::Mutex, State};
+use tauri::State;
 use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
 
-use crate::{github, vault::Vault};
-
-pub struct AppState {
-    client: Mutex<github::Client>,
-    vault: Vault,
-    pub oauth_client: Mutex<github::OAuth2Client>,
-}
-
-impl AppState {
-    pub fn new() -> Self {
-        let vault = Vault::new("git-pal", "token").unwrap();
-        let token = vault.get_token().ok();
-
-        AppState {
-            vault,
-            client: Mutex::new(github::Client::new(token)),
-            oauth_client: Mutex::new(github::OAuth2Client::new()),
-        }
-    }
-}
+use crate::{app_state::AppState, github};
 
 #[derive(Debug, Error)]
 pub enum CommandError {
