@@ -1,4 +1,3 @@
-
 use tauri::{async_runtime::Mutex, AppHandle, Emitter, Manager};
 use ts_rs::TS;
 use url::Url;
@@ -50,7 +49,12 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
                                 .emit("AuthMessage", AuthMsg::AuthSuccess { ok: true })
                                 .unwrap_or_else(|err| {
                                     log::error!("Failed to emit AuthMessage {}", err)
-                                })
+                                });
+
+                            state
+                                .vault
+                                .save_token(&res.access_token)
+                                .unwrap_or_else(|err| log::error!("Failed to save token {}", err));
                         }
                         Err(err) => app_handle
                             .emit(
