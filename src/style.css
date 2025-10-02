@@ -96,7 +96,7 @@ body {
   border-radius: var(--body-radius);
 }
 
-body:has(#setting-page) {
+body:has([data-with-decoration]) {
   border-radius: 0;
 }
 

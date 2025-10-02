@@ -15,7 +15,7 @@ export function SettingsPage() {
   }, []);
 
   return (
-    <main id="setting-page" className="flex h-dvh flex-col gap-7 p-4">
+    <main data-with-decoration className="flex h-dvh flex-col gap-7 p-4">
       <Section icon={Power} title="Startup">
         <AutoStart autoStartEnabled={autoStartEnabled} />
       </Section>
