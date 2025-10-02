@@ -8,6 +8,7 @@ pub struct AppState {
     pub client: Mutex<github::Client>,
     pub vault: Vault,
     pub oauth_client: Mutex<github::OAuth2Client>,
+    pub has_token: bool,
 }
 
 impl AppState {
@@ -16,6 +17,7 @@ impl AppState {
         let token = vault.get_token().ok();
 
         AppState {
+            has_token: token.is_some(),
             vault,
             client: Mutex::new(github::Client::new(token)),
             oauth_client: Mutex::new(github::OAuth2Client::new()),

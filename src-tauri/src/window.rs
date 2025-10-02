@@ -2,6 +2,8 @@ use std::fmt::{self, Debug};
 
 use tauri::{AppHandle, Manager, Runtime, WebviewUrl, WebviewWindow, WindowEvent};
 
+use crate::app_state::AppState;
+
 #[derive(Debug)]
 enum Label {
     Main,
@@ -42,13 +44,20 @@ pub fn show_settings(app: &AppHandle) -> Result {
     }
 }
 
-pub fn create_app_window<R: Runtime>(handle: &AppHandle<R>) -> Result {
+pub fn create_app_window(handle: &AppHandle) -> Result {
+    let state = handle.state::<AppState>();
+
+    let (initial_path, window_visible) = match state.has_token {
+        true => ("/palette", false),
+        false => ("/login", true),
+    };
+
     let window = tauri::WebviewWindowBuilder::new(
         handle,
         Label::Main.to_string(),
         WebviewUrl::App("palette".into()),
     )
-    .initialization_script(r#"window.initialPath = '/palette';"#)
+    .initialization_script(format!("window.initialPath = '{initial_path}';"))
     .title("Git Pal")
     .inner_size(800.0, 600.0)
     .center()
@@ -56,7 +65,7 @@ pub fn create_app_window<R: Runtime>(handle: &AppHandle<R>) -> Result {
     .decorations(false)
     .resizable(false)
     .shadow(false)
-    .visible(false)
+    .visible(window_visible)
     .background_throttling(tauri::utils::config::BackgroundThrottlingPolicy::Throttle)
     .build()
     .map_err(|e| Error::UnableToCreateWindow {

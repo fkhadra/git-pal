@@ -7,7 +7,7 @@ mod window;
 use app_state::{handle_deeplink, AppState};
 use std::env;
 
-use tauri::{menu::MenuBuilder, tray::TrayIconBuilder};
+use tauri::{image::Image, menu::MenuBuilder, tray::TrayIconBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
@@ -64,9 +64,9 @@ pub fn run() {
                 .text("settings", "Settings")
                 .text("quit", "Quit Git Pal")
                 .build()?;
-
+            let i = Image::from_path("icons/tray-2.png").unwrap();
             let _ = TrayIconBuilder::new()
-                .icon(app.default_window_icon().unwrap().clone())
+                .icon(i)
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
