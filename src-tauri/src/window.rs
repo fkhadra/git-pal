@@ -1,6 +1,6 @@
-use std::fmt::{self, Debug};
+use std::fmt::Debug;
 
-use tauri::{App, AppHandle, Manager, Runtime, WebviewUrl, WebviewWindow, WindowEvent};
+use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WindowEvent};
 
 use crate::app_state::AppState;
 
@@ -12,12 +12,23 @@ const SETUP_WINDOW_LABEL: &str = "Setup";
 pub enum Error {
     #[error("unable to focus window '{label:}'. {err:}")]
     UnableToFocus { label: String, err: String },
+    #[error("window not found '{label:}'. {err:}")]
+    WindowNotFound { label: String, err: String },
     #[error("unable to check window '{label:}' visibility. {err:}")]
     UnableToCheckVisibility { label: String, err: String },
     #[error("unable to show window '{label:}'. {err:}")]
     UnableToShowWindow { label: String, err: String },
     #[error("unable to create window '{label:}'. {err:}")]
     UnableToCreateWindow { label: String, err: String },
+}
+
+impl serde::Serialize for Error {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
 }
 
 type Result<T = ()> = std::result::Result<T, Error>;

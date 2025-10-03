@@ -1,7 +1,6 @@
 mod api;
 mod custom_scalars;
-mod oauth;
+pub mod oauth;
 mod query;
 
 pub use api::*;
-pub use oauth::*;

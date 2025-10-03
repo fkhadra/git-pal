@@ -39,18 +39,19 @@ impl serde::Serialize for Error {
 
 type Result<T = ()> = std::result::Result<T, Error>;
 
-pub struct OAuth2Client {
+pub struct Client {
     client: BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>,
     pkce_verifier: Option<PkceCodeVerifier>,
     csrf_token: Option<CsrfToken>,
 }
 
+#[allow(dead_code)]
 pub struct OAuthCredentials {
     pub access_token: String,
     pub scope: Vec<String>,
 }
 
-impl OAuth2Client {
+impl Client {
     pub fn new() -> Self {
         let client = BasicClient::new(ClientId::new(CLIENT_ID.to_string()))
             .set_auth_uri(

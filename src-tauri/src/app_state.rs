@@ -2,12 +2,12 @@ use tauri::{async_runtime::Mutex, AppHandle, Emitter, Manager};
 use ts_rs::TS;
 use url::Url;
 
-use crate::{github, vault::Vault};
+use crate::{github, github::oauth, vault::Vault};
 
 pub struct AppState {
     pub client: Mutex<github::Client>,
     pub vault: Vault,
-    pub oauth_client: Mutex<github::OAuth2Client>,
+    pub oauth_client: Mutex<oauth::Client>,
     pub has_token: bool,
 }
 
@@ -20,7 +20,7 @@ impl AppState {
             has_token: token.is_some(),
             vault,
             client: Mutex::new(github::Client::new(token)),
-            oauth_client: Mutex::new(github::OAuth2Client::new()),
+            oauth_client: Mutex::new(oauth::Client::new()),
         }
     }
 }

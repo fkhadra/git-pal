@@ -1,20 +1,22 @@
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
-use tokio::process::Command;
 
-use crate::{app_state::AppState, github};
+use crate::{app_state::AppState, github, window};
 
 #[derive(Debug, Error)]
 pub enum CommandError {
     #[error("unable to delete token")]
     UnableToDeleteToken,
-    #[error("unable to show window")]
-    UnableToShowWindow,
+
     #[error(transparent)]
     GithubApi(#[from] github::Error),
     #[error(transparent)]
     Vault(#[from] keyring::Error),
+    #[error(transparent)]
+    Window(#[from] window::Error),
+    #[error(transparent)]
+    Autostart(#[from] tauri_plugin_autostart::Error),
 }
 
 impl serde::Serialize for CommandError {
@@ -107,14 +109,16 @@ pub fn disable_autostart(
     return app_handle.autolaunch().disable();
 }
 
-// TODO: refactor this shit
 #[tauri::command]
 pub async fn show_window(w: tauri::Window) -> Result<()> {
     let ww = w
         .get_webview_window(w.label())
-        .ok_or(CommandError::UnableToShowWindow)?;
+        .ok_or_else(|| window::Error::WindowNotFound {
+            label: w.label().to_string(),
+            err: String::from("Window not found in manager"),
+        })?;
 
-    crate::window::show_window(&ww).map_err(|_| CommandError::UnableToShowWindow)?;
+    window::show_window(&ww)?;
     Ok(())
 }
 
