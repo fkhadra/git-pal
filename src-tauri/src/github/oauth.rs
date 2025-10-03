@@ -1,4 +1,3 @@
-use anyhow::{anyhow, Context};
 use oauth2::basic::BasicClient;
 
 use oauth2::{
@@ -8,9 +7,37 @@ use oauth2::{
 use url::Url;
 
 const CLIENT_ID: &str = "Ov23liM8AmuuLbQqhdUf";
-
 // https://docs.github.com/en/enterprise-cloud@latest/apps/creating-github-apps/about-creating-github-apps/best-practices-for-creating-a-github-app#client-secrets
 const CLIENT_SECRET: &str = "2c283461887cb1fd83664d5291b84834e638e8e4";
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("failed to open browser: {0}")]
+    FailedToOpenBrowser(String),
+    #[error("code missing in callback URL: {0}")]
+    MissingCode(String),
+    #[error("state missing in callback URL: {0}")]
+    MissingState(String),
+    #[error("verifier missing in client")]
+    MissingVerifier,
+    #[error("csrf token missing in client")]
+    MissingCsrf,
+    #[error("csrf token mismatch: {csrf:} - {state:}")]
+    CsrfMismatch { csrf: String, state: String },
+    #[error("failed to get token: {0}")]
+    FailedToGetToken(String),
+}
+
+impl serde::Serialize for Error {
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+type Result<T = ()> = std::result::Result<T, Error>;
 
 pub struct OAuth2Client {
     client: BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>,
@@ -44,7 +71,7 @@ impl OAuth2Client {
         }
     }
 
-    pub fn start_auth_flow(self: &mut Self) -> anyhow::Result<()> {
+    pub fn start_auth_flow(self: &mut Self) -> Result<()> {
         let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 
         self.pkce_verifier = Some(pkce_verifier);
@@ -62,40 +89,33 @@ impl OAuth2Client {
 
         self.csrf_token = Some(csrf_token);
 
-        log::debug!("Auth url {}", auth_url.as_str());
-
         tauri_plugin_opener::open_url(auth_url, None::<&str>)
-            .with_context(|| format!("Failed to open default browser"))?;
-
-        Ok(())
+            .map_err(|e| Error::FailedToOpenBrowser(e.to_string()))
     }
 
-    pub async fn exchange_code(
-        self: &mut Self,
-        callback_url: Url,
-    ) -> anyhow::Result<OAuthCredentials> {
+    pub async fn exchange_code(self: &mut Self, callback_url: Url) -> Result<OAuthCredentials> {
         let code = callback_url
             .query_pairs()
             .find(|(k, _)| k == "code")
             .map(|(_, v)| AuthorizationCode::new(v.into_owned()))
-            .ok_or(anyhow!("No code found in callback URL"))?;
+            .ok_or_else(|| Error::MissingCode(callback_url.to_string()))?;
         let state = callback_url
             .query_pairs()
             .find(|(k, _)| k == "state")
             .map(|(_, v)| v.to_string())
-            .ok_or(anyhow!("No state found in callback URL"))?;
-        let pkce_code_verifier = self
-            .pkce_verifier
-            .take()
-            .ok_or(anyhow!("Code verifier missing"))?;
+            .ok_or_else(|| Error::MissingState(callback_url.to_string()))?;
+        let pkce_code_verifier = self.pkce_verifier.take().ok_or(Error::MissingVerifier)?;
         let csrf_token = self
             .csrf_token
             .take()
-            .ok_or(anyhow!("Csrf token missing"))?
+            .ok_or(Error::MissingCsrf)?
             .into_secret();
 
         if state != csrf_token {
-            anyhow::bail!("State mismatch");
+            return Err(Error::CsrfMismatch {
+                csrf: csrf_token,
+                state: state,
+            });
         }
 
         let http_client = reqwest::ClientBuilder::new()
@@ -109,7 +129,7 @@ impl OAuth2Client {
             .set_pkce_verifier(pkce_code_verifier)
             .request_async(&http_client)
             .await
-            .with_context(|| format!("Failed to get token"))?;
+            .map_err(|e| Error::FailedToGetToken(e.to_string()))?;
 
         Ok(OAuthCredentials {
             access_token: token_result.access_token().to_owned().into_secret(),

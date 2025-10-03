@@ -1,6 +1,5 @@
 use std::fmt::Debug;
 
-use log::debug;
 use reqwest::{header::HeaderMap, Client as HttpClient};
 
 use graphql_client::{GraphQLQuery, QueryBody, Response};
@@ -152,8 +151,6 @@ impl Client {
         }
 
         let data = response_body.data.ok_or(Error::MissingData)?;
-
-        debug!("{:?}", data.clone());
 
         Ok(ApiResponse { data, rate_limit })
     }
