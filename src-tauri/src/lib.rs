@@ -13,7 +13,7 @@ use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_log::{Target, TargetKind};
 
-use crate::window::{create_app_window, show_app, show_settings};
+use crate::window::{on_app_start, show_app, show_settings};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -50,7 +50,7 @@ pub fn run() {
         )
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            create_app_window(app.handle())?;
+            on_app_start(app.handle())?;
             let app_handle = app.handle().clone();
 
             app.deep_link().on_open_url(move |event| {

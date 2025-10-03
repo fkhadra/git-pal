@@ -1,8 +1,8 @@
 import { useLoaderData } from "@tanstack/react-router";
 import { Keyboard, Palette, Power } from "lucide-react";
-import { useEffect } from "react";
 import commands from "~/commands";
 import { Button, Hr, ThemePicker } from "~/components";
+import { useWindowReady } from "~/hooks";
 import { AutoStart } from "./AutoStart";
 import { HotKey } from "./HotKey";
 import { Section } from "./Section";
@@ -10,9 +10,7 @@ import { Section } from "./Section";
 export function SettingsPage() {
   const { autoStartEnabled } = useLoaderData({ from: "/settings" });
 
-  useEffect(() => {
-    commands.showSettings();
-  }, []);
+  useWindowReady();
 
   return (
     <main data-with-decoration className="flex h-dvh flex-col gap-7 p-4">

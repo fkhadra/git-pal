@@ -1,6 +1,7 @@
-use tauri::State;
+use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
+use tokio::process::Command;
 
 use crate::{app_state::AppState, github};
 
@@ -8,6 +9,8 @@ use crate::{app_state::AppState, github};
 pub enum CommandError {
     #[error("unable to delete token")]
     UnableToDeleteToken,
+    #[error("unable to show window")]
+    UnableToShowWindow,
     #[error(transparent)]
     GithubApi(#[from] github::Error),
     #[error(transparent)]
@@ -106,9 +109,13 @@ pub fn disable_autostart(
 
 // TODO: refactor this shit
 #[tauri::command]
-pub async fn show_window(w: tauri::Window) {
-    w.show().unwrap();
-    // w.get_webview_window("Settings").unwrap().show().unwrap();
+pub async fn show_window(w: tauri::Window) -> Result<()> {
+    let ww = w
+        .get_webview_window(w.label())
+        .ok_or(CommandError::UnableToShowWindow)?;
+
+    crate::window::show_window(&ww).map_err(|_| CommandError::UnableToShowWindow)?;
+    Ok(())
 }
 
 #[tauri::command]

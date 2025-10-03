@@ -6,6 +6,8 @@ import {
   UserProfileViewer,
 } from "./models/user-profile";
 
+import { Event, listen } from "@tauri-apps/api/event";
+
 import { ResponseData as SearchPullRequestsResponse } from "./models/search-pull-request";
 
 function authenticate(token: string) {
@@ -41,12 +43,21 @@ function disableAutoStart() {
   return invoke<void>("disable_autostart");
 }
 
-function showSettings() {
+function showCurrentWindow() {
   return invoke<void>("show_window");
 }
 
 function startAuthFlow() {
   return invoke<void>("start_oauth_flow");
+}
+
+interface AuthMessage {
+  msg: string;
+  ok: boolean;
+}
+
+function onAuthMessage(cb: (event: Event<AuthMessage>) => void) {
+  return listen<AuthMessage>("AuthMessage", cb);
 }
 
 export default {
@@ -57,6 +68,7 @@ export default {
   isAutoStartEnabled,
   enableAutoStart,
   disableAutoStart,
-  showSettings,
+  showCurrentWindow,
   startAuthFlow,
+  onAuthMessage,
 };

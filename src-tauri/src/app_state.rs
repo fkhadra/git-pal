@@ -47,28 +47,35 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
                     match client.exchange_code(url).await {
                         Ok(res) => {
                             state.client.lock().await.set_token(&res.access_token);
+
+                            log::info!("successfully authenticated");
+
                             app_handle
                                 .emit("AuthMessage", AuthMsg::AuthSuccess { ok: true })
                                 .unwrap_or_else(|err| {
                                     log::error!("Failed to emit AuthMessage {}", err)
                                 });
 
-                            state
-                                .vault
-                                .save_token(&res.access_token)
-                                .unwrap_or_else(|err| log::error!("Failed to save token {}", err));
+                            // state
+                            //     .vault
+                            //     .save_token(&res.access_token)
+                            //     .unwrap_or_else(|err| log::error!("Failed to save token {}", err));
                         }
-                        Err(err) => app_handle
-                            .emit(
-                                "AuthMessage",
-                                AuthMsg::AuthFailed {
-                                    msg: err.to_string(),
-                                    ok: false,
-                                },
-                            )
-                            .unwrap_or_else(|err| {
-                                log::error!("Failed to emit AuthMessage {}", err)
-                            }),
+                        Err(err) => {
+                            log::error!("Failed to exchange code {}", err);
+
+                            app_handle
+                                .emit(
+                                    "AuthMessage",
+                                    AuthMsg::AuthFailed {
+                                        msg: err.to_string(),
+                                        ok: false,
+                                    },
+                                )
+                                .unwrap_or_else(|err| {
+                                    log::error!("Failed to emit AuthMessage {}", err)
+                                });
+                        }
                     }
                 }
             }

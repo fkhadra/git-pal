@@ -1,20 +1,12 @@
 use std::fmt::{self, Debug};
 
-use tauri::{AppHandle, Manager, Runtime, WebviewUrl, WebviewWindow, WindowEvent};
+use tauri::{App, AppHandle, Manager, Runtime, WebviewUrl, WebviewWindow, WindowEvent};
 
 use crate::app_state::AppState;
 
-#[derive(Debug)]
-enum Label {
-    Main,
-    Settings,
-}
-
-impl fmt::Display for Label {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
+const MAIN_WINDOW_LABEL: &str = "Main";
+const SETTINGS_WINDOW_LABEL: &str = "Settings";
+const SETUP_WINDOW_LABEL: &str = "Setup";
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -31,84 +23,46 @@ pub enum Error {
 type Result<T = ()> = std::result::Result<T, Error>;
 
 pub fn show_app(app: &AppHandle) -> Result {
-    match app.get_webview_window(&Label::Main.to_string()) {
+    match app.get_webview_window(MAIN_WINDOW_LABEL) {
         Some(window) => show_window(&window),
-        None => create_app_window(app),
+        None => create_main_window(app),
     }
 }
 
 pub fn show_settings(app: &AppHandle) -> Result {
-    match app.get_webview_window(&Label::Settings.to_string()) {
+    match app.get_webview_window(SETTINGS_WINDOW_LABEL) {
         Some(window) => show_window(&window),
-        None => create_settings_window(app),
+        None => create_window(
+            app,
+            WindowConfig {
+                title: "Settings",
+                initial_path: "/settings",
+                url: "settings",
+                label: SETTINGS_WINDOW_LABEL,
+                width: 715.0,
+                height: 600.0,
+            },
+        ),
     }
 }
 
-pub fn create_app_window(handle: &AppHandle) -> Result {
+pub fn on_app_start(handle: &AppHandle) -> Result {
     let state = handle.state::<AppState>();
 
-    let (initial_path, window_visible) = match state.has_token {
-        true => ("/palette", false),
-        false => ("/login", true),
+    match state.has_token {
+        true => create_main_window(handle)?,
+        false => create_window(
+            handle,
+            WindowConfig {
+                title: "Welcome to Git Pal",
+                initial_path: "/login",
+                url: "login",
+                label: SETUP_WINDOW_LABEL,
+                width: 800.0,
+                height: 600.0,
+            },
+        )?,
     };
-
-    let window = tauri::WebviewWindowBuilder::new(
-        handle,
-        Label::Main.to_string(),
-        WebviewUrl::App("palette".into()),
-    )
-    .initialization_script(format!("window.initialPath = '{initial_path}';"))
-    .title("Git Pal")
-    .inner_size(800.0, 600.0)
-    .center()
-    .transparent(true)
-    .decorations(false)
-    .resizable(false)
-    .shadow(false)
-    .visible(window_visible)
-    .background_throttling(tauri::utils::config::BackgroundThrottlingPolicy::Throttle)
-    .build()
-    .map_err(|e| Error::UnableToCreateWindow {
-        label: Label::Main.to_string(),
-        err: e.to_string(),
-    })?;
-
-    // attach events for main window
-    let cw = window.clone();
-    window.on_window_event(move |e| match e {
-        WindowEvent::CloseRequested { api, .. } => {
-            api.prevent_close();
-            cw.hide().unwrap();
-        }
-        WindowEvent::Focused(focused) => {
-            if !focused {
-                cw.hide().unwrap();
-            }
-        }
-        _ => {}
-    });
-
-    Ok(())
-}
-
-fn create_settings_window<R: Runtime>(handle: &AppHandle<R>) -> Result {
-    let __ = tauri::WebviewWindowBuilder::new(
-        handle,
-        Label::Settings.to_string(),
-        WebviewUrl::App("settings".into()),
-    )
-    .title("Settings")
-    .initialization_script(r#"window.initialPath = '/settings';"#)
-    .inner_size(715.0, 600.0)
-    .resizable(false)
-    .minimizable(false)
-    .visible(false)
-    .center()
-    .build()
-    .map_err(|e| Error::UnableToCreateWindow {
-        label: Label::Settings.to_string(),
-        err: e.to_string(),
-    })?;
 
     Ok(())
 }
@@ -134,6 +88,73 @@ pub fn show_window(w: &WebviewWindow) -> Result {
         label: w.label().to_string(),
         err: err.to_string(),
     })?;
+
+    Ok(())
+}
+
+fn create_main_window(handle: &AppHandle) -> Result {
+    let window = tauri::WebviewWindowBuilder::new(
+        handle,
+        MAIN_WINDOW_LABEL,
+        WebviewUrl::App("palette".into()),
+    )
+    .initialization_script("window.initialPath = '/palette'")
+    .title("Git Pal")
+    .inner_size(800.0, 600.0)
+    .center()
+    .transparent(true)
+    .decorations(false)
+    .resizable(false)
+    .shadow(false)
+    .visible(false)
+    .background_throttling(tauri::utils::config::BackgroundThrottlingPolicy::Throttle)
+    .build()
+    .map_err(|e| Error::UnableToCreateWindow {
+        label: MAIN_WINDOW_LABEL.to_string(),
+        err: e.to_string(),
+    })?;
+
+    // attach events for main window
+    let cw = window.clone();
+    window.on_window_event(move |e| match e {
+        WindowEvent::CloseRequested { api, .. } => {
+            api.prevent_close();
+            cw.hide().unwrap();
+        }
+        WindowEvent::Focused(focused) => {
+            if !focused {
+                cw.hide().unwrap();
+            }
+        }
+        _ => {}
+    });
+
+    Ok(())
+}
+
+struct WindowConfig<'a> {
+    title: &'a str,
+    initial_path: &'a str,
+    url: &'a str,
+    label: &'a str,
+    width: f64,
+    height: f64,
+}
+
+fn create_window(handle: &AppHandle, config: WindowConfig) -> Result {
+    tauri::WebviewWindowBuilder::new(handle, config.label, WebviewUrl::App(config.url.into()))
+        .title(config.title)
+        .initialization_script(format!("window.initialPath = '{}';", config.initial_path))
+        .inner_size(config.width, config.height)
+        .resizable(false)
+        .minimizable(false)
+        .visible(false)
+        .center()
+        .build()
+        .map_err(|e| Error::UnableToCreateWindow {
+            label: config.label.to_string(),
+            err: e.to_string(),
+        })?;
 
     Ok(())
 }
