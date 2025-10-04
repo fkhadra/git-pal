@@ -66,8 +66,8 @@ pub fn on_app_start(handle: &AppHandle) -> Result {
             handle,
             WindowConfig {
                 title: "Welcome to Git Pal",
-                initial_path: "/login",
-                url: "login",
+                initial_path: "/setup",
+                url: "setup",
                 label: SETUP_WINDOW_LABEL,
                 width: 800.0,
                 height: 600.0,

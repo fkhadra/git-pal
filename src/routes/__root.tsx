@@ -16,7 +16,7 @@ export const Route = createRootRoute({
   async beforeLoad(props) {
     try {
       if (userProfile) return userProfile;
-      if (props.location.pathname === "/login") return;
+      if (props.location.pathname === "/setup") return;
 
       userProfile = await commands.isAuthenticated();
 
@@ -29,7 +29,7 @@ export const Route = createRootRoute({
       return userProfile;
     } catch {
       throw redirect({
-        to: "/login",
+        to: "/setup",
       });
     }
   },

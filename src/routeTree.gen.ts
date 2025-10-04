@@ -9,22 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as LoginRouteImport } from './routes/login'
 import { Route as PaletteRouteRouteImport } from './routes/palette/route'
 import { Route as PaletteIndexRouteImport } from './routes/palette/index'
 import { Route as PaletteSearchRouteImport } from './routes/palette/search'
 import { Route as PalettePullRequestsRouteImport } from './routes/palette/pull-requests'
 import { Route as PaletteRepositoryIdRouteImport } from './routes/palette/repository.$id'
 
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaletteRouteRoute = PaletteRouteRouteImport.update({
@@ -55,16 +55,16 @@ const PaletteRepositoryIdRoute = PaletteRepositoryIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/palette': typeof PaletteRouteRouteWithChildren
-  '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/palette/pull-requests': typeof PalettePullRequestsRoute
   '/palette/search': typeof PaletteSearchRoute
   '/palette/': typeof PaletteIndexRoute
   '/palette/repository/$id': typeof PaletteRepositoryIdRoute
 }
 export interface FileRoutesByTo {
-  '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/palette/pull-requests': typeof PalettePullRequestsRoute
   '/palette/search': typeof PaletteSearchRoute
   '/palette': typeof PaletteIndexRoute
@@ -73,8 +73,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/palette': typeof PaletteRouteRouteWithChildren
-  '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/setup': typeof SetupRoute
   '/palette/pull-requests': typeof PalettePullRequestsRoute
   '/palette/search': typeof PaletteSearchRoute
   '/palette/': typeof PaletteIndexRoute
@@ -84,16 +84,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/palette'
-    | '/login'
     | '/settings'
+    | '/setup'
     | '/palette/pull-requests'
     | '/palette/search'
     | '/palette/'
     | '/palette/repository/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/login'
     | '/settings'
+    | '/setup'
     | '/palette/pull-requests'
     | '/palette/search'
     | '/palette'
@@ -101,8 +101,8 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/palette'
-    | '/login'
     | '/settings'
+    | '/setup'
     | '/palette/pull-requests'
     | '/palette/search'
     | '/palette/'
@@ -111,24 +111,24 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   PaletteRouteRoute: typeof PaletteRouteRouteWithChildren
-  LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
+  SetupRoute: typeof SetupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/palette': {
@@ -189,8 +189,8 @@ const PaletteRouteRouteWithChildren = PaletteRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   PaletteRouteRoute: PaletteRouteRouteWithChildren,
-  LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
+  SetupRoute: SetupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

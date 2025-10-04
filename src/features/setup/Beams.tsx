@@ -1,4 +1,4 @@
-import React, { forwardRef, useRef } from "react";
+import React, { ComponentPropsWithRef, useRef } from "react";
 
 import appIcon from "~/icon.png";
 
@@ -10,13 +10,15 @@ import {
   MessagesSquare,
   Search,
 } from "lucide-react";
+import { AnimatedBeam } from "~/components";
 import { cn } from "~/libs/utils";
-import { AnimatedBeam } from "./Beam";
 
-const Circle = forwardRef<
-  HTMLDivElement,
-  { className?: string; children?: React.ReactNode }
->(({ className, children }, ref) => {
+type CircleProps = ComponentPropsWithRef<"div"> & {
+  className?: string;
+  children?: React.ReactNode;
+};
+
+const Circle: React.FC<CircleProps> = ({ className, children, ref }) => {
   return (
     <div
       ref={ref}
@@ -28,11 +30,9 @@ const Circle = forwardRef<
       {children}
     </div>
   );
-});
+};
 
-Circle.displayName = "Circle";
-
-export function AnimatedBeamDemo() {
+export function Beams() {
   const containerRef = useRef<HTMLDivElement>(null);
   const div1Ref = useRef<HTMLDivElement>(null);
   const div2Ref = useRef<HTMLDivElement>(null);

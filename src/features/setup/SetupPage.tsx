@@ -1,16 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { Github } from "lucide-react";
 import { useEffect } from "react";
 import commands from "~/commands";
-import { Button, Typography, WavyBackground } from "~/components";
-import { AnimatedBeamDemo } from "~/components/demo";
+import { Button, Typography, Vortex } from "~/components";
+
 import { useWindowReady } from "~/hooks";
+import { Beams } from "./Beams";
 
-export const Route = createFileRoute("/login")({
-  component: RouteComponent,
-});
-
-function RouteComponent() {
+export function SetupPage() {
   useWindowReady();
   useEffect(() => {
     const listener = commands.onAuthMessage((event) => {
@@ -27,12 +23,11 @@ function RouteComponent() {
       data-with-decoration
       className="relative grid h-dvh place-items-center"
     >
-      <WavyBackground />
-      {/*<Vortex
+      <Vortex
         rangeY={800}
         particleCount={500}
         className="flex h-full w-full flex-col items-center justify-center px-2 py-4 md:px-10"
-      />*/}
+      />
       <div className="absolute z-10 flex min-w-[75%] flex-col items-center justify-center rounded-md border border-fuchsia-300/10 bg-zinc-900/45 p-8 backdrop-blur-md">
         <Typography.h1>
           Welcome to{" "}
@@ -43,7 +38,7 @@ function RouteComponent() {
         <Typography.h4 className="mt-2 italic">
           GitHub in your flow, not in your way.
         </Typography.h4>
-        <AnimatedBeamDemo />
+        <Beams />
         <Button
           color="primary"
           className="mt-2"
