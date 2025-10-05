@@ -71,7 +71,7 @@ pub fn run() {
                 .path()
                 .resolve("icons/tray-2.png", tauri::path::BaseDirectory::Resource)?;
 
-            let i = Image::from_path(resource_path).unwrap();
+            let i = Image::from_path(resource_path).expect("valid tray icon path");
             let _ = TrayIconBuilder::new()
                 .icon(i)
                 .menu(&menu)

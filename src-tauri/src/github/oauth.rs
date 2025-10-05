@@ -55,14 +55,17 @@ impl Client {
     pub fn new() -> Self {
         let client = BasicClient::new(ClientId::new(CLIENT_ID.to_string()))
             .set_auth_uri(
-                AuthUrl::new("https://github.com/login/oauth/authorize".to_string()).unwrap(),
+                AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
+                    .expect("valid auth uri"),
             )
             .set_client_secret(ClientSecret::new(CLIENT_SECRET.to_string()))
             .set_token_uri(
-                TokenUrl::new("https://github.com/login/oauth/access_token".to_string()).unwrap(),
+                TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
+                    .expect("valid token uri"),
             )
             .set_redirect_uri(
-                RedirectUrl::new("git-pal://github/auth-callback".to_string()).unwrap(),
+                RedirectUrl::new("git-pal://github/auth-callback".to_string())
+                    .expect("valid callback uri"),
             );
 
         Self {

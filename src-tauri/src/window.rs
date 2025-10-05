@@ -21,6 +21,8 @@ pub enum Error {
     UnableToShowWindow { label: String, err: String },
     #[error("unable to create window '{label:}'. {err:}")]
     UnableToCreateWindow { label: String, err: String },
+    #[error("unable to hide window '{label:}'. {err:}")]
+    UnableToHideWindow { label: String, err: String },
     #[error("unable to register global shortcut: {0}")]
     UnableToRegisterGlobalShortcut(String),
 }
@@ -129,6 +131,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
     .resizable(false)
     .shadow(false)
     .visible(false)
+    .always_on_top(true)
     .background_throttling(tauri::utils::config::BackgroundThrottlingPolicy::Throttle)
     .build()
     .map_err(|e| Error::UnableToCreateWindow {
@@ -143,11 +146,27 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
     window.on_window_event(move |e| match e {
         WindowEvent::CloseRequested { api, .. } => {
             api.prevent_close();
-            cw.hide().unwrap();
+            cw.hide().unwrap_or_else(|err| {
+                log::error!(
+                    "On window close, {}",
+                    Error::UnableToHideWindow {
+                        label: MAIN_WINDOW_LABEL.to_string(),
+                        err: err.to_string()
+                    }
+                )
+            });
         }
         WindowEvent::Focused(focused) => {
             if !focused {
-                cw.hide().unwrap();
+                cw.hide().unwrap_or_else(|err| {
+                    log::error!(
+                        "On window focus change, {}",
+                        Error::UnableToHideWindow {
+                            label: MAIN_WINDOW_LABEL.to_string(),
+                            err: err.to_string()
+                        }
+                    )
+                });
             }
         }
         _ => {}
