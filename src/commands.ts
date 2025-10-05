@@ -52,7 +52,7 @@ function startAuthFlow() {
 }
 
 interface AuthMessage {
-  msg: string;
+  msg?: string;
   ok: boolean;
 }
 
