@@ -1,35 +1,42 @@
+use std::sync::atomic::{AtomicBool, Ordering};
+
 use tauri::{async_runtime::Mutex, AppHandle, Emitter, Manager};
 use ts_rs::TS;
 use url::Url;
 
-use crate::{github, github::oauth, vault::Vault};
+use crate::{
+    github::{self, oauth},
+    vault::Vault,
+    window,
+};
 
 pub struct AppState {
     pub client: Mutex<github::Client>,
     pub vault: Vault,
     pub oauth_client: Mutex<oauth::Client>,
-    pub has_token: bool,
+    pub should_do_setup: AtomicBool,
 }
 
 impl AppState {
     pub fn new() -> Self {
-        let vault = Vault::new("git-pal", "token").unwrap();
+        let vault = Vault::new("git-pal", "token").expect("vault should build");
         let token = vault.get_token().ok();
+        let should_do_setup = token.is_none();
 
         AppState {
-            has_token: token.is_some(),
             vault,
             client: Mutex::new(github::Client::new(token)),
             oauth_client: Mutex::new(oauth::Client::new()),
+            should_do_setup: AtomicBool::new(should_do_setup),
         }
     }
 }
 
 #[derive(Debug, Clone, serde::Serialize, TS)]
 #[ts(export, export_to = "../../src/models/events.ts")]
-enum AuthMsg {
-    AuthFailed { msg: String, ok: bool },
-    AuthSuccess { ok: bool },
+struct AuthMessage {
+    msg: Option<String>,
+    ok: bool,
 }
 
 pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
@@ -46,15 +53,26 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
 
                     match client.exchange_code(url).await {
                         Ok(res) => {
+                            state.should_do_setup.store(false, Ordering::Relaxed);
                             state.client.lock().await.set_token(&res.access_token);
 
                             log::info!("successfully authenticated");
 
                             app_handle
-                                .emit("AuthMessage", AuthMsg::AuthSuccess { ok: true })
+                                .emit(
+                                    "AuthMessage",
+                                    AuthMessage {
+                                        ok: true,
+                                        msg: None,
+                                    },
+                                )
                                 .unwrap_or_else(|err| {
                                     log::error!("Failed to emit AuthMessage {}", err)
                                 });
+
+                            window::create_main_window(&app_handle).unwrap_or_else(|err| {
+                                log::error!("Failed to create main window after auth {}", err)
+                            });
 
                             // state
                             //     .vault
@@ -67,9 +85,9 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
                             app_handle
                                 .emit(
                                     "AuthMessage",
-                                    AuthMsg::AuthFailed {
-                                        msg: err.to_string(),
+                                    AuthMessage {
                                         ok: false,
+                                        msg: Some(err.to_string()),
                                     },
                                 )
                                 .unwrap_or_else(|err| {

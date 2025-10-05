@@ -1,16 +1,21 @@
 import { Github } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import commands from "~/commands";
-import { Button, Typography, Vortex } from "~/components";
+import { Button, Keybind, Typography, Vortex } from "~/components";
 
 import { useWindowReady } from "~/hooks";
 import { Beams } from "./Beams";
 
 export function SetupPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
   useWindowReady();
+
   useEffect(() => {
     const listener = commands.onAuthMessage((event) => {
-      console.log(event.payload);
+      if (event.payload.ok) {
+        setIsAuthenticated(true);
+      }
     });
 
     return () => {
@@ -39,16 +44,26 @@ export function SetupPage() {
           GitHub in your flow, not in your way.
         </Typography.h4>
         <Beams />
-        <Button
-          color="primary"
-          className="mt-2"
-          leftSlot={Github}
-          onClick={() => {
-            commands.startAuthFlow();
-          }}
-        >
-          Login with Github
-        </Button>
+        {isAuthenticated ? (
+          <Typography.h4 className="mt-4 flex gap-2">
+            <div>
+              <span aria-hidden="true">🎉</span> You’re in!
+            </div>
+            <Keybind label="Press" keys={["⌘", "G"]} />
+            <span className="-ml-1">anytime to bring up Git Pal.</span>
+          </Typography.h4>
+        ) : (
+          <Button
+            color="primary"
+            className="mt-2"
+            leftSlot={Github}
+            onClick={() => {
+              commands.startAuthFlow();
+            }}
+          >
+            Login with Github
+          </Button>
+        )}
       </div>
     </main>
   );

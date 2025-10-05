@@ -1,6 +1,7 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, sync::atomic::Ordering};
 
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WindowEvent};
+use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 
 use crate::app_state::AppState;
 
@@ -20,6 +21,8 @@ pub enum Error {
     UnableToShowWindow { label: String, err: String },
     #[error("unable to create window '{label:}'. {err:}")]
     UnableToCreateWindow { label: String, err: String },
+    #[error("unable to register global shortcut: {0}")]
+    UnableToRegisterGlobalShortcut(String),
 }
 
 impl serde::Serialize for Error {
@@ -34,6 +37,17 @@ impl serde::Serialize for Error {
 type Result<T = ()> = std::result::Result<T, Error>;
 
 pub fn show_app(app: &AppHandle) -> Result {
+    // bro still doing setup
+    if let Some(setup_window) = app.get_webview_window(SETUP_WINDOW_LABEL) {
+        if app
+            .state::<AppState>()
+            .should_do_setup
+            .load(Ordering::Relaxed)
+        {
+            return show_window(&setup_window);
+        }
+    }
+
     match app.get_webview_window(MAIN_WINDOW_LABEL) {
         Some(window) => show_window(&window),
         None => create_main_window(app),
@@ -60,9 +74,9 @@ pub fn show_settings(app: &AppHandle) -> Result {
 pub fn on_app_start(handle: &AppHandle) -> Result {
     let state = handle.state::<AppState>();
 
-    match state.has_token {
-        true => create_main_window(handle)?,
-        false => create_window(
+    match state.should_do_setup.load(Ordering::Relaxed) {
+        false => create_main_window(handle)?,
+        true => create_window(
             handle,
             WindowConfig {
                 title: "Welcome to Git Pal",
@@ -86,9 +100,6 @@ pub fn show_window(w: &WebviewWindow) -> Result {
             err: err.to_string(),
         })?
     {
-        // best effort
-        let _ = w.center();
-
         w.show().map_err(|err| Error::UnableToShowWindow {
             label: w.label().to_string(),
             err: err.to_string(),
@@ -103,7 +114,7 @@ pub fn show_window(w: &WebviewWindow) -> Result {
     Ok(())
 }
 
-fn create_main_window(handle: &AppHandle) -> Result {
+pub fn create_main_window(handle: &AppHandle) -> Result {
     let window = tauri::WebviewWindowBuilder::new(
         handle,
         MAIN_WINDOW_LABEL,
@@ -124,6 +135,8 @@ fn create_main_window(handle: &AppHandle) -> Result {
         label: MAIN_WINDOW_LABEL.to_string(),
         err: e.to_string(),
     })?;
+
+    register_global_shortcut(handle)?;
 
     // attach events for main window
     let cw = window.clone();
@@ -166,6 +179,28 @@ fn create_window(handle: &AppHandle, config: WindowConfig) -> Result {
             label: config.label.to_string(),
             err: e.to_string(),
         })?;
+
+    Ok(())
+}
+
+fn register_global_shortcut(app_handle: &AppHandle) -> Result {
+    let hotkey = Shortcut::new(Some(Modifiers::SUPER), Code::KeyG);
+
+    app_handle
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_shortcut(hotkey)
+                .map_err(|err| Error::UnableToRegisterGlobalShortcut(err.to_string()))?
+                .with_handler(|app, _shortcut, event| {
+                    if event.state() == ShortcutState::Pressed {
+                        show_app(app).unwrap_or_else(|err| {
+                            log::error!("Hotkey -> failed to show app. {}", err)
+                        });
+                    }
+                })
+                .build(),
+        )
+        .map_err(|err| Error::UnableToRegisterGlobalShortcut(err.to_string()))?;
 
     Ok(())
 }

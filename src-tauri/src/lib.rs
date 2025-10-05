@@ -7,10 +7,9 @@ mod window;
 use app_state::{handle_deeplink, AppState};
 use std::env;
 
-use tauri::{image::Image, menu::MenuBuilder, tray::TrayIconBuilder};
+use tauri::{image::Image, menu::MenuBuilder, tray::TrayIconBuilder, Manager};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_deep_link::DeepLinkExt;
-use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_log::{Target, TargetKind};
 
 use crate::window::{on_app_start, show_app, show_settings};
@@ -64,7 +63,12 @@ pub fn run() {
                 .text("settings", "Settings")
                 .text("quit", "Quit Git Pal")
                 .build()?;
-            let i = Image::from_path("icons/tray-2.png").unwrap();
+
+            let resource_path = app
+                .path()
+                .resolve("icons/tray-2.png", tauri::path::BaseDirectory::Resource)?;
+
+            let i = Image::from_path(resource_path).unwrap();
             let _ = TrayIconBuilder::new()
                 .icon(i)
                 .menu(&menu)
@@ -89,20 +93,6 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            let hotkey = Shortcut::new(Some(Modifiers::SUPER), Code::KeyG);
-            app.handle().plugin(
-                tauri_plugin_global_shortcut::Builder::new()
-                    .with_shortcut(hotkey)?
-                    .with_handler(|app, _shortcut, event| {
-                        if event.state() == ShortcutState::Pressed {
-                            show_app(app).unwrap_or_else(|err| {
-                                log::error!("Hotkey -> failed to show app. {}", err)
-                            });
-                        }
-                    })
-                    .build(),
-            )?;
-
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -115,7 +105,7 @@ pub fn run() {
             commands::enable_autostart,
             commands::disable_autostart,
             commands::show_window,
-            commands::start_oauth_flow
+            commands::start_oauth_flow,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

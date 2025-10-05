@@ -1,3 +1,4 @@
+
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
@@ -8,7 +9,6 @@ use crate::{app_state::AppState, github, window};
 pub enum CommandError {
     #[error("unable to delete token")]
     UnableToDeleteToken,
-
     #[error(transparent)]
     GithubApi(#[from] github::Error),
     #[error(transparent)]
