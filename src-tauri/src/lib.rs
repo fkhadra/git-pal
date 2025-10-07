@@ -49,9 +49,6 @@ pub fn run() {
         )
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            #[cfg(target_os = "macos")]
-            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
-
             on_app_start(app.handle())?;
             let app_handle = app.handle().clone();
 

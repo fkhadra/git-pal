@@ -102,6 +102,8 @@ pub fn show_window(w: &WebviewWindow) -> Result {
             err: err.to_string(),
         })?
     {
+        w.center().expect("should center bro");
+
         w.show().map_err(|err| Error::UnableToShowWindow {
             label: w.label().to_string(),
             err: err.to_string(),
@@ -125,7 +127,6 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
     .initialization_script("window.initialPath = '/palette'")
     .title("Git Pal")
     .inner_size(800.0, 600.0)
-    .center()
     .transparent(true)
     .decorations(false)
     .resizable(false)
@@ -138,6 +139,11 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
         label: MAIN_WINDOW_LABEL.to_string(),
         err: e.to_string(),
     })?;
+
+    #[cfg(target_os = "macos")]
+    handle
+        .set_activation_policy(tauri::ActivationPolicy::Accessory)
+        .expect("Failed to set activation policy");
 
     register_global_shortcut(handle)?;
 
@@ -192,7 +198,6 @@ fn create_window(handle: &AppHandle, config: WindowConfig) -> Result {
         .resizable(false)
         .minimizable(false)
         .visible(false)
-        .center()
         .build()
         .map_err(|e| Error::UnableToCreateWindow {
             label: config.label.to_string(),

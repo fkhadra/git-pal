@@ -1,4 +1,3 @@
-
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
