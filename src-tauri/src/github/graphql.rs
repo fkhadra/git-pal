@@ -1,81 +1,21 @@
 use std::fmt::Debug;
 
-use reqwest::{header::HeaderMap, Client as HttpClient};
-
 use graphql_client::{GraphQLQuery, QueryBody, Response};
-use serde::{self, de::DeserializeOwned, Deserialize, Serialize};
-use ts_rs::TS;
+use serde::{self, de::DeserializeOwned, Serialize};
 
-use crate::github::query::user_profile;
-
+use super::api_client::{ApiResponse, Client, Error, RateLimit, Result};
 use super::query;
 
-type Result<T> = std::result::Result<T, Error>;
-
-#[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/api.ts")]
-pub struct ApiResponse<T> {
-    pub rate_limit: RateLimit,
-    pub data: T,
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("token is missing")]
-    MissingToken,
-    #[error("response errors: {}",.0)]
-    GraphQLErr(String),
-    #[error("invalid request: {status:} {message:}")]
-    BadRequest { message: String, status: u16 },
-    #[error("unsupported filter: {}", .0)]
-    UnsupportedFilter(String),
-    #[error("no data")]
-    MissingData,
-    #[error(transparent)]
-    Other(#[from] reqwest::Error),
-}
-
-impl serde::Serialize for Error {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
-}
-
-const API_URL: &str = "https://api.github.com/graphql";
+const GRAPHQL_API_URL: &str = "https://api.github.com/graphql";
 const SUPPORTED_FILTER: [&str; 2] = ["mentions", "review-requested"];
 
 pub type UserProfile = ApiResponse<query::user_profile::ResponseData>;
 pub type Homepage = ApiResponse<query::homepage::ResponseData>;
 pub type SearchResult = ApiResponse<query::search_pull_request::ResponseData>;
 
-pub type UserProfileViewer = user_profile::UserProfileViewer;
-
-pub struct Client {
-    token: Option<String>,
-    pub user: Option<user_profile::UserProfileViewer>,
-    http: HttpClient,
-}
+pub type UserProfileViewer = query::user_profile::UserProfileViewer;
 
 impl Client {
-    pub fn new(token: Option<String>) -> Self {
-        Client {
-            token,
-            user: None,
-            http: reqwest::Client::new(),
-        }
-    }
-
-    pub fn set_token(&mut self, token: &str) {
-        self.token = Some(token.to_string());
-    }
-
-    pub fn is_token_set(&self) -> bool {
-        return self.token.is_some();
-    }
-
     pub async fn load_user_profile(&mut self) -> Result<UserProfile> {
         let q = query::UserProfile::build_query(query::user_profile::Variables);
         let res: UserProfile = self.send_graphql(&q).await?;
@@ -122,7 +62,7 @@ impl Client {
 
         let res = self
             .http
-            .post(API_URL)
+            .post(GRAPHQL_API_URL)
             .bearer_auth(token)
             .header("user-agent", "hey-github-wanna-hire-me?")
             .json(body)
@@ -137,7 +77,7 @@ impl Client {
             });
         }
 
-        let rate_limit = RateLimit::from(res.headers());
+        let rate_limit = RateLimit::extract(res.headers());
         let response_body: Response<R> = res.json().await?;
 
         if let Some(errs) = response_body.errors {
@@ -153,33 +93,5 @@ impl Client {
         let data = response_body.data.ok_or(Error::MissingData)?;
 
         Ok(ApiResponse { data, rate_limit })
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/api.ts")]
-pub struct RateLimit {
-    pub limit: u32,
-    pub remaining: u32,
-    pub reset: u32,
-    pub used: u32,
-}
-
-impl RateLimit {
-    fn from(headers: &HeaderMap) -> Self {
-        let get_value = |k: &str| {
-            headers
-                .get(k)
-                .and_then(|f| f.to_str().ok())
-                .and_then(|f| f.parse::<u32>().ok())
-                .unwrap_or(0)
-        };
-
-        RateLimit {
-            limit: get_value("X-RateLimit-Limit"),
-            remaining: get_value("X-RateLimit-Remaining"),
-            reset: get_value("X-RateLimit-Reset"),
-            used: get_value("X-RateLimit-Used"),
-        }
     }
 }
