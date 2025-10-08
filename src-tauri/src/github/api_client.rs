@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use reqwest::{header::HeaderMap, Client as HttpClient};
+use reqwest::{header::HeaderMap, Client as HttpClient, RequestBuilder};
 
 use serde::{self, Deserialize, Serialize};
 use ts_rs::TS;
@@ -41,6 +41,11 @@ impl serde::Serialize for Error {
     }
 }
 
+pub(super) struct Response {
+    pub(super) rate_limit: RateLimit,
+    pub(super) response: reqwest::Response,
+}
+
 pub struct Client {
     pub(super) token: Option<String>,
     pub user: Option<user_profile::UserProfileViewer>,
@@ -62,6 +67,30 @@ impl Client {
 
     pub fn is_token_set(&self) -> bool {
         return self.token.is_some();
+    }
+
+    pub(super) async fn do_request(&self, req: RequestBuilder) -> Result<Response> {
+        let token = self.token.as_ref().ok_or(Error::MissingToken)?;
+        let res = req
+            .bearer_auth(token)
+            .header("user-agent", "hey-github-wanna-hire-me?")
+            .send()
+            .await?;
+
+        if !res.status().is_success() {
+            let status = res.status().as_u16();
+            return Err(Error::BadRequest {
+                status,
+                message: res.text().await?,
+            });
+        }
+
+        let rate_limit = RateLimit::extract(res.headers());
+
+        Ok(Response {
+            rate_limit,
+            response: res,
+        })
     }
 }
 

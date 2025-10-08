@@ -1,9 +1,9 @@
 use std::fmt::Debug;
 
-use graphql_client::{GraphQLQuery, QueryBody, Response};
+use graphql_client::{GraphQLQuery, QueryBody, Response as GraphQLResponse};
 use serde::{self, de::DeserializeOwned, Serialize};
 
-use super::api_client::{ApiResponse, Client, Error, RateLimit, Result};
+use super::api_client::{ApiResponse, Client, Error, Response, Result};
 use super::query;
 
 const GRAPHQL_API_URL: &str = "https://api.github.com/graphql";
@@ -31,9 +31,7 @@ impl Client {
             top_repository_count: 10,
         });
 
-        let res: Homepage = self.send_graphql(&q).await?;
-
-        Ok(res)
+        self.send_graphql(&q).await
     }
 
     pub async fn search_pull_requests(&self, filter: &str) -> Result<SearchResult> {
@@ -48,9 +46,7 @@ impl Client {
             query: format!("is:open is:pr archived:false {}:{}", filter, &user.login),
         });
 
-        let res: SearchResult = self.send_graphql(&q).await?;
-
-        Ok(res)
+        self.send_graphql(&q).await
     }
 
     async fn send_graphql<T, R>(&self, body: &QueryBody<T>) -> Result<ApiResponse<R>>
@@ -58,27 +54,13 @@ impl Client {
         T: Serialize,
         R: DeserializeOwned + Clone + Debug,
     {
-        let token = self.token.as_ref().ok_or(Error::MissingToken)?;
-
-        let res = self
-            .http
-            .post(GRAPHQL_API_URL)
-            .bearer_auth(token)
-            .header("user-agent", "hey-github-wanna-hire-me?")
-            .json(body)
-            .send()
+        let Response {
+            rate_limit,
+            response,
+        } = self
+            .do_request(self.http.post(GRAPHQL_API_URL).json(body))
             .await?;
-
-        if !res.status().is_success() {
-            let status = res.status().as_u16();
-            return Err(Error::BadRequest {
-                status,
-                message: res.text().await?,
-            });
-        }
-
-        let rate_limit = RateLimit::extract(res.headers());
-        let response_body: Response<R> = res.json().await?;
+        let response_body: GraphQLResponse<R> = response.json().await?;
 
         if let Some(errs) = response_body.errors {
             let msg = errs

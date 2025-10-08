@@ -7,3 +7,4 @@ mod rest;
 
 pub use api_client::*;
 pub use graphql::*;
+pub use rest::*;
