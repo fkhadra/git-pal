@@ -1,4 +1,5 @@
 export type { Repository } from "./homepage";
+export * from "./rest";
 export type {
   PullRequest,
   PullRequestReviewDecision,

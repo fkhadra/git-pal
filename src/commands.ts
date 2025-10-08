@@ -8,6 +8,13 @@ import {
 
 import { Event, listen } from "@tauri-apps/api/event";
 
+import {
+  FileRequest,
+  FindWorkflowsRequest,
+  RunWorkflowRequest,
+  WorkflowInput,
+  Workflows,
+} from "./models";
 import { ResponseData as SearchPullRequestsResponse } from "./models/search-pull-request";
 
 function authenticate(token: string) {
@@ -60,6 +67,20 @@ function onAuthMessage(cb: (event: Event<AuthMessage>) => void) {
   return listen<AuthMessage>("AuthMessage", cb);
 }
 
+function findWorkflows(params: FindWorkflowsRequest) {
+  return invoke<ApiResponse<Workflows>>("find_workflows", { params });
+}
+
+function extractWorkflowVariables(params: FileRequest) {
+  return invoke<ApiResponse<WorkflowInput[]>>("extract_workflow_variables", {
+    params,
+  });
+}
+
+function runWorkflow(params: RunWorkflowRequest) {
+  return invoke<void>("run_workflow", { params });
+}
+
 export default {
   authenticate,
   homepage,
@@ -71,4 +92,8 @@ export default {
   showCurrentWindow,
   startAuthFlow,
   onAuthMessage,
+
+  findWorkflows,
+  extractWorkflowVariables,
+  runWorkflow,
 };

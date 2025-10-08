@@ -106,6 +106,9 @@ pub fn run() {
             commands::disable_autostart,
             commands::show_window,
             commands::start_oauth_flow,
+            commands::extract_workflow_variables,
+            commands::find_workflows,
+            commands::run_workflow
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

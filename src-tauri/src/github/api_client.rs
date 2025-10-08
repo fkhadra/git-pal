@@ -28,6 +28,8 @@ pub enum Error {
     UnsupportedFilter(String),
     #[error("no data")]
     MissingData,
+    #[error("invalid workflow file: {0}")]
+    InvalidWorkflowFile(String),
     #[error(transparent)]
     Other(#[from] reqwest::Error),
 }

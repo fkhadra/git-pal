@@ -6,12 +6,14 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use crate::github::Error;
+
 use super::api_client::{ApiResponse, Client, Response, Result};
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
 #[ts(export, export_to = "../../src/models/rest.ts")]
 pub struct Workflow {
-    pub id: i64,
+    pub id: i32,
     pub node_id: String,
     pub name: String,
     pub path: String,
@@ -32,7 +34,7 @@ pub struct Workflows {
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/models/rest.ts")]
-pub struct WorkflowVariable {
+pub struct WorkflowInput {
     pub name: Option<String>,
     pub description: Option<String>,
     pub default: Option<String>,
@@ -41,7 +43,9 @@ pub struct WorkflowVariable {
     pub input_type: Option<String>,
 }
 
-type WorkflowVariableName = String;
+pub type WorkflowInputs = Vec<WorkflowInput>;
+
+type WorkflowInputName = String;
 
 #[derive(Debug, Deserialize)]
 struct WorkflowFile {
@@ -56,7 +60,7 @@ struct WorkflowFileOnField {
 
 #[derive(Debug, Deserialize)]
 struct WorkflowTrigger {
-    inputs: Option<HashMap<WorkflowVariableName, WorkflowVariable>>,
+    inputs: Option<HashMap<WorkflowInputName, WorkflowInput>>,
 }
 
 const API_URL: &str = "https://api.github.com/";
@@ -69,11 +73,28 @@ pub struct FileRequest<'a> {
     pub file_path: &'a str,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/models/rest.ts")]
+pub struct RunWorkflowRequest<'a> {
+    pub owner: &'a str,
+    pub repository: &'a str,
+    pub workflow_id: i32,
+    pub branch: &'a str,
+    #[ts(type = "Record<string, any>")]
+    pub variables: Option<HashMap<String, serde_json::Value>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/models/rest.ts")]
+pub struct FindWorkflowsRequest<'a> {
+    pub owner: &'a str,
+    pub repository: &'a str,
+}
+
 impl Client {
-    pub async fn list_workflows(
+    pub async fn find_workflows(
         &self,
-        owner: &str,
-        repository: &str,
+        FindWorkflowsRequest { owner, repository }: FindWorkflowsRequest<'_>,
     ) -> Result<ApiResponse<Workflows>> {
         let req = self.http.get(format!(
             "{API_URL}repos/{owner}/{repository}/actions/workflows"
@@ -105,26 +126,30 @@ impl Client {
         })
     }
 
-    pub async fn find_workflow_variables(
+    pub async fn extract_workflow_variables(
         &self,
         params: FileRequest<'_>,
-    ) -> Result<ApiResponse<Vec<WorkflowVariable>>> {
-        let res = self.file(params).await.expect("should get file");
+    ) -> Result<ApiResponse<WorkflowInputs>> {
+        let res = self.file(params).await?;
 
-        let workflow: WorkflowFile = serde_yaml::from_str(&res.data).expect("yamL??");
+        let workflow: WorkflowFile = serde_yaml::from_str(&res.data)
+            .map_err(|e| Error::InvalidWorkflowFile(e.to_string()))?;
 
-        let trigger = workflow
-            .on
-            .workflow_call
-            .or(workflow.on.workflow_dispatch)
-            .expect("no workflow");
+        let trigger = match workflow.on.workflow_call.or(workflow.on.workflow_dispatch) {
+            Some(trigger) => trigger,
+            None => {
+                return Err(Error::InvalidWorkflowFile(
+                    "not a workflow file".to_string(),
+                ))
+            }
+        };
 
-        let variables: Vec<WorkflowVariable> = trigger
+        let variables: Vec<WorkflowInput> = trigger
             .inputs
             .map(|inputs| {
                 inputs
                     .into_iter()
-                    .map(|(name, input)| WorkflowVariable {
+                    .map(|(name, input)| WorkflowInput {
                         name: Some(name),
                         description: input.description,
                         default: input.default,
@@ -141,10 +166,39 @@ impl Client {
         })
     }
 
+    pub async fn run_workflow(&self, params: RunWorkflowRequest<'_>) -> Result<()> {
+        #[derive(Debug, Serialize, Clone)]
+        struct Body {
+            #[serde(rename = "ref")]
+            ref_field: String,
+            #[serde(skip_serializing_if = "Option::is_none")]
+            inputs: Option<HashMap<String, serde_json::Value>>,
+        }
+
+        let req = self
+            .http
+            .post(format!(
+                "{API_URL}repos/{owner}/{repository}/actions/workflows/{workflow_id}/dispatches",
+                owner = params.owner,
+                repository = params.repository,
+                workflow_id = params.workflow_id
+            ))
+            .json(&Body {
+                ref_field: params.branch.to_string(),
+                inputs: params.variables,
+            })
+            .header("Accept", "application/vnd.github+json");
+
+        let _ = self.do_request(req).await?;
+
+        Ok(())
+    }
+
     async fn send_request<R>(&self, req: RequestBuilder) -> Result<ApiResponse<R>>
     where
         R: DeserializeOwned + Clone + Debug,
     {
+        let req = req.header("Accept", "application/vnd.github+json");
         let Response {
             rate_limit,
             response,

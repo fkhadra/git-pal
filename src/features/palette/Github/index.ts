@@ -1,4 +1,5 @@
 export * from "./OrganizationItem";
-export * from "./PullRequestItem";
-export * from "./RepositoryItem";
 export * from "./Page";
+export * from "./PullRequestItem";
+export * from "./PullRequestPage";
+export * from "./RepositoryItem";

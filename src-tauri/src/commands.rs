@@ -130,3 +130,38 @@ pub async fn start_oauth_flow(state: State<'_, AppState>) -> Result<()> {
         .start_auth_flow()
         .map_err(|_| CommandError::UnableToDeleteToken)
 }
+
+#[tauri::command]
+pub async fn find_workflows(
+    state: State<'_, AppState>,
+    params: github::FindWorkflowsRequest<'_>,
+) -> Result<github::ApiResponse<github::Workflows>> {
+    let res = state.client.lock().await.find_workflows(params).await?;
+
+    Ok(res)
+}
+
+#[tauri::command]
+pub async fn extract_workflow_variables(
+    state: State<'_, AppState>,
+    params: github::FileRequest<'_>,
+) -> Result<github::ApiResponse<github::WorkflowInputs>> {
+    let res = state
+        .client
+        .lock()
+        .await
+        .extract_workflow_variables(params)
+        .await?;
+
+    Ok(res)
+}
+
+#[tauri::command]
+pub async fn run_workflow(
+    state: State<'_, AppState>,
+    params: github::RunWorkflowRequest<'_>,
+) -> Result<()> {
+    let _ = state.client.lock().await.run_workflow(params).await?;
+
+    Ok(())
+}
