@@ -29,6 +29,8 @@ export function useKeybinds() {
     const shouldHideWindowOrClearFilter = e.key === Keys.Esc;
     const shouldDisplayRepositoryPages =
       e.key === "Tab" && selectedItem.item?.kind === "repo";
+    const shouldDisplayPullRequestPage =
+      e.key === Keys.Tab && selectedItem.item?.kind === "pr";
 
     if (shouldGoToPreviousPage) {
       router.history.back();
@@ -56,9 +58,18 @@ export function useKeybinds() {
         setFilter("");
       }
     } else if (shouldDisplayRepositoryPages) {
+      setFilter("");
       e.preventDefault();
       navigate({
         to: "/palette/repository/$id",
+        params: {
+          id: selectedItem.value,
+        },
+      });
+    } else if (shouldDisplayPullRequestPage) {
+      e.preventDefault();
+      navigate({
+        to: "/palette/pull-request/$id",
         params: {
           id: selectedItem.value,
         },
