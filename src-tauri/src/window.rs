@@ -102,8 +102,6 @@ pub fn show_window(w: &WebviewWindow) -> Result {
             err: err.to_string(),
         })?
     {
-        w.center().expect("should center bro");
-
         w.show().map_err(|err| Error::UnableToShowWindow {
             label: w.label().to_string(),
             err: err.to_string(),
@@ -133,6 +131,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
     .shadow(false)
     .visible(false)
     .always_on_top(true)
+    .center()
     .background_throttling(tauri::utils::config::BackgroundThrottlingPolicy::Throttle)
     .build()
     .map_err(|e| Error::UnableToCreateWindow {
@@ -198,6 +197,7 @@ fn create_window(handle: &AppHandle, config: WindowConfig) -> Result {
         .resizable(false)
         .minimizable(false)
         .visible(false)
+        .center()
         .build()
         .map_err(|e| Error::UnableToCreateWindow {
             label: config.label.to_string(),
