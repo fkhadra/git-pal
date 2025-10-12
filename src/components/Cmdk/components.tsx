@@ -65,11 +65,11 @@ export function CommandGroup({
   return (
     <Command.Group
       className={cn(
-        "overflow-auto p-1 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-gray-400",
+        "overflow-auto p-1 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-sm [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-gray-400",
         className,
       )}
+      heading={heading && <Heading label={heading} />}
     >
-      {heading && <Heading label={heading} />}
       {children}
     </Command.Group>
   );
