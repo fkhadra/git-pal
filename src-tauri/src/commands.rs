@@ -2,7 +2,7 @@ use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
 
-use crate::{app_state::AppState, github, window};
+use crate::{core::AppState, github, window};
 
 #[derive(Debug, Error)]
 pub enum CommandError {

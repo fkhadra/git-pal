@@ -1,12 +1,17 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::{
+    env, fs,
+    path::PathBuf,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use tauri::{async_runtime::Mutex, AppHandle, Emitter, Manager};
 use ts_rs::TS;
 use url::Url;
 
+use super::{store::Store, vault::Vault};
+
 use crate::{
     github::{self, oauth},
-    vault::Vault,
     window,
 };
 
@@ -15,6 +20,8 @@ pub struct AppState {
     pub vault: Vault,
     pub oauth_client: Mutex<oauth::Client>,
     pub should_do_setup: AtomicBool,
+    app_dir: PathBuf,
+    store: Store,
 }
 
 impl AppState {
@@ -22,13 +29,21 @@ impl AppState {
         let vault = Vault::new("git-pal", "token").expect("vault should build");
         let token = vault.get_token().ok();
         let should_do_setup = token.is_none();
+        let app_dir = app_dir();
+        let db_path = app_dir.join("db");
 
         AppState {
             vault,
             client: Mutex::new(github::Client::new(token)),
             oauth_client: Mutex::new(oauth::Client::new()),
             should_do_setup: AtomicBool::new(should_do_setup),
+            app_dir: app_dir,
+            store: Store::new(db_path.to_str().expect("should always be set")),
         }
+    }
+
+    pub fn app_dir(&self) -> PathBuf {
+        self.app_dir.clone()
     }
 }
 
@@ -99,4 +114,17 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
             }
         }
     });
+}
+
+fn app_dir() -> PathBuf {
+    let home_dir = match env::home_dir() {
+        Some(h) => h,
+        None => return env::temp_dir(),
+    };
+
+    let app_dir = home_dir.join(".config/git-pal");
+    match fs::create_dir_all(&app_dir) {
+        Ok(_) => app_dir,
+        Err(_) => env::temp_dir(),
+    }
 }

@@ -1,10 +1,9 @@
-mod app_state;
 mod commands;
+mod core;
 mod github;
-mod vault;
 mod window;
 
-use app_state::{handle_deeplink, AppState};
+use core::{handle_deeplink, AppState};
 use std::env;
 
 use tauri::{image::Image, menu::MenuBuilder, tray::TrayIconBuilder, Manager};
@@ -12,23 +11,15 @@ use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_log::{Target, TargetKind};
 
-use crate::window::{on_app_start, show_app, show_settings};
+use window::{on_app_start, show_app, show_settings};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let log_path = {
-        #[cfg(debug_assertions)]
-        {
-            env::current_dir().unwrap_or_else(|_| env::temp_dir())
-        }
-        #[cfg(not(debug_assertions))]
-        {
-            env::home_dir().unwrap_or_else(|| env::temp_dir())
-        }
-    };
+    let app_state = AppState::new();
+    let log_path = app_state.app_dir();
 
     tauri::Builder::default()
-        .manage(AppState::new())
+        .manage(app_state)
         .plugin(tauri_plugin_single_instance::init(|app, _, __| {
             show_app(app).unwrap_or_else(|err| {
                 log::error!("Single Instance -> failed to show app. {}", err)

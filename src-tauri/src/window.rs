@@ -3,7 +3,7 @@ use std::{fmt::Debug, sync::atomic::Ordering};
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WindowEvent};
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
 
-use crate::app_state::AppState;
+use crate::core::AppState;
 
 const MAIN_WINDOW_LABEL: &str = "Main";
 const SETTINGS_WINDOW_LABEL: &str = "Settings";
@@ -129,7 +129,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
     .decorations(false)
     .resizable(false)
     .shadow(false)
-    .visible(false)
+    .visible(true)
     .always_on_top(true)
     .center()
     .background_throttling(tauri::utils::config::BackgroundThrottlingPolicy::Throttle)
