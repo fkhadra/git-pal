@@ -1,8 +1,13 @@
+use std::collections::HashMap;
+
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
 
-use crate::{core::AppState, github, window};
+use crate::{
+    core::{settings, AppState},
+    github, window,
+};
 
 #[derive(Debug, Error)]
 pub enum CommandError {
@@ -16,6 +21,8 @@ pub enum CommandError {
     Window(#[from] window::Error),
     #[error(transparent)]
     Autostart(#[from] tauri_plugin_autostart::Error),
+    #[error(transparent)]
+    Settings(#[from] redb::Error),
 }
 
 impl serde::Serialize for CommandError {
@@ -164,4 +171,25 @@ pub async fn run_workflow(
     let _ = state.client.lock().await.run_workflow(params).await?;
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn update_setting(app_handle: tauri::AppHandle, params: settings::Value) -> Result<()> {
+    let state: State<'_, AppState> = app_handle.state();
+
+    state.update_setting(&app_handle, params)?;
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn get_setting(
+    state: State<'_, AppState>,
+    params: settings::Key,
+) -> Result<Option<String>> {
+    Ok(state.settings.get(params)?)
+}
+
+#[tauri::command]
+pub async fn get_all_settings(state: State<'_, AppState>) -> Result<HashMap<String, String>> {
+    Ok(state.settings.get_all()?)
 }

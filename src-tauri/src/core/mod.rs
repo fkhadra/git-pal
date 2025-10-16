@@ -1,5 +1,5 @@
 mod app_state;
-mod store;
+pub mod settings;
 mod vault;
 
 pub use app_state::*;

@@ -4,13 +4,15 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
+use serde::Serialize;
 use tauri::{async_runtime::Mutex, AppHandle, Emitter, Manager};
 use ts_rs::TS;
 use url::Url;
 
-use super::{store::Store, vault::Vault};
+use super::{settings::Store, vault::Vault};
 
 use crate::{
+    core::settings,
     github::{self, oauth},
     window,
 };
@@ -20,8 +22,8 @@ pub struct AppState {
     pub vault: Vault,
     pub oauth_client: Mutex<oauth::Client>,
     pub should_do_setup: AtomicBool,
+    pub settings: Store,
     app_dir: PathBuf,
-    store: Store,
 }
 
 impl AppState {
@@ -38,20 +40,22 @@ impl AppState {
             oauth_client: Mutex::new(oauth::Client::new()),
             should_do_setup: AtomicBool::new(should_do_setup),
             app_dir: app_dir,
-            store: Store::new(db_path.to_str().expect("should always be set")),
+            settings: Store::new(db_path.to_str().expect("should always be set")),
         }
+    }
+
+    pub fn update_setting(&self, handle: &AppHandle, value: settings::Value) -> Result<(), redb::Error> {
+
+        if let settings::Value::Theme(ref v) = value {
+            emit_event(handle, Event::ThemeChanged(v.to_owned()));
+        }
+
+        self.settings.set(value)
     }
 
     pub fn app_dir(&self) -> PathBuf {
         self.app_dir.clone()
     }
-}
-
-#[derive(Debug, Clone, serde::Serialize, TS)]
-#[ts(export, export_to = "../../src/models/events.ts")]
-struct AuthMessage {
-    msg: Option<String>,
-    ok: bool,
 }
 
 pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
@@ -72,18 +76,13 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
                             state.client.lock().await.set_token(&res.access_token);
 
                             log::info!("successfully authenticated");
-
-                            app_handle
-                                .emit(
-                                    "AuthMessage",
-                                    AuthMessage {
-                                        ok: true,
-                                        msg: None,
-                                    },
-                                )
-                                .unwrap_or_else(|err| {
-                                    log::error!("Failed to emit AuthMessage {}", err)
-                                });
+                            emit_event(
+                                &app_handle,
+                                Event::Authenticated(AuthMessage {
+                                    msg: None,
+                                    ok: true,
+                                }),
+                            );
 
                             window::create_main_window(&app_handle).unwrap_or_else(|err| {
                                 log::error!("Failed to create main window after auth {}", err)
@@ -97,23 +96,45 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
                         Err(err) => {
                             log::error!("Failed to exchange code {}", err);
 
-                            app_handle
-                                .emit(
-                                    "AuthMessage",
-                                    AuthMessage {
-                                        ok: false,
-                                        msg: Some(err.to_string()),
-                                    },
-                                )
-                                .unwrap_or_else(|err| {
-                                    log::error!("Failed to emit AuthMessage {}", err)
-                                });
+                            emit_event(
+                                &app_handle,
+                                Event::Authenticated(AuthMessage {
+                                    ok: false,
+                                    msg: Some(err.to_string()),
+                                }),
+                            );
                         }
                     }
                 }
             }
         }
     });
+}
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../src/models/events.ts")]
+pub struct AuthMessage {
+    msg: Option<String>,
+    ok: bool,
+}
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "../../src/models/events.ts")]
+#[serde(rename_all = "camelCase")]
+pub enum Event {
+    Authenticated(AuthMessage),
+    ThemeChanged(settings::Theme),
+}
+
+pub fn emit_event(handle: &AppHandle, event: Event) {
+    let ev = match &event {
+        Event::Authenticated(_) => "AuthMessage",
+        Event::ThemeChanged(_) => "ThemeChanged",
+    };
+
+    handle
+        .emit(ev, event)
+        .unwrap_or_else(|err| log::error!("failed to emit event: {}", err));
 }
 
 fn app_dir() -> PathBuf {

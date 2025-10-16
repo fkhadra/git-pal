@@ -1,23 +1,39 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import commands from "~/commands";
+import { themeSwitcher } from "./utils";
 
-export function useColorScheme() {
-  useEffect(() => {
-    const darkMode = window.matchMedia("(prefers-color-scheme: dark)");
+export function useColorScheme(initialTheme?: string) {
+	const userDefinedTheme = useRef(initialTheme);
 
-    function toggleDarkMode(e: MediaQueryListEvent | MediaQueryList) {
-      document.documentElement.classList.toggle(
-        "dark",
-        localStorage.theme === "dark" ||
-          (!("theme" in localStorage) && e.matches),
-      );
-    }
+	useEffect(() => {
+		const listener = commands.onThemeChanged((event) => {
+			themeSwitcher(event.payload.themeChanged);
+			userDefinedTheme.current = event.payload.themeChanged;
+		});
 
-    darkMode.addEventListener("change", toggleDarkMode);
+		return () => {
+			listener.then((unsub) => unsub());
+		};
+	}, []);
 
-    toggleDarkMode(darkMode);
+	useEffect(() => {
+		const darkMode = window.matchMedia("(prefers-color-scheme: dark)");
 
-    return () => {
-      darkMode.removeEventListener("change", toggleDarkMode);
-    };
-  }, []);
+		function toggleDarkMode(e: MediaQueryListEvent | MediaQueryList) {
+			if (userDefinedTheme.current) {
+				themeSwitcher(userDefinedTheme.current);
+				return;
+			}
+
+			document.documentElement.classList.toggle("dark", e.matches);
+		}
+
+		darkMode.addEventListener("change", toggleDarkMode);
+
+		toggleDarkMode(darkMode);
+
+		return () => {
+			darkMode.removeEventListener("change", toggleDarkMode);
+		};
+	}, []);
 }

@@ -99,7 +99,10 @@ pub fn run() {
             commands::start_oauth_flow,
             commands::extract_workflow_variables,
             commands::find_workflows,
-            commands::run_workflow
+            commands::run_workflow,
+            commands::update_setting,
+            commands::get_setting,
+            commands::get_all_settings,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

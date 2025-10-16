@@ -1,51 +1,50 @@
 import {
-  createRootRoute,
-  Outlet,
-  redirect,
-  useRouteContext,
+	createRootRoute,
+	Outlet,
+	redirect,
+	useLoaderData,
 } from "@tanstack/react-router";
 import commands from "~/commands";
-import { UserProfileContext } from "~/contexts/user-profile";
+import { AppContext } from "~/common";
 import { useColorScheme } from "~/libs/useColorScheme";
-import { UserProfile } from "~/models";
 import { Store } from "~/store";
 
-let userProfile: UserProfile | undefined;
-
 export const Route = createRootRoute({
-  async beforeLoad(props) {
-    try {
-      if (userProfile) return userProfile;
-      if (props.location.pathname === "/setup") return;
+	pendingMs: 0,
+	staleTime: 60_000,
+	async loader(props) {
+		try {
+			if (props.location.pathname === "/setup") return;
 
-      userProfile = await commands.isAuthenticated();
+			const userProfile = await commands.isAuthenticated();
+			const theme = await commands.getSetting("theme");
 
-      userProfile.organizations.nodes?.forEach((org) => {
-        if (org && org.name) {
-          Store.set(org.name, { kind: "org", data: org });
-        }
-      });
+			userProfile.organizations.nodes?.forEach((org) => {
+				if (org?.name) {
+					Store.set(org.name, { kind: "org", data: org });
+				}
+			});
 
-      return userProfile;
-    } catch {
-      throw redirect({
-        to: "/setup",
-      });
-    }
-  },
-  component() {
-    useColorScheme();
-    const userProfile = useRouteContext({ from: "__root__" });
+			return { userProfile, theme };
+		} catch {
+			throw redirect({
+				to: "/setup",
+			});
+		}
+	},
+	component() {
+		const data = useLoaderData({ from: "__root__" });
 
-    if (!userProfile) {
-      // TODO: Login form
-      return <Outlet />;
-    }
+		useColorScheme(data?.theme);
 
-    return (
-      <UserProfileContext value={userProfile}>
-        <Outlet />
-      </UserProfileContext>
-    );
-  },
+		if (!data?.userProfile) {
+			return <Outlet />;
+		}
+
+		return (
+			<AppContext value={{userProfile: data.userProfile, theme: data.theme}}>
+				<Outlet />
+			</AppContext>
+		);
+	},
 });
