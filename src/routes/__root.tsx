@@ -10,7 +10,6 @@ import { useColorScheme } from "~/libs/useColorScheme";
 import { Store } from "~/store";
 
 export const Route = createRootRoute({
-	pendingMs: 0,
 	staleTime: 60_000,
 	async loader(props) {
 		try {
@@ -42,7 +41,7 @@ export const Route = createRootRoute({
 		}
 
 		return (
-			<AppContext value={{userProfile: data.userProfile, theme: data.theme}}>
+			<AppContext value={{ userProfile: data.userProfile, theme: data.theme }}>
 				<Outlet />
 			</AppContext>
 		);
