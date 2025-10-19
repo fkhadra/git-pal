@@ -21,7 +21,7 @@ import {
 	RepositoryItem,
 } from "~/features/palette/Github";
 import { nil } from "~/libs/utils";
-import { Store } from "~/store";
+import { state } from "~/store";
 
 export const Route = createFileRoute("/palette/")({
 	component: RouteComponent,
@@ -30,11 +30,11 @@ export const Route = createFileRoute("/palette/")({
 
 		queueMicrotask(() => {
 			data.viewer.pullRequests.nodes?.forEach((pr) => {
-				if (pr) Store.set(pr.id, { kind: "pr", data: pr });
+				if (pr) state.setItem(pr.id, { kind: "pr", data: pr });
 			});
 
 			data.viewer.topRepositories.nodes?.forEach((repo) => {
-				if (repo) Store.set(repo.id, { kind: "repo", data: repo });
+				if (repo) state.setItem(repo.id, { kind: "repo", data: repo });
 			});
 		});
 
@@ -58,6 +58,7 @@ function RouteComponent() {
 							to: "/palette/pull-requests",
 							search: {
 								filter: "review-requested",
+								p: "Review Requested",
 							},
 						});
 					}}
@@ -74,6 +75,7 @@ function RouteComponent() {
 							to: "/palette/pull-requests",
 							search: {
 								filter: "mentions",
+								p: "Mentioned",
 							},
 						});
 					}}

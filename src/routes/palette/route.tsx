@@ -10,7 +10,7 @@ import { Navigation } from "./-Navigation";
 
 export const Route = createFileRoute("/palette")({
 	component,
-	validateSearch(p): { p: string | undefined } {
+	validateSearch(p): { p?: string | undefined } {
 		return {
 			p: p.p as string,
 		};

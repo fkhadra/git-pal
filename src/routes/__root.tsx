@@ -7,7 +7,7 @@ import {
 import commands from "~/commands";
 import { AppContext } from "~/common";
 import { useColorScheme } from "~/libs/useColorScheme";
-import { Store } from "~/store";
+import { state } from "~/store";
 
 export const Route = createRootRoute({
 	staleTime: 60_000,
@@ -20,7 +20,7 @@ export const Route = createRootRoute({
 
 			userProfile.organizations.nodes?.forEach((org) => {
 				if (org?.name) {
-					Store.set(org.name, { kind: "org", data: org });
+					state.setItem(org.name, { kind: "org", data: org });
 				}
 			});
 
