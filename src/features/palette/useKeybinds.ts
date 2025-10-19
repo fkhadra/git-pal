@@ -1,7 +1,7 @@
 import { useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useState } from "react";
-import { useSelectedItem } from "~/store";
+import { useSelectedItem } from "./state";
 
 const Keys = {
 	Backspace: "Backspace",
@@ -39,8 +39,6 @@ export function useKeybinds() {
 		const shouldHideWindowOrClearFilter = e.key === Keys.Esc;
 		const shouldDisplayRepositoryPages =
 			e.key === "Tab" && selectedItem.item?.kind === "repo";
-		const shouldDisplayPullRequestPage =
-			e.key === Keys.Tab && selectedItem.item?.kind === "pr";
 
 		if (shouldGoToPreviousPage) {
 			router.history.back();
@@ -70,14 +68,6 @@ export function useKeybinds() {
 			e.preventDefault();
 			navigate({
 				to: "/palette/repository/$id",
-				params: {
-					id: selectedItem.value,
-				},
-			});
-		} else if (shouldDisplayPullRequestPage) {
-			e.preventDefault();
-			navigate({
-				to: "/palette/pull-request/$id",
 				params: {
 					id: selectedItem.value,
 				},

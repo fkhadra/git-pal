@@ -1,4 +1,4 @@
-import { Container } from "~/features/palette/Github/Layout";
+import { Container } from "~/features/palette/Layout";
 
 export function SkeletonRows({ count = 7 }) {
 	return (

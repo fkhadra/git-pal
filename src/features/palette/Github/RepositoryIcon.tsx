@@ -1,26 +1,26 @@
 import { BookMarked, Lock } from "lucide-react";
-import { IconWrapper } from "./Layout";
+import { IconWrapper } from "../Layout";
 
 interface Props {
-  isInOrganization?: boolean;
-  isPrivate?: boolean;
-  avatarUrl: string;
+	isInOrganization?: boolean;
+	isPrivate?: boolean;
+	avatarUrl: string;
 }
 
 export function RepositoryIcon({
-  avatarUrl,
-  isInOrganization,
-  isPrivate,
+	avatarUrl,
+	isInOrganization,
+	isPrivate,
 }: Props) {
-  let component: React.ReactNode;
+	let component: React.ReactNode;
 
-  if (isInOrganization) {
-    component = <img src={avatarUrl} className="size-6" />;
-  } else if (isPrivate) {
-    component = <Lock className="text-warning size-5" />;
-  } else {
-    component = <BookMarked className="text-info size-5" />;
-  }
+	if (isInOrganization) {
+		component = <img alt="Avatar" src={avatarUrl} className="size-6" />;
+	} else if (isPrivate) {
+		component = <Lock className="text-warning size-5" />;
+	} else {
+		component = <BookMarked className="text-info size-5" />;
+	}
 
-  return <IconWrapper>{component}</IconWrapper>;
+	return <IconWrapper>{component}</IconWrapper>;
 }

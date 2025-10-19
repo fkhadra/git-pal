@@ -16,7 +16,6 @@ import { Route as PaletteIndexRouteImport } from './routes/palette/index'
 import { Route as PaletteSearchRouteImport } from './routes/palette/search'
 import { Route as PalettePullRequestsRouteImport } from './routes/palette/pull-requests'
 import { Route as PaletteRepositoryIdRouteImport } from './routes/palette/repository.$id'
-import { Route as PalettePullRequestIdRouteImport } from './routes/palette/pull-request.$id'
 
 const SetupRoute = SetupRouteImport.update({
   id: '/setup',
@@ -53,11 +52,6 @@ const PaletteRepositoryIdRoute = PaletteRepositoryIdRouteImport.update({
   path: '/repository/$id',
   getParentRoute: () => PaletteRouteRoute,
 } as any)
-const PalettePullRequestIdRoute = PalettePullRequestIdRouteImport.update({
-  id: '/pull-request/$id',
-  path: '/pull-request/$id',
-  getParentRoute: () => PaletteRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/palette': typeof PaletteRouteRouteWithChildren
@@ -66,7 +60,6 @@ export interface FileRoutesByFullPath {
   '/palette/pull-requests': typeof PalettePullRequestsRoute
   '/palette/search': typeof PaletteSearchRoute
   '/palette/': typeof PaletteIndexRoute
-  '/palette/pull-request/$id': typeof PalettePullRequestIdRoute
   '/palette/repository/$id': typeof PaletteRepositoryIdRoute
 }
 export interface FileRoutesByTo {
@@ -75,7 +68,6 @@ export interface FileRoutesByTo {
   '/palette/pull-requests': typeof PalettePullRequestsRoute
   '/palette/search': typeof PaletteSearchRoute
   '/palette': typeof PaletteIndexRoute
-  '/palette/pull-request/$id': typeof PalettePullRequestIdRoute
   '/palette/repository/$id': typeof PaletteRepositoryIdRoute
 }
 export interface FileRoutesById {
@@ -86,7 +78,6 @@ export interface FileRoutesById {
   '/palette/pull-requests': typeof PalettePullRequestsRoute
   '/palette/search': typeof PaletteSearchRoute
   '/palette/': typeof PaletteIndexRoute
-  '/palette/pull-request/$id': typeof PalettePullRequestIdRoute
   '/palette/repository/$id': typeof PaletteRepositoryIdRoute
 }
 export interface FileRouteTypes {
@@ -98,7 +89,6 @@ export interface FileRouteTypes {
     | '/palette/pull-requests'
     | '/palette/search'
     | '/palette/'
-    | '/palette/pull-request/$id'
     | '/palette/repository/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -107,7 +97,6 @@ export interface FileRouteTypes {
     | '/palette/pull-requests'
     | '/palette/search'
     | '/palette'
-    | '/palette/pull-request/$id'
     | '/palette/repository/$id'
   id:
     | '__root__'
@@ -117,7 +106,6 @@ export interface FileRouteTypes {
     | '/palette/pull-requests'
     | '/palette/search'
     | '/palette/'
-    | '/palette/pull-request/$id'
     | '/palette/repository/$id'
   fileRoutesById: FileRoutesById
 }
@@ -178,13 +166,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaletteRepositoryIdRouteImport
       parentRoute: typeof PaletteRouteRoute
     }
-    '/palette/pull-request/$id': {
-      id: '/palette/pull-request/$id'
-      path: '/pull-request/$id'
-      fullPath: '/palette/pull-request/$id'
-      preLoaderRoute: typeof PalettePullRequestIdRouteImport
-      parentRoute: typeof PaletteRouteRoute
-    }
   }
 }
 
@@ -192,7 +173,6 @@ interface PaletteRouteRouteChildren {
   PalettePullRequestsRoute: typeof PalettePullRequestsRoute
   PaletteSearchRoute: typeof PaletteSearchRoute
   PaletteIndexRoute: typeof PaletteIndexRoute
-  PalettePullRequestIdRoute: typeof PalettePullRequestIdRoute
   PaletteRepositoryIdRoute: typeof PaletteRepositoryIdRoute
 }
 
@@ -200,7 +180,6 @@ const PaletteRouteRouteChildren: PaletteRouteRouteChildren = {
   PalettePullRequestsRoute: PalettePullRequestsRoute,
   PaletteSearchRoute: PaletteSearchRoute,
   PaletteIndexRoute: PaletteIndexRoute,
-  PalettePullRequestIdRoute: PalettePullRequestIdRoute,
   PaletteRepositoryIdRoute: PaletteRepositoryIdRoute,
 }
 
