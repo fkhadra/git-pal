@@ -6,8 +6,8 @@ import {
 } from "@tanstack/react-router";
 import commands from "~/commands";
 import { AppContext } from "~/common";
+import { state } from "~/features/palette";
 import { useColorScheme } from "~/libs/useColorScheme";
-import { state } from "~/store";
 
 export const Route = createRootRoute({
 	staleTime: 60_000,

@@ -6,7 +6,6 @@ import { Keybinds } from "~/features/palette/Keybinds";
 import { useGhSearchActive } from "~/features/palette/useGhSearchActive";
 import { usePreloadRoutes } from "~/features/palette/usePreloadRoutes";
 import { useFullHeightRef } from "~/libs/useFullHeight";
-import { Navigation } from "./-Navigation";
 
 export const Route = createFileRoute("/palette")({
 	component,
@@ -27,7 +26,6 @@ function component() {
 		<div
 			className={"h-screen bg-gradient-to-tl from-pink-300/10 to-purple-500/10"}
 		>
-			<Navigation />
 			<Command
 				loop
 				className="relative h-full overflow-hidden"

@@ -12,21 +12,21 @@ type RootValue =
 	| { kind: "repo"; data: Repository }
 	| { kind: "org"; data: Organization };
 
-const itemStore = new Map<string, Value>();
+const paletteItems = new Map<string, Value>();
 
 export const state = proxy({
 	currentRoot: null as RootValue,
 	setItem(key: string, value: Value) {
-		itemStore.set(key, value);
+		paletteItems.set(key, value);
 	},
 	getItem(key: string) {
-		return itemStore.get(key);
+		return paletteItems.get(key);
 	},
 });
 
 export function useSelectedItem() {
 	const commandValue = useCommandState((s) => s.value);
-	const selectedItem = state.getItem(commandValue);
+	const selectedItem = paletteItems.get(commandValue);
 
 	return {
 		value: commandValue,
