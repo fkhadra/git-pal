@@ -1,46 +1,27 @@
+import { useSearch } from "@tanstack/react-router";
 import { useCommandState } from "cmdk";
-import { proxy, useSnapshot } from "valtio";
 import type { Organization, PullRequest, Repository } from "~/models";
 
-type Value =
+type PaletteItemValue =
 	| { kind: "pr"; data: PullRequest }
 	| { kind: "repo"; data: Repository }
 	| { kind: "org"; data: Organization };
 
-type RootValue =
-	| null
-	| { kind: "repo"; data: Repository }
-	| { kind: "org"; data: Organization };
+type PaletteItem = Omit<ReturnType<typeof createPaletteItem>, "data" | "kind"> &
+	PaletteItemValue;
 
-const paletteItems = new Map<string, Value>();
-
-export const state = proxy({
-	currentRoot: null as RootValue,
-	setItem(key: string, value: Value) {
-		paletteItems.set(key, value);
-	},
-	getItem(key: string) {
-		return paletteItems.get(key);
-	},
-});
-
-export function useSelectedItem() {
-	const commandValue = useCommandState((s) => s.value);
-	const selectedItem = paletteItems.get(commandValue);
-
+export function createPaletteItem(item: PaletteItemValue) {
 	return {
-		value: commandValue,
-		get isPage() {
-			return !!commandValue?.startsWith("page");
+		kind: item.kind,
+		data: item.data,
+		supportGithubSearch() {
+			return item.kind === "org" || item.kind === "repo";
 		},
-		item: selectedItem,
-		supportGithubSearch:
-			selectedItem?.kind === "org" || selectedItem?.kind === "repo",
-		get owner() {
-			if (selectedItem?.kind === "org") {
-				return selectedItem.data.login;
-			} else if (selectedItem?.kind === "repo") {
-				return selectedItem.data.owner.login;
+		owner() {
+			if (item.kind === "org") {
+				return item.data.login;
+			} else if (item.kind === "repo") {
+				return item.data.owner.login;
 			}
 
 			return null;
@@ -48,6 +29,29 @@ export function useSelectedItem() {
 	};
 }
 
-export function useStoreSnapshot() {
-	return useSnapshot(state);
+const paletteItems = new Map<string, ReturnType<typeof createPaletteItem>>();
+
+export const state = {
+	setItem(key: string, value: PaletteItemValue) {
+		paletteItems.set(key, createPaletteItem(value));
+	},
+	getItem(key: string) {
+		return paletteItems.get(key) as PaletteItem;
+	},
+};
+
+export function usePaletteItem() {
+	const searchParams = useSearch({ from: "/palette" });
+	const commandValue = useCommandState((s) => s.value);
+	const selectedItem = state.getItem(commandValue);
+	const rootItem = searchParams.r ? state.getItem(searchParams.r) : null;
+
+	return {
+		rootItem,
+		selectedItem,
+		selectedItemValue: commandValue,
+		get isPage() {
+			return !!commandValue?.startsWith("page");
+		},
+	};
 }

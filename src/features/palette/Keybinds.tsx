@@ -1,9 +1,9 @@
 import { Keybind } from "~/components/Keybind";
-import { useSelectedItem } from "./state";
+import { usePaletteItem } from "./state";
 import { useGhSearchActive } from "./useGhSearchActive";
 
 export function Keybinds() {
-	const selectedItem = useSelectedItem();
+	const { selectedItem, rootItem, isPage } = usePaletteItem();
 	const isGhSearchActive = useGhSearchActive();
 
 	if (isGhSearchActive) {
@@ -18,10 +18,11 @@ export function Keybinds() {
 	return (
 		<Container>
 			<Keybind label="Help" keys={["⌘", "?"]} className="mr-auto" />
-			{selectedItem?.supportGithubSearch && (
+			{(selectedItem?.supportGithubSearch() ||
+				rootItem?.supportGithubSearch()) && (
 				<Keybind label="Code Search" keys={["⌘", "/"]} />
 			)}
-			<Keybind label={selectedItem.isPage ? "View" : "Open"} keys={["↵"]} />
+			<Keybind label={isPage ? "View" : "Open"} keys={["↵"]} />
 		</Container>
 	);
 }

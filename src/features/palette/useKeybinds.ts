@@ -1,22 +1,29 @@
-import { useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
+import {
+	type RouterState,
+	useNavigate,
+	useRouter,
+	useRouterState,
+} from "@tanstack/react-router";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useState } from "react";
-import { useSelectedItem } from "./state";
+import { usePaletteItem } from "./state";
 
-const Keys = {
+const Key = {
 	Backspace: "Backspace",
 	Esc: "Escape",
 	Tab: "Tab",
+	Slash: "/",
 };
+
+const routerStateSelect = (v: RouterState) => v.status === "pending";
 
 export function useKeybinds() {
 	const [filter, setFilter] = useState("");
 	const navigate = useNavigate();
-	const selectedItem = useSelectedItem();
+	const { selectedItem, rootItem } = usePaletteItem();
 	const router = useRouter();
-
 	const isLoadingRoute = useRouterState({
-		select: (v) => v.status === "pending",
+		select: routerStateSelect,
 	});
 
 	useEffect(() => {
@@ -26,52 +33,59 @@ export function useKeybinds() {
 	}, [isLoadingRoute]);
 
 	const handleKeyboard = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-		const shouldGoToPreviousPage =
-			(e.key === Keys.Backspace || e.key === Keys.Esc) &&
-			router.history.canGoBack() &&
-			!filter;
-		const shouldEnableCodeSearch =
-			e.metaKey &&
-			e.key === "/" &&
-			selectedItem &&
-			selectedItem.item &&
-			selectedItem.supportGithubSearch;
-		const shouldHideWindowOrClearFilter = e.key === Keys.Esc;
-		const shouldDisplayRepositoryPages =
-			e.key === "Tab" && selectedItem.item?.kind === "repo";
+		const { key, metaKey } = e;
+		const canGoBack = router.history.canGoBack();
 
-		if (shouldGoToPreviousPage) {
+		// back to previous page
+		if ((key === Key.Backspace || key === Key.Esc) && canGoBack && !filter) {
 			router.history.back();
-		} else if (shouldEnableCodeSearch) {
-			const owner = selectedItem.owner;
-			const repo =
-				selectedItem?.item?.kind === "repo"
-					? selectedItem.item.data.name
-					: void 0;
+			return;
+		}
+
+		// clear filter or hide window
+		if (key === Key.Esc) {
+			if (filter.length > 0) {
+				setFilter("");
+			} else {
+				getCurrentWindow().hide();
+			}
+
+			return;
+		}
+
+		// go to repo page
+		if (key === Key.Tab && selectedItem.kind === "repo") {
+			e.preventDefault();
+			navigate({
+				to: "/palette/repository/$id",
+				params: {
+					id: selectedItem.data.id,
+				},
+				search: {
+					r: selectedItem.data.id,
+				},
+			});
+		}
+
+		// code search, selected item first then root if any
+		if (
+			metaKey &&
+			key === Key.Slash &&
+			(selectedItem?.supportGithubSearch() || rootItem?.supportGithubSearch())
+		) {
+			const item = selectedItem || rootItem;
+			const owner = item.owner();
+			const repo = item?.kind === "repo" ? item.data.name : void 0;
 
 			if (owner) {
 				navigate({
 					to: "/palette/search",
 					search: {
-						owner: selectedItem.owner,
+						owner,
 						repo,
 					},
 				});
 			}
-		} else if (shouldHideWindowOrClearFilter) {
-			if (filter.length === 0) {
-				getCurrentWindow().hide();
-			} else {
-				setFilter("");
-			}
-		} else if (shouldDisplayRepositoryPages) {
-			e.preventDefault();
-			navigate({
-				to: "/palette/repository/$id",
-				params: {
-					id: selectedItem.value,
-				},
-			});
 		}
 	};
 
