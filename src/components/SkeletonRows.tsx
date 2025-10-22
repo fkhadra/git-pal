@@ -1,6 +1,6 @@
 import { Container } from "~/features/palette/Layout";
 
-export function SkeletonRows({ count = 7 }) {
+export function SkeletonRows({ count = 7, hideRightPart = false }) {
 	return (
 		<div aria-busy="true" className="flex flex-col gap-4">
 			<div className="ml-2 h-4 w-1/3 rounded-md bg-neutral-700/50 animate-pulse" />
@@ -12,7 +12,9 @@ export function SkeletonRows({ count = 7 }) {
 							<div className="h-4 w-3/4 rounded-md bg-neutral-700/60 animate-pulse mb-2" />
 							<div className="h-4 w-1/3 rounded-md bg-neutral-700/50 animate-pulse" />
 						</div>
-						<div className="h-8 w-24 rounded-md bg-neutral-700/60 animate-pulse" />
+						{!hideRightPart && (
+							<div className="h-8 w-24 rounded-md bg-neutral-700/60 animate-pulse" />
+						)}
 					</Container>
 				</div>
 			))}

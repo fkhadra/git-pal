@@ -1,9 +1,10 @@
 import { useLoaderData } from "@tanstack/react-router";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { CommandGroup } from "cmdk";
+
 import {
 	BookOpenText,
 	CircleDot,
+	CirclePlay,
 	GitPullRequestArrow,
 	MessageCircleMore,
 	PanelsTopLeft,
@@ -11,7 +12,7 @@ import {
 	Workflow,
 } from "lucide-react";
 import commands from "~/commands";
-import { CommandItem } from "~/components/Cmdk";
+import { CommandGroup, CommandItem } from "~/components/Cmdk";
 import { RepositoryIcon } from "./Github/RepositoryIcon";
 import { Container, IconWrapper } from "./Layout";
 import { state } from "./state";
@@ -50,7 +51,7 @@ export function RepositoryPage() {
 	const { repository, workflows } = params;
 
 	return (
-		<CommandGroup>
+		<CommandGroup heading="Pages">
 			<CommandItem
 				value={`${repository.id}-home`}
 				onSelect={() => {
@@ -150,6 +151,19 @@ export function RepositoryPage() {
 					</Container>
 				</CommandItem>
 			)}
+			<CommandItem
+				value={`${repository.id}-actions`}
+				onSelect={() => {
+					openUrl(`${repository.url}/actions`);
+				}}
+			>
+				<Container>
+					<IconWrapper>
+						<CirclePlay className="text-success" />
+					</IconWrapper>
+					<div>Actions</div>
+				</Container>
+			</CommandItem>
 			{workflows.data.total_count > 0 && (
 				<CommandItem value={`${repository.id}-workflows`}>
 					<Container>

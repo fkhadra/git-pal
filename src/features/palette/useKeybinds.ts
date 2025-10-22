@@ -63,6 +63,7 @@ export function useKeybinds() {
 				},
 				search: {
 					r: selectedItem.data.id,
+					p: `${selectedItem.owner()}/${selectedItem.data.name}`,
 				},
 			});
 		}
