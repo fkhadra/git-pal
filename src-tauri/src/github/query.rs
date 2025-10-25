@@ -5,7 +5,7 @@ pub mod user_profile {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "UserProfile";
-    pub const QUERY : & str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n" ;
+    pub const QUERY : & str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -71,7 +71,7 @@ pub mod homepage {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "Homepage";
-    pub const QUERY : & str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n" ;
+    pub const QUERY : & str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -433,7 +433,7 @@ pub mod search_pull_request {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "SearchPullRequest";
-    pub const QUERY : & str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n" ;
+    pub const QUERY : & str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n" ;
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -712,6 +712,127 @@ impl graphql_client::GraphQLQuery for SearchPullRequest {
             variables,
             query: search_pull_request::QUERY,
             operation_name: search_pull_request::OPERATION_NAME,
+        }
+    }
+}
+pub struct FindRepositories;
+pub mod find_repositories {
+    #![allow(dead_code)]
+    use std::result::Result;
+    pub const OPERATION_NAME: &str = "FindRepositories";
+    pub const QUERY : & str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n" ;
+    use super::*;
+    use serde::{Deserialize, Serialize};
+    #[allow(dead_code)]
+    type Boolean = bool;
+    #[allow(dead_code)]
+    type Float = f64;
+    #[allow(dead_code)]
+    type Int = i64;
+    #[allow(dead_code)]
+    type ID = String;
+    type URI = crate::github::custom_scalars::URI;
+    #[derive(Serialize)]
+    pub struct Variables {
+        pub count: Int,
+        pub query: String,
+    }
+    impl Variables {}
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models/find-repositories.ts")]
+    pub struct Repository {
+        pub id: ID,
+        pub name: String,
+        pub url: URI,
+        #[serde(rename = "isPrivate")]
+        pub is_private: Boolean,
+        #[serde(rename = "isInOrganization")]
+        pub is_in_organization: Boolean,
+        #[serde(rename = "stargazerCount")]
+        pub stargazer_count: Int,
+        #[serde(rename = "pullRequests")]
+        pub pull_requests: RepositoryPullRequests,
+        #[serde(rename = "hasIssuesEnabled")]
+        pub has_issues_enabled: Boolean,
+        #[serde(rename = "hasDiscussionsEnabled")]
+        pub has_discussions_enabled: Boolean,
+        #[serde(rename = "hasProjectsEnabled")]
+        pub has_projects_enabled: Boolean,
+        #[serde(rename = "hasWikiEnabled")]
+        pub has_wiki_enabled: Boolean,
+        #[serde(rename = "homepageUrl")]
+        pub homepage_url: Option<URI>,
+        pub issues: RepositoryIssues,
+        pub discussions: RepositoryDiscussions,
+        pub owner: RepositoryOwner,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models/find-repositories.ts")]
+    pub struct RepositoryPullRequests {
+        #[serde(rename = "totalCount")]
+        pub total_count: Int,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models/find-repositories.ts")]
+    pub struct RepositoryIssues {
+        #[serde(rename = "totalCount")]
+        pub total_count: Int,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models/find-repositories.ts")]
+    pub struct RepositoryDiscussions {
+        #[serde(rename = "totalCount")]
+        pub total_count: Int,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models/find-repositories.ts")]
+    pub struct RepositoryOwner {
+        pub login: String,
+        #[serde(rename = "avatarUrl")]
+        pub avatar_url: URI,
+        #[serde(flatten)]
+        pub on: RepositoryOwnerOn,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models/find-repositories.ts")]
+    #[serde(tag = "__typename")]
+    pub enum RepositoryOwnerOn {
+        Organization,
+        User,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models/find-repositories.ts")]
+    pub struct ResponseData {
+        pub search: FindRepositoriesSearch,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models/find-repositories.ts")]
+    pub struct FindRepositoriesSearch {
+        pub nodes: Option<Vec<Option<FindRepositoriesSearchNodes>>>,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+#[ts(export, export_to = "../../src/models/find-repositories.ts")]
+    #[serde(tag = "__typename")]
+    pub enum FindRepositoriesSearchNodes {
+        App,
+        Discussion,
+        Issue,
+        MarketplaceListing,
+        Organization,
+        PullRequest,
+        Repository(FindRepositoriesSearchNodesOnRepository),
+        User,
+    }
+    pub type FindRepositoriesSearchNodesOnRepository = Repository;
+}
+impl graphql_client::GraphQLQuery for FindRepositories {
+    type Variables = find_repositories::Variables;
+    type ResponseData = find_repositories::ResponseData;
+    fn build_query(variables: Self::Variables) -> ::graphql_client::QueryBody<Self::Variables> {
+        graphql_client::QueryBody {
+            variables,
+            query: find_repositories::QUERY,
+            operation_name: find_repositories::OPERATION_NAME,
         }
     }
 }

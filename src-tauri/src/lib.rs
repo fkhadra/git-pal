@@ -91,6 +91,7 @@ pub fn run() {
             commands::is_authenticated,
             commands::homepage,
             commands::search_pull_requests,
+            commands::find_repositories,
             commands::delete_token,
             commands::is_autostart_enabled,
             commands::enable_autostart,

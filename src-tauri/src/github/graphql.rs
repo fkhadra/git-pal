@@ -1,7 +1,9 @@
 use std::fmt::Debug;
 
 use graphql_client::{GraphQLQuery, QueryBody, Response as GraphQLResponse};
+use serde::Deserialize;
 use serde::{self, de::DeserializeOwned, Serialize};
+use ts_rs::TS;
 
 use super::api_client::{ApiResponse, Client, Error, Response, Result};
 use super::query;
@@ -11,9 +13,22 @@ const SUPPORTED_FILTER: [&str; 2] = ["mentions", "review-requested"];
 
 pub type UserProfile = ApiResponse<query::user_profile::ResponseData>;
 pub type Homepage = ApiResponse<query::homepage::ResponseData>;
-pub type SearchResult = ApiResponse<query::search_pull_request::ResponseData>;
-
+pub type FindPullRequestResult = ApiResponse<query::search_pull_request::ResponseData>;
+pub type FindRepostoriesResult = ApiResponse<query::find_repositories::ResponseData>;
 pub type UserProfileViewer = query::user_profile::UserProfileViewer;
+
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(export, export_to = "../../src/models/graphql.ts")]
+pub struct FindRepositoriesRequest {
+    pub owner: String,
+    pub query: String,
+}
+
+impl std::fmt::Display for FindRepositoriesRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "org:{} in:name {}", self.owner, self.query)
+    }
+}
 
 impl Client {
     pub async fn load_user_profile(&mut self) -> Result<UserProfile> {
@@ -34,7 +49,19 @@ impl Client {
         self.send_graphql(&q).await
     }
 
-    pub async fn search_pull_requests(&self, filter: &str) -> Result<SearchResult> {
+    pub async fn find_repositories(
+        &self,
+        params: FindRepositoriesRequest,
+    ) -> Result<FindPullRequestResult> {
+        let q = query::FindRepositories::build_query(query::find_repositories::Variables {
+            count: 20,
+            query: params.to_string(),
+        });
+
+        self.send_graphql(&q).await
+    }
+
+    pub async fn search_pull_requests(&self, filter: &str) -> Result<FindPullRequestResult> {
         if !SUPPORTED_FILTER.contains(&filter) {
             return Err(Error::UnsupportedFilter(filter.to_owned()));
         }

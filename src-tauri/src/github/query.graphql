@@ -156,3 +156,12 @@ query SearchPullRequest($count: Int!, $query: String!) {
     }
   }
 }
+
+query FindRepositories($count: Int!, $query: String!) {
+  search(first: $count, query: $query, type: REPOSITORY) {
+    nodes {
+      __typename
+      ...Repository
+    }
+  }
+}

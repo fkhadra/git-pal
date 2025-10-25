@@ -78,13 +78,21 @@ pub async fn homepage(state: State<'_, AppState>) -> Result<github::Homepage> {
 pub async fn search_pull_requests(
     state: State<'_, AppState>,
     filter: String,
-) -> Result<github::SearchResult> {
+) -> Result<github::FindPullRequestResult> {
     Ok(state
         .client
         .lock()
         .await
         .search_pull_requests(filter.as_str())
         .await?)
+}
+
+#[tauri::command]
+pub async fn find_repositories(
+    state: State<'_, AppState>,
+    params: github::FindRepositoriesRequest,
+) -> Result<github::FindPullRequestResult> {
+    Ok(state.client.lock().await.find_repositories(params).await?)
 }
 
 #[tauri::command]
