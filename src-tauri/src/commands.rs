@@ -91,7 +91,7 @@ pub async fn search_pull_requests(
 pub async fn find_repositories(
     state: State<'_, AppState>,
     params: github::FindRepositoriesRequest,
-) -> Result<github::FindPullRequestResult> {
+) -> Result<github::FindRepositoriesResult> {
     Ok(state.client.lock().await.find_repositories(params).await?)
 }
 

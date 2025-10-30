@@ -11,6 +11,8 @@ import type {
 	Workflows,
 } from "./models";
 import type { ApiResponse } from "./models/api";
+import type { ResponseData as FindRepositoriesResponse } from "./models/find-repositories";
+import type { FindRepositoriesRequest } from "./models/graphql";
 import type { ResponseData as HomepageResponse } from "./models/homepage";
 import type { ResponseData as SearchPullRequestsResponse } from "./models/search-pull-request";
 import type {
@@ -37,6 +39,12 @@ function searchPullRequests(filter: "mentions" | "review-requested") {
 			filter,
 		},
 	);
+}
+
+function findRepositories(params: FindRepositoriesRequest) {
+	return invoke<ApiResponse<FindRepositoriesResponse>>("find_repositories", {
+		params,
+	});
 }
 
 function isAutoStartEnabled() {
@@ -94,6 +102,7 @@ export default {
 	homepage,
 	isAuthenticated,
 	searchPullRequests,
+	findRepositories,
 	isAutoStartEnabled,
 	enableAutoStart,
 	disableAutoStart,

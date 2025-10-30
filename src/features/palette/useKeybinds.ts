@@ -7,6 +7,7 @@ import {
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useState } from "react";
 import { usePaletteItem } from "./state";
+import { usePendingRoute } from "./usePendingRoute";
 
 const Key = {
 	Backspace: "Backspace",
@@ -15,16 +16,12 @@ const Key = {
 	Slash: "/",
 };
 
-const routerStateSelect = (v: RouterState) => v.status === "pending";
-
 export function useKeybinds() {
 	const [filter, setFilter] = useState("");
 	const navigate = useNavigate();
 	const { selectedItem, rootItem } = usePaletteItem();
 	const router = useRouter();
-	const isLoadingRoute = useRouterState({
-		select: routerStateSelect,
-	});
+	const isLoadingRoute = usePendingRoute();
 
 	useEffect(() => {
 		if (isLoadingRoute) {
@@ -64,6 +61,17 @@ export function useKeybinds() {
 				search: {
 					r: selectedItem.data.id,
 					p: `${selectedItem.owner()}/${selectedItem.data.name}`,
+				},
+			});
+		}
+
+		// go to org page
+		if (key === Key.Tab && selectedItem.kind === "org") {
+			e.preventDefault();
+			navigate({
+				to: "/palette/org/$name",
+				params: {
+					name: selectedItem.data.login,
 				},
 			});
 		}

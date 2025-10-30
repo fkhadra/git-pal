@@ -12,7 +12,7 @@ export function useFullHeightRef<T extends HTMLElement>(
 		(el: T) => {
 			if (el) {
 				nodeRef.current = el;
-				el.style.minHeight = `calc(100dvh - ${el.getBoundingClientRect().top + bottomPadding}px)`;
+				el.style.height = `calc(100dvh - ${el.getBoundingClientRect().top + bottomPadding}px)`;
 			}
 		},
 		[bottomPadding],

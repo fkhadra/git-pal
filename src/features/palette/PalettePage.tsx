@@ -1,4 +1,4 @@
-import { Outlet } from "@tanstack/react-router";
+import { Outlet, useRouterState } from "@tanstack/react-router";
 import { Command, useCommandState } from "cmdk";
 import { CommandEmpty } from "~/components/Cmdk";
 import { useFullHeightRef } from "~/libs/useFullHeight";
@@ -37,13 +37,11 @@ export function PalettePage() {
 function EmptySearchResults() {
 	const search = useCommandState((s) => s.search);
 	const isGhSearchActive = useGhSearchActive();
-	// const isPending = useRouterState({
-	// 	select: (s) => s.status === "pending",
-	// });
+	const isPending = useRouterState({
+		select: (s) => s.status === "pending",
+	});
 
-	if (isGhSearchActive || search.length === 0) return null;
-
-	// if (isPending) return <span>LOADING FTW</span>;
+	if (isPending || isGhSearchActive || search.length === 0) return null;
 
 	return (
 		<CommandEmpty>

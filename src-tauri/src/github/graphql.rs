@@ -14,7 +14,7 @@ const SUPPORTED_FILTER: [&str; 2] = ["mentions", "review-requested"];
 pub type UserProfile = ApiResponse<query::user_profile::ResponseData>;
 pub type Homepage = ApiResponse<query::homepage::ResponseData>;
 pub type FindPullRequestResult = ApiResponse<query::search_pull_request::ResponseData>;
-pub type FindRepostoriesResult = ApiResponse<query::find_repositories::ResponseData>;
+pub type FindRepositoriesResult = ApiResponse<query::find_repositories::ResponseData>;
 pub type UserProfileViewer = query::user_profile::UserProfileViewer;
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
@@ -52,7 +52,7 @@ impl Client {
     pub async fn find_repositories(
         &self,
         params: FindRepositoriesRequest,
-    ) -> Result<FindPullRequestResult> {
+    ) -> Result<FindRepositoriesResult> {
         let q = query::FindRepositories::build_query(query::find_repositories::Variables {
             count: 20,
             query: params.to_string(),
