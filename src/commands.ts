@@ -3,12 +3,13 @@ import { type Event, listen } from "@tauri-apps/api/event";
 import type {
 	AuthenticatedPayload,
 	FileRequest,
+	FindPullRequestsFilter,
 	FindWorkflowsRequest,
 	RunWorkflowRequest,
 	settings,
 	ThemeChangedPayload,
 	WorkflowInput,
-	Workflows,
+	Workflows
 } from "./models";
 import type { ApiResponse } from "./models/api";
 import type { ResponseData as FindRepositoriesResponse } from "./models/find-repositories";
@@ -32,9 +33,9 @@ function homepage() {
 	return invoke<ApiResponse<HomepageResponse>>("homepage");
 }
 
-function searchPullRequests(filter: "mentions" | "review-requested") {
+function findPullRequests(filter: FindPullRequestsFilter) {
 	return invoke<ApiResponse<SearchPullRequestsResponse>>(
-		"search_pull_requests",
+		"find_pull_requests",
 		{
 			filter,
 		},
@@ -101,7 +102,7 @@ export default {
 	authenticate,
 	homepage,
 	isAuthenticated,
-	searchPullRequests,
+	findPullRequests,
 	findRepositories,
 	isAutoStartEnabled,
 	enableAutoStart,

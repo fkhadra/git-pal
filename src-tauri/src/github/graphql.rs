@@ -9,7 +9,14 @@ use super::api_client::{ApiResponse, Client, Error, Response, Result};
 use super::query;
 
 const GRAPHQL_API_URL: &str = "https://api.github.com/graphql";
-const SUPPORTED_FILTER: [&str; 2] = ["mentions", "review-requested"];
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/models/graphql.ts")]
+#[serde(rename_all = "camelCase")]
+pub enum FindPullRequestsFilter {
+    Mentionned,
+    ReviewRequested,
+}
 
 pub type UserProfile = ApiResponse<query::user_profile::ResponseData>;
 pub type Homepage = ApiResponse<query::homepage::ResponseData>;
@@ -61,16 +68,20 @@ impl Client {
         self.send_graphql(&q).await
     }
 
-    pub async fn search_pull_requests(&self, filter: &str) -> Result<FindPullRequestResult> {
-        if !SUPPORTED_FILTER.contains(&filter) {
-            return Err(Error::UnsupportedFilter(filter.to_owned()));
-        }
+    pub async fn find_pull_requests(
+        &self,
+        filter: FindPullRequestsFilter,
+    ) -> Result<FindPullRequestResult> {
+        let f = match filter {
+            FindPullRequestsFilter::Mentionned => "mentions",
+            FindPullRequestsFilter::ReviewRequested => "review-requested",
+        };
 
         let user = self.user.as_ref().ok_or(Error::MissingData)?;
 
         let q = query::SearchPullRequest::build_query(query::search_pull_request::Variables {
             count: 20,
-            query: format!("is:open is:pr archived:false {}:{}", filter, &user.login),
+            query: format!("is:open is:pr archived:false {}:{}", f, &user.login),
         });
 
         self.send_graphql(&q).await

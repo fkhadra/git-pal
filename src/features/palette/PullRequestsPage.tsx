@@ -3,19 +3,19 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 
 import commands from "~/commands";
 import { CommandGroup, CommandItem } from "~/components/Cmdk";
-import type { PullRequest } from "~/models";
+import type { PullRequest, FindPullRequestsFilter } from "~/models";
 
 import { PullRequestItem } from "./Github";
 import { state } from "./state";
 
 type Params = {
 	deps: {
-		filter: "review-requested" | "mentions";
+		filter: FindPullRequestsFilter;
 	};
 };
 
 export async function pullRequestsPageLoader({ deps }: Params) {
-	const { data } = await commands.searchPullRequests(deps.filter);
+	const { data } = await commands.findPullRequests(deps.filter);
 
 	const groups: Record<string, PullRequest[]> = {};
 	const pullRequests =

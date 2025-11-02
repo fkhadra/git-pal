@@ -75,16 +75,11 @@ pub async fn homepage(state: State<'_, AppState>) -> Result<github::Homepage> {
 }
 
 #[tauri::command]
-pub async fn search_pull_requests(
+pub async fn find_pull_requests(
     state: State<'_, AppState>,
-    filter: String,
+    filter: github::FindPullRequestsFilter,
 ) -> Result<github::FindPullRequestResult> {
-    Ok(state
-        .client
-        .lock()
-        .await
-        .search_pull_requests(filter.as_str())
-        .await?)
+    Ok(state.client.lock().await.find_pull_requests(filter).await?)
 }
 
 #[tauri::command]
@@ -201,3 +196,20 @@ pub async fn get_setting(
 pub async fn get_all_settings(state: State<'_, AppState>) -> Result<HashMap<String, String>> {
     Ok(state.settings.get_all()?)
 }
+
+// pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()> {
+//     let app = app_handle.clone();
+
+//     tokio::task::spawn(async move {
+//         let state: State<'_, AppState> = app.state();
+//         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(10));
+//         loop {
+//             interval.tick().await;
+//             let m = state.client.lock().await;
+
+//             m.search_pull_requests(filter)
+//         }
+//     });
+
+//     Ok(())
+// }

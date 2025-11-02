@@ -50,7 +50,7 @@ export function HomePage() {
 						navigate({
 							to: "/palette/pull-requests",
 							search: {
-								filter: "review-requested",
+								filter: "reviewRequested",
 								p: "Review Requested",
 							},
 						});
@@ -67,7 +67,7 @@ export function HomePage() {
 						navigate({
 							to: "/palette/pull-requests",
 							search: {
-								filter: "mentions",
+								filter: "mentionned",
 								p: "Mentioned",
 							},
 						});

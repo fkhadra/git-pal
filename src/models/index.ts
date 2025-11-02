@@ -1,5 +1,6 @@
 export type { Repository } from "./homepage";
 export * from "./rest";
+export * from "./graphql"
 export type {
 	PullRequest,
 	PullRequestReviewDecision,
