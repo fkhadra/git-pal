@@ -1,6 +1,5 @@
-import { useLoaderData, useNavigate } from "@tanstack/react-router";
-import { openUrl } from "@tauri-apps/plugin-opener";
-
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import {
 	CircleDot,
 	Github,
@@ -18,27 +17,34 @@ import {
 } from "~/features/palette/Github";
 import { nil } from "~/libs/utils";
 import { state } from "./state";
+import { useOpenUrl } from "./useOpenUrl";
 
-export async function homePageLoader() {
-	const { data } = await commands.homepage();
+function useHomePageQuery() {
+	return useSuspenseQuery({
+		queryKey: ["homepage"],
+		queryFn: async () => {
+			const { data } = await commands.homepage();
 
-	queueMicrotask(() => {
-		data.viewer.pullRequests.nodes?.forEach((pr) => {
-			if (pr) state.setItem(pr.id, { kind: "pr", data: pr });
-		});
+			queueMicrotask(() => {
+				data.viewer.pullRequests.nodes?.forEach((pr) => {
+					if (pr) state.setItem(pr.id, { kind: "pr", data: pr });
+				});
 
-		data.viewer.topRepositories.nodes?.forEach((repo) => {
-			if (repo) state.setItem(repo.id, { kind: "repo", data: repo });
-		});
+				data.viewer.topRepositories.nodes?.forEach((repo) => {
+					if (repo) state.setItem(repo.id, { kind: "repo", data: repo });
+				});
+			});
+
+			return data;
+		},
 	});
-
-	return data;
 }
 
 export function HomePage() {
 	const { userProfile } = useAppContext();
 	const navigate = useNavigate();
-	const data = useLoaderData({ from: "/palette/" });
+	const { data } = useHomePageQuery();
+	const openUrl = useOpenUrl();
 
 	return (
 		<>

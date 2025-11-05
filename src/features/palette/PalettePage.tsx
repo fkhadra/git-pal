@@ -1,9 +1,11 @@
-import { Outlet, useRouterState } from "@tanstack/react-router";
+import { useRouterState } from "@tanstack/react-router";
 import { Command, useCommandState } from "cmdk";
+import { Suspense, useState } from "react";
+import { SkeletonRows } from "~/components";
 import { CommandEmpty } from "~/components/Cmdk";
 import { useFullHeightRef } from "~/libs/useFullHeight";
-
 import { CommandInput } from "./CommandInput";
+import { HomePage } from "./HomePage";
 import { Keybinds } from "./Keybinds";
 import { useGhSearchActive } from "./useGhSearchActive";
 import { usePreloadRoutes } from "./usePreloadRoutes";
@@ -11,6 +13,7 @@ import { usePreloadRoutes } from "./usePreloadRoutes";
 export function PalettePage() {
 	const listBox = useFullHeightRef<HTMLDivElement>({ bottomPadding: 52 });
 	const isGhSearchActive = useGhSearchActive();
+	const [v, setV] = useState("");
 
 	usePreloadRoutes();
 
@@ -22,11 +25,18 @@ export function PalettePage() {
 				loop
 				className="relative h-full overflow-hidden"
 				shouldFilter={!isGhSearchActive}
+				value={v}
+				onValueChange={(value) => {
+					setV(value);
+				}}
 			>
 				<CommandInput />
 				<Command.List ref={listBox.setRef} className="px-2">
 					<EmptySearchResults />
-					<Outlet />
+					<Suspense fallback={<SkeletonRows />}>
+						<HomePage />
+					</Suspense>
+					{/*<Outlet />*/}
 				</Command.List>
 				<Keybinds />
 			</Command>
