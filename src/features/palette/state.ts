@@ -1,6 +1,11 @@
-import { useSearch } from "@tanstack/react-router";
 import { useCommandState } from "cmdk";
-import type { Organization, PullRequest, Repository } from "~/models";
+import { proxy, useSnapshot } from "valtio";
+import type {
+	FindPullRequestsFilter,
+	Organization,
+	PullRequest,
+	Repository,
+} from "~/models";
 
 type PaletteItemValue =
 	| { kind: "pr"; data: PullRequest }
@@ -31,20 +36,106 @@ export function createPaletteItem(item: PaletteItemValue) {
 
 const paletteItems = new Map<string, ReturnType<typeof createPaletteItem>>();
 
-export const state = {
+type Page =
+	| { to: "home" }
+	| {
+			to: "org";
+			params: {
+				name: string;
+			};
+	  }
+	| {
+			to: "pull-requests";
+			params: {
+				filter: FindPullRequestsFilter;
+			};
+	  }
+	| {
+			to: "repository";
+			params: {
+				id: string;
+				parentId?: string;
+			};
+	  }
+	| {
+			to: "search";
+			params: {
+				owner: string;
+				repo?: string;
+			};
+	  };
+
+export function createPageMapper(map: Record<PageTo, React.FC>) {
+	return map;
+}
+
+type PageTo = Page["to"];
+type CurrentPage<T> = Extract<Page, { to: T }>;
+
+export function useCurrentPage<T extends PageTo>(
+	_?: T,
+): T extends undefined ? Page : CurrentPage<T> {
+	const snap = useSnapshot(state);
+	return snap.currentPage as T extends undefined ? Page : CurrentPage<T>;
+}
+
+export function useGHSearchActive() {
+	const snap = useSnapshot(state);
+	return snap.currentPage.to === "search";
+}
+
+export function useStateSnaphot() {
+	return useSnapshot(state);
+}
+
+export const state = proxy({
+	pages: [{ to: "home" }],
+	get currentPage() {
+		return this.pages[this.pages.length - 1] as Page;
+	},
+	path: "",
+	query: "",
+	parentId: null,
+	clearPath() {
+		state.path = "";
+	},
+	canGoBack() {
+		return state.pages.length > 1;
+	},
+	resetPalette() {
+		state.pages = [{ to: "home" }];
+		state.path = "";
+		state.query = "";
+		state.parentId = null;
+	},
+	goTo(page: Page, path?: string) {
+		state.pages.push(page);
+		if (path) {
+			state.path = path;
+		}
+	},
+	goBack() {
+		if (state.pages.length > 1) {
+			state.pages.pop();
+
+			if (state.pages.length === 1) {
+				state.path = "";
+			}
+		}
+	},
 	setItem(key: string, value: PaletteItemValue) {
 		paletteItems.set(key, createPaletteItem(value));
 	},
 	getItem(key: string) {
 		return paletteItems.get(key) as PaletteItem;
 	},
-};
+});
 
 export function usePaletteItem() {
-	const searchParams = useSearch({ from: "/palette" });
+	const snapshot = useStateSnaphot();
 	const commandValue = useCommandState((s) => s.value);
 	const selectedItem = state.getItem(commandValue);
-	const rootItem = searchParams.r ? state.getItem(searchParams.r) : null;
+	const rootItem = snapshot.parentId ? state.getItem(snapshot.parentId) : null;
 
 	return {
 		rootItem,

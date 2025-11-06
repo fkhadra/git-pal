@@ -1,6 +1,5 @@
-import { useLoaderData } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { openUrl } from "@tauri-apps/plugin-opener";
-
 import {
 	BookOpenText,
 	CircleDot,
@@ -15,28 +14,31 @@ import commands from "~/commands";
 import { CommandGroup, CommandItem } from "~/components/Cmdk";
 import { RepositoryIcon } from "./Github/RepositoryIcon";
 import { Container, IconWrapper } from "./Layout";
-import { state } from "./state";
+import { state, useCurrentPage } from "./state";
 
-export async function repositoryPageLoader({
-	params,
-}: {
-	params: { id: string };
-}) {
-	const item = state.getItem(params.id);
+function useRepositoryQuery() {
+	const page = useCurrentPage("repository");
 
-	if (item?.kind !== "repo") return null;
+	return useSuspenseQuery({
+		queryKey: ["repository", page.params.id],
+		queryFn: async () => {
+			const item = state.getItem(page.params.id);
 
-	const repository = item.data;
+			if (item?.kind !== "repo") return null;
 
-	const workflows = await commands.findWorkflows({
-		owner: repository.owner.login,
-		repository: repository.name,
+			const repository = item.data;
+
+			const workflows = await commands.findWorkflows({
+				owner: repository.owner.login,
+				repository: repository.name,
+			});
+
+			return {
+				repository,
+				workflows,
+			};
+		},
 	});
-
-	return {
-		repository,
-		workflows,
-	};
 }
 
 function Count({ value }: { value: number | bigint }) {
@@ -44,11 +46,11 @@ function Count({ value }: { value: number | bigint }) {
 }
 
 export function RepositoryPage() {
-	const params = useLoaderData({ from: "/palette/repository/$id" });
+	const { data } = useRepositoryQuery();
 
-	if (!params) return null;
+	if (!data) return;
 
-	const { repository, workflows } = params;
+	const { repository, workflows } = data;
 
 	return (
 		<CommandGroup heading="Pages">

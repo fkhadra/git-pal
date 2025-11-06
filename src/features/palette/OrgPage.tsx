@@ -1,40 +1,39 @@
-import { useLoaderData } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import commands from "~/commands";
 import { CommandGroup, CommandItem } from "~/components/Cmdk";
 import { nil } from "~/libs/utils";
 import type { Repository } from "~/models";
 import { RepositoryItem } from "./Github";
-import { state } from "./state";
+import { state, useCurrentPage, useStateSnaphot } from "./state";
 
-interface Params {
-	deps: {
-		query?: string;
-	};
-	params: {
-		name: string;
-	};
-}
+function useOrgPageQuery() {
+	const page = useCurrentPage("org");
+	const snapshot = useStateSnaphot();
+	return useSuspenseQuery({
+		queryKey: ["orgPage", page.params.name, snapshot.query],
+		queryFn: async () => {
+			const { data } = await commands.findRepositories({
+				owner: page.params.name,
+				query: snapshot.query,
+			});
 
-export async function orgPageLoader({ deps, params }: Params) {
-	const { data } = await commands.findRepositories({
-		owner: params.name,
-		query: deps.query || "",
+			queueMicrotask(() => {
+				data.search.nodes?.forEach((repo) => {
+					if (repo && repo.__typename === "Repository") {
+						state.setItem(repo.id, { kind: "repo", data: repo });
+					}
+				});
+			});
+
+			return data;
+		},
 	});
-
-	queueMicrotask(() => {
-		data.search.nodes?.forEach((repo) => {
-			if (repo && repo.__typename === "Repository") {
-				state.setItem(repo.id, { kind: "repo", data: repo });
-			}
-		});
-	});
-
-	return data;
 }
 
 export function OrgPage() {
-	const data = useLoaderData({ from: "/palette/org/$name" });
+	const { data } = useOrgPageQuery();
+
 	return (
 		<CommandGroup heading="Repositories">
 			{data.search?.nodes?.filter(nil).map((repo) => {

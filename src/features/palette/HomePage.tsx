@@ -1,5 +1,4 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import {
 	CircleDot,
 	Github,
@@ -42,7 +41,6 @@ function useHomePageQuery() {
 
 export function HomePage() {
 	const { userProfile } = useAppContext();
-	const navigate = useNavigate();
 	const { data } = useHomePageQuery();
 	const openUrl = useOpenUrl();
 
@@ -53,13 +51,15 @@ export function HomePage() {
 					value="page-review-requested"
 					keywords={["review", "request"]}
 					onSelect={() => {
-						navigate({
-							to: "/palette/pull-requests",
-							search: {
-								filter: "reviewRequested",
-								p: "Review Requested",
+						state.goTo(
+							{
+								to: "pull-requests",
+								params: {
+									filter: "reviewRequested",
+								},
 							},
-						});
+							"Review Requested",
+						);
 					}}
 				>
 					<Page icon={<GitPullRequestArrow className="text-blue-500" />}>
@@ -70,13 +70,15 @@ export function HomePage() {
 					value="page-mentioned"
 					keywords={["mention", "review", "request"]}
 					onSelect={() => {
-						navigate({
-							to: "/palette/pull-requests",
-							search: {
-								filter: "mentionned",
-								p: "Mentioned",
+						state.goTo(
+							{
+								to: "pull-requests",
+								params: {
+									filter: "mentionned",
+								},
 							},
-						});
+							"Mentioned",
+						);
 					}}
 				>
 					<Page icon={<MessageCircleMore className="text-pink-400" />}>

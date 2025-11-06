@@ -1,10 +1,12 @@
-import { useSearch } from "@tanstack/react-router";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useCommandState } from "cmdk";
 import { CommandItem } from "~/components/Cmdk";
+import { useCurrentPage } from "./state";
 
 export function SearchPage() {
-	const { owner, repo } = useSearch({ from: "/palette/search" });
+	const {
+		params: { owner, repo },
+	} = useCurrentPage("search");
 	const searchValue = useCommandState((s) => s.search);
 
 	const searchTarget = repo ? `${owner}/${repo}` : owner;

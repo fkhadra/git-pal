@@ -1,4 +1,3 @@
-import { useRouterState } from "@tanstack/react-router";
 import { Command, useCommandState } from "cmdk";
 import { Suspense, useState } from "react";
 import { SkeletonRows } from "~/components";
@@ -7,36 +6,48 @@ import { useFullHeightRef } from "~/libs/useFullHeight";
 import { CommandInput } from "./CommandInput";
 import { HomePage } from "./HomePage";
 import { Keybinds } from "./Keybinds";
-import { useGhSearchActive } from "./useGhSearchActive";
-import { usePreloadRoutes } from "./usePreloadRoutes";
+import { OrgPage } from "./OrgPage";
+import { PullRequestsPage } from "./PullRequestsPage";
+import { RepositoryPage } from "./RepositoryPage";
+import { SearchPage } from "./SearchPage";
+import { createPageMapper, useCurrentPage, useGHSearchActive } from "./state";
+
+const pages = createPageMapper({
+	home: HomePage,
+	org: OrgPage,
+	"pull-requests": PullRequestsPage,
+	repository: RepositoryPage,
+	search: SearchPage,
+});
 
 export function PalettePage() {
 	const listBox = useFullHeightRef<HTMLDivElement>({ bottomPadding: 52 });
-	const isGhSearchActive = useGhSearchActive();
+	const isGhSearchActive = useGHSearchActive();
 	const [v, setV] = useState("");
+	const currentPage = useCurrentPage();
+	const Page = pages[currentPage.to];
 
-	usePreloadRoutes();
+	// usePreloadRoutes();
 
 	return (
 		<div
-			className={"h-screen bg-gradient-to-tl from-pink-300/10 to-purple-500/10"}
+			className={"h-screen bg-linear-to-tl from-pink-300/10 to-purple-500/10"}
 		>
 			<Command
 				loop
 				className="relative h-full overflow-hidden"
 				shouldFilter={!isGhSearchActive}
-				value={v}
-				onValueChange={(value) => {
-					setV(value);
-				}}
+				// value={v}
+				// onValueChange={(value) => {
+				// 	setV(value);
+				// }}
 			>
 				<CommandInput />
 				<Command.List ref={listBox.setRef} className="px-2">
-					<EmptySearchResults />
 					<Suspense fallback={<SkeletonRows />}>
-						<HomePage />
+						<EmptySearchResults />
+						<Page />
 					</Suspense>
-					{/*<Outlet />*/}
 				</Command.List>
 				<Keybinds />
 			</Command>
@@ -46,12 +57,9 @@ export function PalettePage() {
 
 function EmptySearchResults() {
 	const search = useCommandState((s) => s.search);
-	const isGhSearchActive = useGhSearchActive();
-	const isPending = useRouterState({
-		select: (s) => s.status === "pending",
-	});
+	const isGhSearchActive = useGHSearchActive();
 
-	if (isPending || isGhSearchActive || search.length === 0) return null;
+	if (isGhSearchActive || search.length === 0) return null;
 
 	return (
 		<CommandEmpty>

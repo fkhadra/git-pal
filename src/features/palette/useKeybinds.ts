@@ -1,13 +1,6 @@
-import {
-	type RouterState,
-	useNavigate,
-	useRouter,
-	useRouterState,
-} from "@tanstack/react-router";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { useEffect, useState } from "react";
-import { usePaletteItem } from "./state";
-import { usePendingRoute } from "./usePendingRoute";
+import { useState } from "react";
+import { state, usePaletteItem } from "./state";
 
 const Key = {
 	Backspace: "Backspace",
@@ -18,24 +11,22 @@ const Key = {
 
 export function useKeybinds() {
 	const [filter, setFilter] = useState("");
-	const navigate = useNavigate();
 	const { selectedItem, rootItem } = usePaletteItem();
-	const router = useRouter();
-	const isLoadingRoute = usePendingRoute();
+	// const isLoadingRoute = usePendingRoute();
 
-	useEffect(() => {
-		if (isLoadingRoute) {
-			setFilter("");
-		}
-	}, [isLoadingRoute]);
+	// useEffect(() => {
+	// 	if (isLoadingRoute) {
+	// 		setFilter("");
+	// 	}
+	// }, [isLoadingRoute]);
 
 	const handleKeyboard = async (e: React.KeyboardEvent<HTMLInputElement>) => {
 		const { key, metaKey } = e;
-		const canGoBack = router.history.canGoBack();
+		const canGoBack = state.canGoBack();
 
 		// back to previous page
 		if ((key === Key.Backspace || key === Key.Esc) && canGoBack && !filter) {
-			router.history.back();
+			state.goBack();
 			return;
 		}
 
@@ -53,27 +44,30 @@ export function useKeybinds() {
 		// go to repo page
 		if (key === Key.Tab && selectedItem.kind === "repo") {
 			e.preventDefault();
-			navigate({
-				to: "/palette/repository/$id",
-				params: {
-					id: selectedItem.data.id,
+			state.goTo(
+				{
+					to: "repository",
+					params: {
+						id: selectedItem.data.id,
+						parentId: selectedItem.data.id,
+					},
 				},
-				search: {
-					r: selectedItem.data.id,
-					p: `${selectedItem.owner()}/${selectedItem.data.name}`,
-				},
-			});
+				`${selectedItem.owner()}/${selectedItem.data.name}`,
+			);
 		}
 
 		// go to org page
 		if (key === Key.Tab && selectedItem.kind === "org") {
 			e.preventDefault();
-			navigate({
-				to: "/palette/org/$name",
-				params: {
-					name: selectedItem.data.login,
+			state.goTo(
+				{
+					to: "org",
+					params: {
+						name: selectedItem.data.login,
+					},
 				},
-			});
+				selectedItem.data.login,
+			);
 		}
 
 		// code search, selected item first then root if any
@@ -82,14 +76,15 @@ export function useKeybinds() {
 			key === Key.Slash &&
 			(selectedItem?.supportGithubSearch() || rootItem?.supportGithubSearch())
 		) {
+			console.log({ selectedItem, rootItem });
 			const item = selectedItem || rootItem;
 			const owner = item.owner();
 			const repo = item?.kind === "repo" ? item.data.name : void 0;
 
 			if (owner) {
-				navigate({
-					to: "/palette/search",
-					search: {
+				state.goTo({
+					to: "search",
+					params: {
 						owner,
 						repo,
 					},

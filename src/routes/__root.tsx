@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
 	createRootRoute,
 	Outlet,
@@ -41,9 +42,15 @@ export const Route = createRootRoute({
 		}
 
 		return (
-			<AppContext value={{ userProfile: data.userProfile, theme: data.theme }}>
-				<Outlet />
-			</AppContext>
+			<QueryClientProvider client={queryClient}>
+				<AppContext
+					value={{ userProfile: data.userProfile, theme: data.theme }}
+				>
+					<Outlet />
+				</AppContext>
+			</QueryClientProvider>
 		);
 	},
 });
+
+const queryClient = new QueryClient();
