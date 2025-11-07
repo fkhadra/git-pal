@@ -1,7 +1,7 @@
-import { openUrl } from "@tauri-apps/plugin-opener";
 import { useCommandState } from "cmdk";
 import { CommandItem } from "~/components/Cmdk";
 import { useCurrentPage } from "./state";
+import { openUrl } from "./utils";
 
 export function SearchPage() {
 	const {

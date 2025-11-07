@@ -1,5 +1,5 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { openUrl } from "@tauri-apps/plugin-opener";
+
 import {
 	BookOpenText,
 	CircleDot,
@@ -15,6 +15,7 @@ import { CommandGroup, CommandItem } from "~/components/Cmdk";
 import { RepositoryIcon } from "./Github/RepositoryIcon";
 import { Container, IconWrapper } from "./Layout";
 import { state, useCurrentPage } from "./state";
+import { openUrl } from "./utils";
 
 function useRepositoryQuery() {
 	const page = useCurrentPage("repository");

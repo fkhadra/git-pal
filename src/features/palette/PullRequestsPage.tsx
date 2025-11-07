@@ -1,10 +1,11 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { openUrl } from "@tauri-apps/plugin-opener";
+
 import commands from "~/commands";
 import { CommandGroup, CommandItem } from "~/components/Cmdk";
 import type { PullRequest } from "~/models";
 import { PullRequestItem } from "./Github";
 import { state, useCurrentPage } from "./state";
+import { openUrl } from "./utils";
 
 function usePullRequestsQuery() {
 	const page = useCurrentPage("pull-requests");

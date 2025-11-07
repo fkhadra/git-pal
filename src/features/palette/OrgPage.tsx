@@ -1,11 +1,12 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { openUrl } from "@tauri-apps/plugin-opener";
+
 import commands from "~/commands";
 import { CommandGroup, CommandItem } from "~/components/Cmdk";
 import { nil } from "~/libs/utils";
 import type { Repository } from "~/models";
 import { RepositoryItem } from "./Github";
 import { state, useCurrentPage, useStateSnaphot } from "./state";
+import { openUrl } from "./utils";
 
 function useOrgPageQuery() {
 	const page = useCurrentPage("org");

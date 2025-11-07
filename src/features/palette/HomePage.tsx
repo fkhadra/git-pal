@@ -16,7 +16,7 @@ import {
 } from "~/features/palette/Github";
 import { nil } from "~/libs/utils";
 import { state } from "./state";
-import { useOpenUrl } from "./useOpenUrl";
+import { openUrl } from "./utils";
 
 function useHomePageQuery() {
 	return useSuspenseQuery({
@@ -42,7 +42,6 @@ function useHomePageQuery() {
 export function HomePage() {
 	const { userProfile } = useAppContext();
 	const { data } = useHomePageQuery();
-	const openUrl = useOpenUrl();
 
 	return (
 		<>

@@ -41,9 +41,12 @@ export function useKeybinds() {
 			return;
 		}
 
+		if (key === Key.Tab) {
+			e.preventDefault();
+		}
+
 		// go to repo page
 		if (key === Key.Tab && selectedItem.kind === "repo") {
-			e.preventDefault();
 			state.goTo(
 				{
 					to: "repository",
