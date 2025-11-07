@@ -63,7 +63,7 @@ pub fn show_settings(app: &AppHandle) -> Result {
             app,
             WindowConfig {
                 title: "Settings",
-                initial_path: "/settings",
+                current_view: "settings",
                 url: "settings",
                 label: SETTINGS_WINDOW_LABEL,
                 width: 715.0,
@@ -82,7 +82,7 @@ pub fn on_app_start(handle: &AppHandle) -> Result {
             handle,
             WindowConfig {
                 title: "Welcome to Git Pal",
-                initial_path: "/setup",
+                current_view: "setup",
                 url: "setup",
                 label: SETUP_WINDOW_LABEL,
                 width: 800.0,
@@ -122,7 +122,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
         MAIN_WINDOW_LABEL,
         WebviewUrl::App("palette".into()),
     )
-    .initialization_script("window.initialPath = '/palette'")
+    .initialization_script("window.currentView = 'palette'")
     .title("Git Pal")
     .inner_size(800.0, 600.0)
     .transparent(true)
@@ -146,7 +146,6 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
 
     register_global_shortcut(handle)?;
 
-    // attach events for main window
     let cw = window.clone();
     window.on_window_event(move |e| match e {
         WindowEvent::CloseRequested { api, .. } => {
@@ -182,7 +181,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
 
 struct WindowConfig<'a> {
     title: &'a str,
-    initial_path: &'a str,
+    current_view: &'a str,
     url: &'a str,
     label: &'a str,
     width: f64,
@@ -192,7 +191,7 @@ struct WindowConfig<'a> {
 fn create_window(handle: &AppHandle, config: WindowConfig) -> Result {
     tauri::WebviewWindowBuilder::new(handle, config.label, WebviewUrl::App(config.url.into()))
         .title(config.title)
-        .initialization_script(format!("window.initialPath = '{}';", config.initial_path))
+        .initialization_script(format!("window.currentView = '{}';", config.current_view))
         .inner_size(config.width, config.height)
         .resizable(false)
         .minimizable(false)

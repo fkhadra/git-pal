@@ -1,34 +1,20 @@
-import {
-	createMemoryHistory,
-	createRouter,
-	RouterProvider,
-} from "@tanstack/react-router";
-import { StrictMode } from "react";
+import { StrictMode, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import "./style.css";
 
-import { routeTree } from "./routeTree.gen";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { App } from "./App";
 
-const router = createRouter({
-	routeTree,
-	defaultPendingMs: 0,
-	defaultPendingMinMs: 0,
-	history: createMemoryHistory({
-		initialEntries: [`${window.initialPath}`],
-	}),
-});
-
-declare module "@tanstack/react-router" {
-	interface Register {
-		router: typeof router;
-	}
-}
-
-const rootElement = document.getElementById("root")!;
+const rootElement = document.getElementById("root") as HTMLElement;
+const queryClient = new QueryClient();
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
 	<StrictMode>
-		<RouterProvider router={router} />
+		<QueryClientProvider client={queryClient}>
+			<Suspense>
+				<App />
+			</Suspense>
+		</QueryClientProvider>
 	</StrictMode>,
 );
