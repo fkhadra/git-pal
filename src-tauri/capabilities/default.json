@@ -8,6 +8,7 @@
     "opener:default",
     "log:default",
     "core:window:allow-hide",
-    "autostart:default"
+    "autostart:default",
+    "notification:default"
   ]
 }

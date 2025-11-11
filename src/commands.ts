@@ -9,7 +9,7 @@ import type {
 	settings,
 	ThemeChangedPayload,
 	WorkflowInput,
-	Workflows
+	Workflows,
 } from "./models";
 import type { ApiResponse } from "./models/api";
 import type { ResponseData as FindRepositoriesResponse } from "./models/find-repositories";
@@ -34,12 +34,9 @@ function homepage() {
 }
 
 function findPullRequests(filter: FindPullRequestsFilter) {
-	return invoke<ApiResponse<SearchPullRequestsResponse>>(
-		"find_pull_requests",
-		{
-			filter,
-		},
-	);
+	return invoke<ApiResponse<SearchPullRequestsResponse>>("find_pull_requests", {
+		filter,
+	});
 }
 
 function findRepositories(params: FindRepositoriesRequest) {
@@ -98,6 +95,10 @@ function getSetting(params: settings.Key) {
 	return invoke<string>("get_setting", { params });
 }
 
+function monitorPullRequests() {
+	return invoke<void>("monitor_review_requested");
+}
+
 export default {
 	authenticate,
 	homepage,
@@ -116,4 +117,5 @@ export default {
 	runWorkflow,
 	updateSetting,
 	getSetting,
+	monitorPullRequests,
 };

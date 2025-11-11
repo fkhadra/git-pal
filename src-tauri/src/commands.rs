@@ -2,11 +2,14 @@ use std::collections::HashMap;
 
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
+use tauri_plugin_notification::NotificationExt;
 use thiserror::Error;
 
 use crate::{
     core::{settings, AppState},
-    github, window,
+    github,
+    github::query::search_pull_request::SearchPullRequestSearchNodes::PullRequest,
+    window,
 };
 
 #[derive(Debug, Error)]
@@ -79,7 +82,71 @@ pub async fn find_pull_requests(
     state: State<'_, AppState>,
     filter: github::FindPullRequestsFilter,
 ) -> Result<github::FindPullRequestResult> {
-    Ok(state.client.lock().await.find_pull_requests(filter).await?)
+    let is_review_requested = filter == github::FindPullRequestsFilter::ReviewRequested;
+    let response = state.client.lock().await.find_pull_requests(filter).await?;
+
+    if is_review_requested {
+        let mut prs = state.pull_requests.lock().await;
+
+        for v in response.data.search.nodes.iter().flatten().flatten() {
+            if let PullRequest(pr) = v {
+                prs.insert(pr.id.clone(), pr.clone());
+            }
+        }
+    }
+
+    Ok(response)
+}
+
+#[tauri::command]
+pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()> {
+    let app = app_handle.clone();
+
+    log::debug!("Starting monitor");
+
+    tokio::task::spawn(async move {
+        let state: State<'_, AppState> = app.state();
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(20));
+        loop {
+            interval.tick().await;
+
+            let response = state
+                .client
+                .lock()
+                .await
+                .find_pull_requests(github::FindPullRequestsFilter::ReviewRequested)
+                .await;
+
+            match response {
+                Ok(response) => {
+                    let mut prs = state.pull_requests.lock().await;
+
+                    for v in response.data.search.nodes.iter().flatten().flatten() {
+                        if let PullRequest(pr) = v {
+                            if !prs.contains_key(&pr.id) {
+                                log::info!("New PR detected lets notify");
+                                app.notification()
+                                    .builder()
+                                    .title("Review Requested")
+                                    .large_body(&pr.title)
+                                    .group("Review Requested")
+                                    .show()
+                                    .expect("Failed to show notification");
+
+                                log::info!("New PR detected {}", &pr.title);
+                            }
+                            prs.insert(pr.id.clone(), pr.clone());
+                        }
+                    }
+                }
+                Err(err) => {
+                    log::error!("Error fetching review requested pull requests: {}", err);
+                }
+            }
+        }
+    });
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -196,20 +263,3 @@ pub async fn get_setting(
 pub async fn get_all_settings(state: State<'_, AppState>) -> Result<HashMap<String, String>> {
     Ok(state.settings.get_all()?)
 }
-
-// pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()> {
-//     let app = app_handle.clone();
-
-//     tokio::task::spawn(async move {
-//         let state: State<'_, AppState> = app.state();
-//         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(10));
-//         loop {
-//             interval.tick().await;
-//             let m = state.client.lock().await;
-
-//             m.search_pull_requests(filter)
-//         }
-//     });
-
-//     Ok(())
-// }

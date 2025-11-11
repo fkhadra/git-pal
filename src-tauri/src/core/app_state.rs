@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     env, fs,
     path::PathBuf,
     sync::atomic::{AtomicBool, Ordering},
@@ -23,6 +24,7 @@ pub struct AppState {
     pub oauth_client: Mutex<oauth::Client>,
     pub should_do_setup: AtomicBool,
     pub settings: Store,
+    pub pull_requests: Mutex<HashMap<String, github::query::search_pull_request::PullRequest>>,
     app_dir: PathBuf,
 }
 
@@ -39,13 +41,17 @@ impl AppState {
             client: Mutex::new(github::Client::new(token)),
             oauth_client: Mutex::new(oauth::Client::new()),
             should_do_setup: AtomicBool::new(should_do_setup),
+            pull_requests: Mutex::new(HashMap::new()),
             app_dir: app_dir,
             settings: Store::new(db_path.to_str().expect("should always be set")),
         }
     }
 
-    pub fn update_setting(&self, handle: &AppHandle, value: settings::Value) -> Result<(), redb::Error> {
-
+    pub fn update_setting(
+        &self,
+        handle: &AppHandle,
+        value: settings::Value,
+    ) -> Result<(), redb::Error> {
         if let settings::Value::Theme(ref v) = value {
             emit_event(handle, Event::ThemeChanged(v.to_owned()));
         }
@@ -56,12 +62,30 @@ impl AppState {
     pub fn app_dir(&self) -> PathBuf {
         self.app_dir.clone()
     }
+
+    // pub async fn m(&self) {
+    //     let c = self.client.lock().await;
+    //     c.search_pull_requests(filter)
+
+    //     tokio::spawn(async {
+    //         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(10));
+
+    //         loop {
+    //             interval.tick().await;
+
+    //             // Your code to execute every 10 seconds goes here
+    //             log::info!("Executing periodic task every 10 seconds");
+
+    //         }
+    //     });
+    // }
 }
 
 pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
     let app_handle = app_handle.to_owned();
 
     tauri::async_runtime::spawn(async move {
+        log::info!("deep links URLs: {:?}", urls);
         for url in urls {
             if let Some(host) = url.host() {
                 if host.to_string() == "github" && url.path() == "/auth-callback" {

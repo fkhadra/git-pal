@@ -10,7 +10,7 @@ use super::query;
 
 const GRAPHQL_API_URL: &str = "https://api.github.com/graphql";
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq, Eq)]
 #[ts(export, export_to = "../../src/models/graphql.ts")]
 #[serde(rename_all = "camelCase")]
 pub enum FindPullRequestsFilter {
@@ -23,6 +23,7 @@ pub type Homepage = ApiResponse<query::homepage::ResponseData>;
 pub type FindPullRequestResult = ApiResponse<query::search_pull_request::ResponseData>;
 pub type FindRepositoriesResult = ApiResponse<query::find_repositories::ResponseData>;
 pub type UserProfileViewer = query::user_profile::UserProfileViewer;
+pub type PullRequest = query::search_pull_request::ResponseData;
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
 #[ts(export, export_to = "../../src/models/graphql.ts")]
