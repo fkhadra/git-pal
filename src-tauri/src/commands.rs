@@ -128,8 +128,7 @@ pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()
                                 app.notification()
                                     .builder()
                                     .title("Review Requested")
-                                    .large_body(&pr.title)
-                                    .group("Review Requested")
+                                    .body(&pr.title)
                                     .show()
                                     .expect("Failed to show notification");
 
