@@ -1,4 +1,5 @@
 mod app_state;
+pub mod notification;
 pub mod settings;
 mod vault;
 

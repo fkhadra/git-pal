@@ -13,7 +13,7 @@ use url::Url;
 use super::{settings::Store, vault::Vault};
 
 use crate::{
-    core::settings,
+    core::{notification, settings},
     github::{self, oauth},
     window,
 };
@@ -25,6 +25,7 @@ pub struct AppState {
     pub should_do_setup: AtomicBool,
     pub settings: Store,
     pub pull_requests: Mutex<HashMap<String, github::query::search_pull_request::PullRequest>>,
+    pub notification_manager: notification::NotificationManager,
     app_dir: PathBuf,
 }
 
@@ -43,6 +44,7 @@ impl AppState {
             should_do_setup: AtomicBool::new(should_do_setup),
             pull_requests: Mutex::new(HashMap::new()),
             app_dir: app_dir,
+            notification_manager: notification::NotificationManager::new(),
             settings: Store::new(db_path.to_str().expect("should always be set")),
         }
     }
@@ -85,12 +87,9 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
     let app_handle = app_handle.to_owned();
 
     tauri::async_runtime::spawn(async move {
-        log::info!("deep links URLs: {:?}", urls);
         for url in urls {
             if let Some(host) = url.host() {
                 if host.to_string() == "github" && url.path() == "/auth-callback" {
-                    log::debug!("deep link URLs: {:?}", url);
-
                     let state = app_handle.state::<AppState>();
                     let mut client = state.oauth_client.lock().await;
 
