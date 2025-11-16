@@ -25,7 +25,6 @@ pub fn run() {
                 log::error!("Single Instance -> failed to show app. {}", err)
             });
         }))
-        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
@@ -43,6 +42,10 @@ pub fn run() {
         .setup(|app| {
             on_app_start(app.handle())?;
             let app_handle = app.handle().clone();
+
+            app.state::<AppState>()
+                .notification_manager
+                .register_handler();
 
             app.deep_link().on_open_url(move |event| {
                 handle_deeplink(&app_handle, event.urls());

@@ -23,7 +23,6 @@ pub type Homepage = ApiResponse<query::homepage::ResponseData>;
 pub type FindPullRequestResult = ApiResponse<query::search_pull_request::ResponseData>;
 pub type FindRepositoriesResult = ApiResponse<query::find_repositories::ResponseData>;
 pub type UserProfileViewer = query::user_profile::UserProfileViewer;
-pub type PullRequest = query::search_pull_request::ResponseData;
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
 #[ts(export, export_to = "../../src/models/graphql.ts")]

@@ -64,23 +64,6 @@ impl AppState {
     pub fn app_dir(&self) -> PathBuf {
         self.app_dir.clone()
     }
-
-    // pub async fn m(&self) {
-    //     let c = self.client.lock().await;
-    //     c.search_pull_requests(filter)
-
-    //     tokio::spawn(async {
-    //         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(10));
-
-    //         loop {
-    //             interval.tick().await;
-
-    //             // Your code to execute every 10 seconds goes here
-    //             log::info!("Executing periodic task every 10 seconds");
-
-    //         }
-    //     });
-    // }
 }
 
 pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {

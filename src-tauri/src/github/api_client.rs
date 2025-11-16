@@ -24,8 +24,6 @@ pub enum Error {
     GraphQLErr(String),
     #[error("invalid request: {status:} {message:}")]
     BadRequest { message: String, status: u16 },
-    #[error("unsupported filter: {}", .0)]
-    UnsupportedFilter(String),
     #[error("no data")]
     MissingData,
     #[error("invalid workflow file: {0}")]

@@ -2,13 +2,11 @@ use std::collections::HashMap;
 
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
-use tauri_plugin_notification::NotificationExt;
 use thiserror::Error;
 
 use crate::{
-    core::{settings, AppState},
-    github,
-    github::query::search_pull_request::SearchPullRequestSearchNodes::PullRequest,
+    core::{notification, settings, AppState},
+    github::{self, query::search_pull_request::SearchPullRequestSearchNodes::PullRequest},
     window,
 };
 
@@ -102,11 +100,10 @@ pub async fn find_pull_requests(
 pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()> {
     let app = app_handle.clone();
 
-    log::debug!("Starting monitor");
-
     tokio::task::spawn(async move {
         let state: State<'_, AppState> = app.state();
         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(20));
+
         loop {
             interval.tick().await;
 
@@ -124,15 +121,17 @@ pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()
                     for v in response.data.search.nodes.iter().flatten().flatten() {
                         if let PullRequest(pr) = v {
                             if !prs.contains_key(&pr.id) {
-                                log::info!("New PR detected lets notify");
-                                app.notification()
-                                    .builder()
-                                    .title("Review Requested")
-                                    .body(&pr.title)
-                                    .show()
-                                    .expect("Failed to show notification");
+                                log::debug!("New PR detected, notifiying {}", &pr.title);
 
-                                log::info!("New PR detected {}", &pr.title);
+                                state
+                                    .notification_manager
+                                    .push_notification(
+                                        &format!("Review Request {}", pr.repository.name),
+                                        &pr.title,
+                                        Some(notification::Category::ReviewRequested),
+                                        Some(HashMap::from([("url".to_string(), pr.url.clone())])),
+                                    )
+                                    .await;
                             }
                             prs.insert(pr.id.clone(), pr.clone());
                         }

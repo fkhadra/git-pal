@@ -54,7 +54,7 @@ impl NotificationManager {
                                 log::debug!("Review requested");
 
                                 if let Some(url) = response.user_info.get("url") {
-                                    log::debug!("Opening pull request in github");
+                                    log::debug!("Opening url from notification");
 
                                     if let Err(err) = open_url(url, None::<&str>) {
                                         log::error!(
