@@ -5,7 +5,7 @@ use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
 
 use crate::{
-    core::{notification, settings, AppState},
+    core::{notification, settings, AppState, JobStatus},
     github::{self, query::search_pull_request::SearchPullRequestSearchNodes::PullRequest},
     window,
 };
@@ -96,6 +96,11 @@ pub async fn find_pull_requests(
     Ok(response)
 }
 
+// #[tauri::command]
+// pub async fn stop_monitoring(state: State<'_, AppState>) -> Result<()> {
+//     state.pull_requests_ch.send(JobStatus::Stopped)?;
+// }
+
 #[tauri::command]
 pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()> {
     let app = app_handle.clone();
@@ -103,42 +108,52 @@ pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()
     tokio::task::spawn(async move {
         let state: State<'_, AppState> = app.state();
         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(20));
+        let mut rx = state.pull_requests_ch.subscribe();
 
         loop {
-            interval.tick().await;
-
-            let response = state
-                .client
-                .lock()
-                .await
-                .find_pull_requests(github::FindPullRequestsFilter::ReviewRequested)
-                .await;
-
-            match response {
-                Ok(response) => {
-                    let mut prs = state.pull_requests.lock().await;
-
-                    for v in response.data.search.nodes.iter().flatten().flatten() {
-                        if let PullRequest(pr) = v {
-                            if !prs.contains_key(&pr.id) {
-                                log::debug!("New PR detected, notifiying {}", &pr.title);
-
-                                state
-                                    .notification_manager
-                                    .push_notification(
-                                        &format!("Review Request {}", pr.repository.name),
-                                        &pr.title,
-                                        Some(notification::Category::ReviewRequested),
-                                        Some(HashMap::from([("url".to_string(), pr.url.clone())])),
-                                    )
-                                    .await;
-                            }
-                            prs.insert(pr.id.clone(), pr.clone());
-                        }
+            tokio::select! {
+                _ = rx.changed() => {
+                    if  *rx.borrow() == JobStatus::Stopped {
+                        log::debug!("stopping pull requests monitoring");
+                        break;
                     }
                 }
-                Err(err) => {
-                    log::error!("Error fetching review requested pull requests: {}", err);
+                _ = interval.tick() => {
+                      let response = state
+                        .client
+                        .lock()
+                        .await
+                        .find_pull_requests(github::FindPullRequestsFilter::ReviewRequested)
+                        .await;
+
+                    match response {
+                        Ok(response) => {
+                            let mut prs = state.pull_requests.lock().await;
+
+                            for v in response.data.search.nodes.iter().flatten().flatten() {
+                                if let PullRequest(pr) = v {
+                                    if !prs.contains_key(&pr.id) {
+                                        log::debug!("New PR detected, notifiying {}", &pr.title);
+
+                                        state
+                                            .notification_manager
+                                            .push_notification(
+                                                &format!("Review Request {}", pr.repository.name),
+                                                &pr.title,
+                                                Some(notification::Category::ReviewRequested),
+                                                Some(HashMap::from([("url".to_string(), pr.url.clone())])),
+                                            )
+                                            .await;
+                                    }
+                                    prs.insert(pr.id.clone(), pr.clone());
+                                }
+                            }
+                        }
+                        Err(err) => {
+                            log::error!("Error fetching review requested pull requests: {}", err);
+                        }
+                    }
+
                 }
             }
         }
