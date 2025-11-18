@@ -108,7 +108,8 @@ pub fn run() {
             commands::update_setting,
             commands::get_setting,
             commands::get_all_settings,
-            commands::monitor_review_requested
+            commands::monitor_review_requested,
+            commands::stop_monitoring
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -14,6 +14,8 @@ use crate::{
 pub enum CommandError {
     #[error("unable to delete token")]
     UnableToDeleteToken,
+    #[error("failed to stop monitoring")]
+    FailedToStopMonitoring,
     #[error(transparent)]
     GithubApi(#[from] github::Error),
     #[error(transparent)]
@@ -96,10 +98,13 @@ pub async fn find_pull_requests(
     Ok(response)
 }
 
-// #[tauri::command]
-// pub async fn stop_monitoring(state: State<'_, AppState>) -> Result<()> {
-//     state.pull_requests_ch.send(JobStatus::Stopped)?;
-// }
+#[tauri::command]
+pub async fn stop_monitoring(state: State<'_, AppState>) -> Result<()> {
+    state
+        .pull_requests_ch
+        .send(JobStatus::Stopped)
+        .map_err(|_| CommandError::FailedToStopMonitoring)
+}
 
 #[tauri::command]
 pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()> {

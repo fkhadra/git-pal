@@ -7,6 +7,7 @@ use std::{
 
 use serde::Serialize;
 use tauri::{async_runtime::Mutex, AppHandle, Emitter, Manager};
+use tokio::sync::watch::{self, Sender};
 use ts_rs::TS;
 use url::Url;
 
@@ -18,6 +19,12 @@ use crate::{
     window,
 };
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum JobStatus {
+    Idle,
+    Stopped,
+}
+
 pub struct AppState {
     pub client: Mutex<github::Client>,
     pub vault: Vault,
@@ -25,6 +32,7 @@ pub struct AppState {
     pub should_do_setup: AtomicBool,
     pub settings: Store,
     pub pull_requests: Mutex<HashMap<String, github::query::search_pull_request::PullRequest>>,
+    pub pull_requests_ch: Sender<JobStatus>,
     pub notification_manager: notification::NotificationManager,
     app_dir: PathBuf,
 }
@@ -36,6 +44,7 @@ impl AppState {
         let should_do_setup = token.is_none();
         let app_dir = app_dir();
         let db_path = app_dir.join("db");
+        let (tx, _) = watch::channel(JobStatus::Idle);
 
         AppState {
             vault,
@@ -46,6 +55,7 @@ impl AppState {
             app_dir: app_dir,
             notification_manager: notification::NotificationManager::new(),
             settings: Store::new(db_path.to_str().expect("should always be set")),
+            pull_requests_ch: tx,
         }
     }
 
