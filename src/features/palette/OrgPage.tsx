@@ -49,7 +49,7 @@ export function OrgPage() {
 							openUrl(v.url);
 						}}
 					>
-						<RepositoryItem repository={v} />
+						<RepositoryItem repository={v} hideOwner />
 					</CommandItem>
 				);
 			})}

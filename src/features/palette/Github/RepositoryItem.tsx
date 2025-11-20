@@ -3,7 +3,13 @@ import type { Repository } from "~/models";
 import { Container } from "../Layout";
 import { RepositoryIcon } from "./RepositoryIcon";
 
-export function RepositoryItem({ repository }: { repository: Repository }) {
+export function RepositoryItem({
+	repository,
+	hideOwner = false,
+}: {
+	repository: Repository;
+	hideOwner?: boolean;
+}) {
 	return (
 		<Container>
 			<RepositoryIcon
@@ -13,7 +19,9 @@ export function RepositoryItem({ repository }: { repository: Repository }) {
 			/>
 			<div className="flex flex-col">
 				<span>
-					{repository.owner.login}/{repository.name}
+					{hideOwner
+						? repository.name
+						: `${repository.owner.login}/${repository.name}`}
 				</span>
 				<div className="flex items-center gap-2 text-xs">
 					<span className="flex items-center">
