@@ -3,6 +3,8 @@ import { state } from "./state";
 
 export function openUrl(url: string) {
 	open(url).finally(() => {
-		state.resetPalette();
+		setTimeout(() => {
+			state.resetPalette();
+		}, 250);
 	});
 }
