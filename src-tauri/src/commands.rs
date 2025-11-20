@@ -146,7 +146,7 @@ pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()
                                         state
                                             .notification_manager
                                             .push_notification(
-                                                &format!("Review Request {}", pr.repository.name),
+                                                &format!("Review Requested: {}", pr.repository.name),
                                                 &pr.title,
                                                 Some(notification::Category::ReviewRequested),
                                                 Some(HashMap::from([("url".to_string(), pr.url.clone())])),
