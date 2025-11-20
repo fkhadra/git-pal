@@ -33,7 +33,7 @@ export function RepositoryItem({
 						<span>{repository.pullRequests?.totalCount || 0}</span>
 					</span>
 					<span className="flex items-center">
-						<CircleDot className="mr-1 size-3" />
+						<CircleDot className="mr-1 size-3 stroke-amber-300" />
 						<span>{repository.issues?.totalCount || 0}</span>
 					</span>
 				</div>
