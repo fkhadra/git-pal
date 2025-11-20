@@ -11,14 +11,7 @@ const Key = {
 
 export function useKeybinds() {
 	const [filter, setFilter] = useState("");
-	const { selectedItem, rootItem } = usePaletteItem();
-	// const isLoadingRoute = usePendingRoute();
-
-	// useEffect(() => {
-	// 	if (isLoadingRoute) {
-	// 		setFilter("");
-	// 	}
-	// }, [isLoadingRoute]);
+	const { selectedItem, parentItem } = usePaletteItem();
 
 	const handleKeyboard = async (e: React.KeyboardEvent<HTMLInputElement>) => {
 		const { key, metaKey } = e;
@@ -47,12 +40,12 @@ export function useKeybinds() {
 
 		// go to repo page
 		if (key === Key.Tab && selectedItem.kind === "repo") {
+			setFilter("");
 			state.goTo(
 				{
 					to: "repository",
 					params: {
 						id: selectedItem.data.id,
-						parentId: selectedItem.data.id,
 					},
 				},
 				`${selectedItem.owner()}/${selectedItem.data.name}`,
@@ -62,6 +55,7 @@ export function useKeybinds() {
 		// go to org page
 		if (key === Key.Tab && selectedItem.kind === "org") {
 			e.preventDefault();
+			setFilter("");
 			state.goTo(
 				{
 					to: "org",
@@ -77,10 +71,10 @@ export function useKeybinds() {
 		if (
 			metaKey &&
 			key === Key.Slash &&
-			(selectedItem?.supportGithubSearch() || rootItem?.supportGithubSearch())
+			(selectedItem?.supportGithubSearch() || parentItem?.supportGithubSearch())
 		) {
-			console.log({ selectedItem, rootItem });
-			const item = selectedItem || rootItem;
+			setFilter("");
+			const item = selectedItem || parentItem;
 			const owner = item.owner();
 			const repo = item?.kind === "repo" ? item.data.name : void 0;
 

@@ -54,7 +54,6 @@ type Page =
 			to: "repository";
 			params: {
 				id: string;
-				parentId?: string;
 			};
 	  }
 	| {
@@ -95,7 +94,6 @@ export const state = proxy({
 	},
 	path: "",
 	query: "",
-	parentId: null,
 	clearPath() {
 		state.path = "";
 	},
@@ -106,7 +104,6 @@ export const state = proxy({
 		state.pages = [{ to: "home" }];
 		state.path = "";
 		state.query = "";
-		state.parentId = null;
 	},
 	goTo(page: Page, path?: string) {
 		state.pages.push(page);
@@ -135,10 +132,13 @@ export function usePaletteItem() {
 	const snapshot = useStateSnaphot();
 	const commandValue = useCommandState((s) => s.value);
 	const selectedItem = state.getItem(commandValue);
-	const rootItem = snapshot.parentId ? state.getItem(snapshot.parentId) : null;
+	const parentItem =
+		snapshot.currentPage.to === "repository"
+			? state.getItem(snapshot.currentPage.params.id)
+			: null;
 
 	return {
-		rootItem,
+		parentItem,
 		selectedItem,
 		selectedItemValue: commandValue,
 		get isPage() {

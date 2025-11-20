@@ -2,7 +2,7 @@ import { Keybind } from "~/components/Keybind";
 import { useGHSearchActive, usePaletteItem } from "./state";
 
 export function Keybinds() {
-	const { selectedItem, rootItem, isPage } = usePaletteItem();
+	const { selectedItem, parentItem: rootItem, isPage } = usePaletteItem();
 	const isGhSearchActive = useGHSearchActive();
 
 	if (isGhSearchActive) {
