@@ -1,5 +1,6 @@
 import { Command, useCommandState } from "cmdk";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect } from "react";
+import commands from "~/commands";
 import { SkeletonRows } from "~/components";
 import { CommandEmpty } from "~/components/Cmdk";
 import { useFullHeightRef } from "~/libs/useFullHeight";
@@ -7,7 +8,10 @@ import { CommandInput } from "./CommandInput";
 import { HomePage } from "./HomePage";
 import { Keybinds } from "./Keybinds";
 import { OrgPage } from "./OrgPage";
-import { PullRequestsPage } from "./PullRequestsPage";
+import {
+	PullRequestsPage,
+	usePreloadPullRequestsQueries,
+} from "./PullRequestsPage";
 import { RepositoryPage } from "./RepositoryPage";
 import { SearchPage } from "./SearchPage";
 import { createPageMapper, useCurrentPage, useGHSearchActive } from "./state";
@@ -23,11 +27,19 @@ const pages = createPageMapper({
 export function PalettePage() {
 	const listBox = useFullHeightRef<HTMLDivElement>({ bottomPadding: 52 });
 	const isGhSearchActive = useGHSearchActive();
-	const [v, setV] = useState("");
+	// const [v, setV] = useState("");
 	const currentPage = useCurrentPage();
 	const Page = pages[currentPage.to];
 
-	// usePreloadRoutes();
+	usePreloadPullRequestsQueries();
+
+	useEffect(() => {
+		commands.monitorPullRequests();
+
+		return () => {
+			commands.stopMonitoring();
+		};
+	}, []);
 
 	return (
 		<div

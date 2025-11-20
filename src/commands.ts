@@ -99,6 +99,10 @@ function monitorPullRequests() {
 	return invoke<void>("monitor_review_requested");
 }
 
+function stopMonitoring() {
+	return invoke<void>("stop_monitoring");
+}
+
 export default {
 	authenticate,
 	homepage,
@@ -118,4 +122,5 @@ export default {
 	updateSetting,
 	getSetting,
 	monitorPullRequests,
+	stopMonitoring
 };

@@ -115,6 +115,8 @@ pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()
         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(20));
         let mut rx = state.pull_requests_ch.subscribe();
 
+        log::debug!("Starting pull request monitoring");
+
         loop {
             tokio::select! {
                 _ = rx.changed() => {
@@ -124,6 +126,7 @@ pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()
                     }
                 }
                 _ = interval.tick() => {
+                      log::debug!("Monitoring tick");
                       let response = state
                         .client
                         .lock()

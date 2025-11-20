@@ -87,6 +87,8 @@ impl Client {
 
         let rate_limit = RateLimit::extract(res.headers());
 
+        log::debug!("Rate limit: {:?}", rate_limit);
+
         Ok(Response {
             rate_limit,
             response: res,
