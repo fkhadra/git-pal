@@ -104,10 +104,10 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
                                 log::error!("Failed to create main window after auth {}", err)
                             });
 
-                            // state
-                            //     .vault
-                            //     .save_token(&res.access_token)
-                            //     .unwrap_or_else(|err| log::error!("Failed to save token {}", err));
+                            state
+                                .vault
+                                .save_token(&res.access_token)
+                                .unwrap_or_else(|err| log::error!("Failed to save token {}", err));
                         }
                         Err(err) => {
                             log::error!("Failed to exchange code {}", err);

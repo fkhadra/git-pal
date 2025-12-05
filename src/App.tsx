@@ -11,7 +11,7 @@ function useAppQuery() {
 		queryKey: ["app"],
 		queryFn: async () => {
 			if (window.currentView === "setup") {
-				return undefined;
+				return {};
 			}
 
 			const userProfile = await commands.isAuthenticated();

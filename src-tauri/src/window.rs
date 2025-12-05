@@ -77,18 +77,25 @@ pub fn on_app_start(handle: &AppHandle) -> Result {
     let state = handle.state::<AppState>();
 
     match state.should_do_setup.load(Ordering::Relaxed) {
-        false => create_main_window(handle)?,
-        true => create_window(
-            handle,
-            WindowConfig {
-                title: "Welcome to Git Pal",
-                current_view: "setup",
-                url: "setup",
-                label: SETUP_WINDOW_LABEL,
-                width: 800.0,
-                height: 600.0,
-            },
-        )?,
+        false => {
+            log::debug!("No need to do setup");
+            create_main_window(handle)?
+        }
+        true => {
+            log::debug!("should do setup");
+
+            create_window(
+                handle,
+                WindowConfig {
+                    title: "Welcome to Git Pal",
+                    current_view: "setup",
+                    url: "setup",
+                    label: SETUP_WINDOW_LABEL,
+                    width: 800.0,
+                    height: 600.0,
+                },
+            )?
+        }
     };
 
     Ok(())

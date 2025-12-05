@@ -9,12 +9,12 @@ pub struct Vault {
 impl Vault {
     pub fn new(service: &str, token_name: &str) -> Result<Vault, Error> {
         let keyring = Entry::new(&service, &token_name)?;
+
         Ok(Vault { keyring })
     }
 
     pub fn get_token(&self) -> Result<String, Error> {
-        Ok("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".to_string())
-        // self.keyring.get_password()
+        self.keyring.get_password()
     }
 
     pub fn save_token(&self, token: &str) -> Result<(), Error> {
