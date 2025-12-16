@@ -40,6 +40,9 @@ pub fn run() {
         )
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())?;
+
             on_app_start(app.handle())?;
             let app_handle = app.handle().clone();
 
