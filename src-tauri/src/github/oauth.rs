@@ -69,13 +69,13 @@ impl Client {
             );
 
         Self {
-            client: client,
+            client,
             pkce_verifier: None,
             csrf_token: None,
         }
     }
 
-    pub fn start_auth_flow(self: &mut Self) -> Result<()> {
+    pub fn start_auth_flow(&mut self) -> Result<()> {
         let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
 
         self.pkce_verifier = Some(pkce_verifier);
@@ -97,7 +97,7 @@ impl Client {
             .map_err(|e| Error::FailedToOpenBrowser(e.to_string()))
     }
 
-    pub async fn exchange_code(self: &mut Self, callback_url: Url) -> Result<OAuthCredentials> {
+    pub async fn exchange_code(&mut self, callback_url: Url) -> Result<OAuthCredentials> {
         let code = callback_url
             .query_pairs()
             .find(|(k, _)| k == "code")
@@ -118,7 +118,7 @@ impl Client {
         if state != csrf_token {
             return Err(Error::CsrfMismatch {
                 csrf: csrf_token,
-                state: state,
+                state,
             });
         }
 

@@ -17,7 +17,7 @@ import type * as events from "./events";
 
 export type AuthenticatedPayload = Extract<
 	events.Event,
-	{ authenticated: unknown }
+	{ authMessage: unknown }
 >;
 
 export type ThemeChangedPayload = Extract<

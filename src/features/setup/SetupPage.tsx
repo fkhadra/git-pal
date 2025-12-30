@@ -13,7 +13,7 @@ export function SetupPage() {
 
 	useEffect(() => {
 		const listener = commands.onAuthMessage((event) => {
-			if (event.payload.authenticated.ok) {
+			if (event.payload.authMessage.ok) {
 				setIsAuthenticated(true);
 			}
 		});

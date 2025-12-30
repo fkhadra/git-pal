@@ -32,7 +32,7 @@ fn main() {
                 .generate_ts_bindings();
         }
         Command::Ts => {
-            Codegen::init().gen_graphql();
+            Codegen::init().generate_ts_bindings();
         }
     }
 }
@@ -47,7 +47,7 @@ fn find_tauri_dir() -> String {
         };
     }
 
-    Err(()).expect("tauri.conf.json not found in current or parent directories")
+    panic!("{1}: {:?}", (), "tauri.conf.json not found in current or parent directories")
 }
 
 struct Codegen {
@@ -90,7 +90,7 @@ impl Codegen {
             .status()
             .expect("Failed to generate graphql queries");
 
-        &self
+        self
     }
 
     fn update_generated_queries(&self) -> &Self {
@@ -114,19 +114,18 @@ impl Codegen {
             } else if is_first {
                 output.push("use ts_rs::TS;".into());
                 is_first = false;
-            } else if let Some(m) = current_mod.as_ref() {
-                if line.contains("TS") {
+            } else if let Some(m) = current_mod.as_ref()
+                && line.contains("TS") {
                     output.push(format!(
                         "#[ts(export, export_to = \"{}{}\")]",
                         &self.models_dir, m
                     ));
                 }
-            }
         }
 
         fs::write(&self.query_filepath, output.join("\n")).expect("unable to save file");
 
-        &self
+        self
     }
 
     fn generate_ts_bindings(&self) -> &Self {
@@ -135,6 +134,6 @@ impl Codegen {
             .current_dir(&self.tauri_dir)
             .status()
             .expect("failed to generate bindings");
-        &self
+        self
     }
 }

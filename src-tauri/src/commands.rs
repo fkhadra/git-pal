@@ -191,19 +191,19 @@ pub fn delete_token(state: State<'_, AppState>) -> Result<()> {
 pub fn is_autostart_enabled(
     app_handle: tauri::AppHandle,
 ) -> Result<bool, tauri_plugin_autostart::Error> {
-    return app_handle.autolaunch().is_enabled();
+    app_handle.autolaunch().is_enabled()
 }
 
 #[tauri::command]
 pub fn enable_autostart(app_handle: tauri::AppHandle) -> Result<(), tauri_plugin_autostart::Error> {
-    return app_handle.autolaunch().enable();
+    app_handle.autolaunch().enable()
 }
 
 #[tauri::command]
 pub fn disable_autostart(
     app_handle: tauri::AppHandle,
 ) -> Result<(), tauri_plugin_autostart::Error> {
-    return app_handle.autolaunch().disable();
+    app_handle.autolaunch().disable()
 }
 
 #[tauri::command]
@@ -259,7 +259,7 @@ pub async fn run_workflow(
     state: State<'_, AppState>,
     params: github::RunWorkflowRequest<'_>,
 ) -> Result<()> {
-    let _ = state.client.lock().await.run_workflow(params).await?;
+    state.client.lock().await.run_workflow(params).await?;
 
     Ok(())
 }

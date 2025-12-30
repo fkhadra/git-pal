@@ -66,7 +66,7 @@ function startAuthFlow() {
 }
 
 function onAuthMessage(cb: (event: Event<AuthenticatedPayload>) => void) {
-	return listen<AuthenticatedPayload>("Authenticated", cb);
+	return listen<AuthenticatedPayload>("AuthMessage", cb);
 }
 
 function onThemeChanged(cb: (event: Event<ThemeChangedPayload>) => void) {

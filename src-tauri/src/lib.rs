@@ -36,6 +36,8 @@ pub fn run() {
                     path: log_path,
                     file_name: Some(String::from("git-pal")),
                 }))
+                .level(log::LevelFilter::Info)
+                .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())

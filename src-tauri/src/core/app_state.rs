@@ -52,7 +52,7 @@ impl AppState {
             oauth_client: Mutex::new(oauth::Client::new()),
             should_do_setup: AtomicBool::new(should_do_setup),
             pull_requests: Mutex::new(HashMap::new()),
-            app_dir: app_dir,
+            app_dir,
             notification_manager: notification::NotificationManager::new(),
             settings: Store::new(db_path.to_str().expect("should always be set")),
             pull_requests_ch: tx,
@@ -94,7 +94,7 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
                             log::info!("successfully authenticated");
                             emit_event(
                                 &app_handle,
-                                Event::Authenticated(AuthMessage {
+                                Event::AuthMessage(AuthPayload {
                                     msg: None,
                                     ok: true,
                                 }),
@@ -108,13 +108,19 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
                                 .vault
                                 .save_token(&res.access_token)
                                 .unwrap_or_else(|err| log::error!("Failed to save token {}", err));
+
+                            let s = app_handle.get_webview_window("Setup").unwrap();
+
+                            window::show_window(&s).unwrap_or_else(|_| {
+                                log::error!("Failed to display setup window again")
+                            })
                         }
                         Err(err) => {
                             log::error!("Failed to exchange code {}", err);
 
                             emit_event(
                                 &app_handle,
-                                Event::Authenticated(AuthMessage {
+                                Event::AuthMessage(AuthPayload {
                                     ok: false,
                                     msg: Some(err.to_string()),
                                 }),
@@ -129,7 +135,7 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
 
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export, export_to = "../../src/models/events.ts")]
-pub struct AuthMessage {
+pub struct AuthPayload {
     msg: Option<String>,
     ok: bool,
 }
@@ -138,13 +144,13 @@ pub struct AuthMessage {
 #[ts(export, export_to = "../../src/models/events.ts")]
 #[serde(rename_all = "camelCase")]
 pub enum Event {
-    Authenticated(AuthMessage),
+    AuthMessage(AuthPayload),
     ThemeChanged(settings::Theme),
 }
 
 pub fn emit_event(handle: &AppHandle, event: Event) {
     let ev = match &event {
-        Event::Authenticated(_) => "AuthMessage",
+        Event::AuthMessage(_) => "AuthMessage",
         Event::ThemeChanged(_) => "ThemeChanged",
     };
 
