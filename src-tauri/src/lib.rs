@@ -13,6 +13,7 @@ use tauri_plugin_log::{Target, TargetKind};
 
 use window::{on_app_start, show_app, show_settings};
 
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app_state = AppState::new();
@@ -41,17 +42,24 @@ pub fn run() {
                 .build(),
         )
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
-            app.handle()
-                .plugin(tauri_plugin_updater::Builder::new().build())?;
+            let _app_handle = app.handle().clone();
+
+            //  uncomment to enable update
+            // tauri::async_runtime::spawn(async move {
+            //     if let Err(err) = handle_app_update(app_handle).await {
+            //         log::error!("failed to handle update: {}", err)
+            //     }
+            // });
 
             on_app_start(app.handle())?;
-            let app_handle = app.handle().clone();
 
             app.state::<AppState>()
                 .notification_manager
                 .register_handler();
 
+            let app_handle = app.handle().clone();
             app.deep_link().on_open_url(move |event| {
                 handle_deeplink(&app_handle, event.urls());
             });

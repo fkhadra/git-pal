@@ -7,6 +7,7 @@ use std::{
 
 use serde::Serialize;
 use tauri::{async_runtime::Mutex, AppHandle, Emitter, Manager};
+use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::watch::{self, Sender};
 use ts_rs::TS;
 use url::Url;
@@ -131,6 +132,29 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
             }
         }
     });
+}
+
+pub async fn handle_app_update(app: AppHandle) -> tauri_plugin_updater::Result<()> {
+    if let Some(update) = app.updater()?.check().await? {
+        let mut downloaded = 0;
+
+        // alternatively we could also call update.download() and update.install() separately
+        update
+            .download_and_install(
+                |chunk_length, content_length| {
+                    downloaded += chunk_length;
+                    log::info!("downloaded {downloaded} from {content_length:?}");
+                },
+                || {
+                    log::info!("download finished");
+                },
+            )
+            .await?;
+
+        log::info!("update installed");
+        // app.restart();
+    }
+    Ok(())
 }
 
 #[derive(Debug, Clone, Serialize, TS)]

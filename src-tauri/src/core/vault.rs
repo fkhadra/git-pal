@@ -8,7 +8,7 @@ pub struct Vault {
 
 impl Vault {
     pub fn new(service: &str, token_name: &str) -> Result<Vault, Error> {
-        let keyring = Entry::new(&service, &token_name)?;
+        let keyring = Entry::new(service, token_name)?;
 
         Ok(Vault { keyring })
     }

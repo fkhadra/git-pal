@@ -66,7 +66,7 @@ impl Client {
     }
 
     pub fn is_token_set(&self) -> bool {
-        return self.token.is_some();
+        self.token.is_some()
     }
 
     pub(super) async fn do_request(&self, req: RequestBuilder) -> Result<Response> {

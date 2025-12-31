@@ -75,8 +75,8 @@ impl Store {
         let tx = self.db.begin_read()?;
 
         match tx.open_table(TABLE) {
-            Err(TableError::TableDoesNotExist(_)) => return Ok(None),
-            Err(e) => return Err(e.into()),
+            Err(TableError::TableDoesNotExist(_)) => Ok(None),
+            Err(e) => Err(e.into()),
             Ok(table) => {
                 let v = table.get(key.as_str())?.map(|v| v.value());
 
