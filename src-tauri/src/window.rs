@@ -129,7 +129,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
         MAIN_WINDOW_LABEL,
         WebviewUrl::App("palette".into()),
     )
-    .initialization_script("window.currentView = 'palette'")
+    .initialization_script(hydrate_global(handle, "palette"))
     .title("Git Pal")
     .inner_size(800.0, 600.0)
     .transparent(true)
@@ -153,10 +153,11 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
 
     register_global_shortcut(handle)?;
 
-    let cw = window.clone();
+    let _cw = window.clone();
     window.on_window_event(move |e| match e {
         WindowEvent::CloseRequested { api, .. } => {
             api.prevent_close();
+            #[cfg(not(debug_assertions))]
             cw.hide().unwrap_or_else(|err| {
                 log::error!(
                     "On window close, {}",
@@ -169,6 +170,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
         }
         WindowEvent::Focused(focused) => {
             if !focused {
+                #[cfg(not(debug_assertions))]
                 cw.hide().unwrap_or_else(|err| {
                     log::error!(
                         "On window focus change, {}",
@@ -198,7 +200,7 @@ struct WindowConfig<'a> {
 fn create_window(handle: &AppHandle, config: WindowConfig) -> Result {
     tauri::WebviewWindowBuilder::new(handle, config.label, WebviewUrl::App(config.url.into()))
         .title(config.title)
-        .initialization_script(format!("window.currentView = '{}';", config.current_view))
+        .initialization_script(hydrate_global(handle, config.current_view))
         .inner_size(config.width, config.height)
         .resizable(false)
         .minimizable(false)
@@ -233,4 +235,16 @@ fn register_global_shortcut(app_handle: &AppHandle) -> Result {
         .map_err(|err| Error::UnableToRegisterGlobalShortcut(err.to_string()))?;
 
     Ok(())
+}
+
+fn hydrate_global(app_handle: &AppHandle, current_view: &str) -> String {
+    let version = app_handle.package_info().version.to_string();
+
+    format!(
+        r#"
+    globalThis.currentView = "{}";
+    globalThis.appVersion = "{}";
+    "#,
+        current_view, version
+    )
 }

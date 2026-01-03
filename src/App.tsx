@@ -10,7 +10,7 @@ function useAppQuery() {
 	return useSuspenseQuery({
 		queryKey: ["app"],
 		queryFn: async () => {
-			if (window.currentView === "setup") {
+			if (globalThis.currentView === "setup") {
 				return {};
 			}
 
@@ -27,7 +27,7 @@ function useAppQuery() {
 	});
 }
 
-const Views: Record<Window["currentView"], React.FC> = {
+const Views: Record<typeof globalThis["currentView"], React.FC> = {
 	settings: SettingsPage,
 	setup: SetupPage,
 	palette: PalettePage,
