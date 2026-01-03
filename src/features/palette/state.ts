@@ -83,6 +83,11 @@ export function useGHSearchActive() {
 	return snap.currentPage.to === "search";
 }
 
+export function useDisableEmptySearchResults() {
+	const snap = useSnapshot(state);
+	return snap.disableEmptySearchResults;
+}
+
 export function useStateSnaphot() {
 	return useSnapshot(state);
 }
@@ -92,6 +97,7 @@ export const state = proxy({
 	get currentPage() {
 		return this.pages[this.pages.length - 1] as Page;
 	},
+	disableEmptySearchResults: false,
 	path: "",
 	query: "",
 	clearPath() {
@@ -104,9 +110,11 @@ export const state = proxy({
 		state.pages = [{ to: "home" }];
 		state.path = "";
 		state.query = "";
+		state.disableEmptySearchResults = false;
 	},
 	goTo(page: Page, path?: string) {
 		state.pages.push(page);
+		state.disableEmptySearchResults = false;
 		if (path) {
 			state.path = path;
 		}
@@ -114,6 +122,7 @@ export const state = proxy({
 	goBack() {
 		if (state.pages.length > 1) {
 			state.pages.pop();
+			state.disableEmptySearchResults = false;
 
 			if (state.pages.length === 1) {
 				state.path = "";
