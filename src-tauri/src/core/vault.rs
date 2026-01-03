@@ -13,8 +13,16 @@ impl Vault {
         Ok(Vault { keyring })
     }
 
+    #[cfg(not(debug_assertions))]
     pub fn get_token(&self) -> Result<String, Error> {
         self.keyring.get_password()
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn get_token(&self) -> Result<String, Error> {
+        use std::env;
+
+        env::var("GIT_PAL_TEST_TOKEN").map_err(|_| Error::NoEntry)
     }
 
     pub fn save_token(&self, token: &str) -> Result<(), Error> {

@@ -6,9 +6,18 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::github::Error;
+use crate::github::{Error, RateLimit};
 
-use super::api_client::{ApiResponse, Client, Response, Result};
+use super::api_client::{Client, Response, Result};
+
+const API_URL: &str = "https://api.github.com/";
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/models/api.ts")]
+pub struct RestResponse<T> {
+    pub rate_limit: RateLimit,
+    pub data: T,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
 #[ts(export, export_to = "../../src/models/rest.ts")]
@@ -63,8 +72,6 @@ struct WorkflowTrigger {
     inputs: Option<HashMap<WorkflowInputName, WorkflowInput>>,
 }
 
-const API_URL: &str = "https://api.github.com/";
-
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "../../src/models/rest.ts")]
 pub struct FileRequest<'a> {
@@ -95,7 +102,7 @@ impl Client {
     pub async fn find_workflows(
         &self,
         FindWorkflowsRequest { owner, repository }: FindWorkflowsRequest<'_>,
-    ) -> Result<ApiResponse<Workflows>> {
+    ) -> Result<RestResponse<Workflows>> {
         let req = self.http.get(format!(
             "{API_URL}repos/{owner}/{repository}/actions/workflows"
         ));
@@ -103,7 +110,7 @@ impl Client {
         self.send_request(req).await
     }
 
-    pub async fn file(&self, params: FileRequest<'_>) -> Result<ApiResponse<String>> {
+    pub async fn file(&self, params: FileRequest<'_>) -> Result<RestResponse<String>> {
         let req = self
             .http
             .get(format!(
@@ -120,7 +127,7 @@ impl Client {
         } = self.do_request(req).await?;
         let file_content = response.text().await?;
 
-        Ok(ApiResponse {
+        Ok(RestResponse {
             rate_limit,
             data: file_content,
         })
@@ -129,7 +136,7 @@ impl Client {
     pub async fn extract_workflow_variables(
         &self,
         params: FileRequest<'_>,
-    ) -> Result<ApiResponse<WorkflowInputs>> {
+    ) -> Result<RestResponse<WorkflowInputs>> {
         let res = self.file(params).await?;
 
         let workflow: WorkflowFile = serde_yaml::from_str(&res.data)
@@ -160,7 +167,7 @@ impl Client {
             })
             .unwrap_or_default();
 
-        Ok(ApiResponse {
+        Ok(RestResponse {
             rate_limit: res.rate_limit,
             data: variables,
         })
@@ -194,7 +201,7 @@ impl Client {
         Ok(())
     }
 
-    async fn send_request<R>(&self, req: RequestBuilder) -> Result<ApiResponse<R>>
+    async fn send_request<R>(&self, req: RequestBuilder) -> Result<RestResponse<R>>
     where
         R: DeserializeOwned + Clone + Debug,
     {
@@ -205,6 +212,6 @@ impl Client {
         } = self.do_request(req).await?;
         let data: R = response.json().await?;
 
-        Ok(ApiResponse { rate_limit, data })
+        Ok(RestResponse { rate_limit, data })
     }
 }

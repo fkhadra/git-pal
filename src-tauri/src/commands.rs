@@ -67,9 +67,10 @@ pub async fn is_authenticated(state: State<'_, AppState>) -> Result<github::User
         return Ok(user);
     }
 
-    let p = client.load_user_profile().await?;
-
-    Ok(p.data.viewer)
+    match client.load_user_profile().await?.data {
+        Some(v) => Ok(v.viewer),
+        None => Err(github::Error::MissingData.into()),
+    }
 }
 
 #[tauri::command]
@@ -88,9 +89,11 @@ pub async fn find_pull_requests(
     if is_review_requested {
         let mut prs = state.pull_requests.lock().await;
 
-        for v in response.data.search.nodes.iter().flatten().flatten() {
-            if let PullRequest(pr) = v {
-                prs.insert(pr.id.clone(), pr.clone());
+        if let Some(data) = &response.data {
+            for v in data.search.nodes.iter().flatten().flatten() {
+                if let PullRequest(pr) = v {
+                    prs.insert(pr.id.clone(), pr.clone());
+                }
             }
         }
     }
@@ -119,50 +122,55 @@ pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()
 
         loop {
             tokio::select! {
-                _ = rx.changed() => {
-                    if  *rx.borrow() == JobStatus::Stopped {
-                        log::debug!("stopping pull requests monitoring");
-                        break;
-                    }
+            _ = rx.changed() => {
+                if  *rx.borrow() == JobStatus::Stopped {
+                    log::debug!("stopping pull requests monitoring");
+                    break;
                 }
-                _ = interval.tick() => {
-                      log::debug!("Monitoring tick");
-                      let response = state
-                        .client
-                        .lock()
-                        .await
-                        .find_pull_requests(github::FindPullRequestsFilter::ReviewRequested)
-                        .await;
+            }
+            _ = interval.tick() => {
+            log::debug!("Monitoring tick");
+            let response = state
+                .client
+                .lock()
+                .await
+                .find_pull_requests(github::FindPullRequestsFilter::ReviewRequested)
+                .await;
 
-                    match response {
-                        Ok(response) => {
-                            let mut prs = state.pull_requests.lock().await;
+            match response {
+                Ok(response) => {
+                    let mut prs = state.pull_requests.lock().await;
 
-                            for v in response.data.search.nodes.iter().flatten().flatten() {
-                                if let PullRequest(pr) = v {
-                                    if !prs.contains_key(&pr.id) {
-                                        log::debug!("New PR detected, notifiying {}", &pr.title);
+                    if let Some(data) = response.data {
+                        for v in data.search.nodes.into_iter().flatten().flatten() {
+                            if let PullRequest(pr) = v {
+                                if !prs.contains_key(&pr.id) {
+                                    log::debug!("New PR detected, notifiying {}", &pr.title);
 
-                                        state
-                                            .notification_manager
-                                            .push_notification(
-                                                &format!("Review Requested: {}", pr.repository.name),
-                                                &pr.title,
-                                                Some(notification::Category::ReviewRequested),
-                                                Some(HashMap::from([("url".to_string(), pr.url.clone())])),
-                                            )
-                                            .await;
-                                    }
-                                    prs.insert(pr.id.clone(), pr.clone());
+                                    state
+                                        .notification_manager
+                                        .push_notification(
+                                            &format!("Review Requested: {}", pr.repository.name),
+                                            &pr.title,
+                                            Some(notification::Category::ReviewRequested),
+                                            Some(HashMap::from([(
+                                                "url".to_string(),
+                                                pr.url.clone(),
+                                            )])),
+                                        )
+                                        .await;
                                 }
+                                prs.insert(pr.id.to_string(), pr);
                             }
                         }
-                        Err(err) => {
-                            log::error!("Error fetching review requested pull requests: {}", err);
-                        }
                     }
-
                 }
+                Err(err) => {
+                    log::error!("Error fetching review requested pull requests: {}", err);
+                }
+            }
+
+            }
             }
         }
     });
@@ -233,7 +241,7 @@ pub async fn start_oauth_flow(state: State<'_, AppState>) -> Result<()> {
 pub async fn find_workflows(
     state: State<'_, AppState>,
     params: github::FindWorkflowsRequest<'_>,
-) -> Result<github::ApiResponse<github::Workflows>> {
+) -> Result<github::RestResponse<github::Workflows>> {
     let res = state.client.lock().await.find_workflows(params).await?;
 
     Ok(res)
@@ -243,7 +251,7 @@ pub async fn find_workflows(
 pub async fn extract_workflow_variables(
     state: State<'_, AppState>,
     params: github::FileRequest<'_>,
-) -> Result<github::ApiResponse<github::WorkflowInputs>> {
+) -> Result<github::RestResponse<github::WorkflowInputs>> {
     let res = state
         .client
         .lock()

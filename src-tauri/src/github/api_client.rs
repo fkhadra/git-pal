@@ -9,19 +9,10 @@ use super::query::user_profile;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/api.ts")]
-pub struct ApiResponse<T> {
-    pub rate_limit: RateLimit,
-    pub data: T,
-}
-
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("token is missing")]
     MissingToken,
-    #[error("response errors: {}",.0)]
-    GraphQLErr(String),
     #[error("invalid request: {status:} {message:}")]
     BadRequest { message: String, status: u16 },
     #[error("no data")]

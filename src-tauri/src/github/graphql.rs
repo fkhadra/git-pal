@@ -1,11 +1,13 @@
 use std::fmt::Debug;
 
-use graphql_client::{GraphQLQuery, QueryBody, Response as GraphQLResponse};
+use graphql_client::{GraphQLQuery, QueryBody, Response as GQLResponse};
 use serde::Deserialize;
 use serde::{self, de::DeserializeOwned, Serialize};
 use ts_rs::TS;
 
-use super::api_client::{ApiResponse, Client, Error, Response, Result};
+use crate::github::RateLimit;
+
+use super::api_client::{Client, Error, Response, Result};
 use super::query;
 
 const GRAPHQL_API_URL: &str = "https://api.github.com/graphql";
@@ -18,10 +20,18 @@ pub enum FindPullRequestsFilter {
     ReviewRequested,
 }
 
-pub type UserProfile = ApiResponse<query::user_profile::ResponseData>;
-pub type Homepage = ApiResponse<query::homepage::ResponseData>;
-pub type FindPullRequestResult = ApiResponse<query::search_pull_request::ResponseData>;
-pub type FindRepositoriesResult = ApiResponse<query::find_repositories::ResponseData>;
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export, export_to = "../../src/models/api.ts")]
+pub struct GraphQLResponse<T> {
+    pub rate_limit: RateLimit,
+    pub data: Option<T>,
+    pub errors: Option<Vec<String>>,
+}
+
+pub type UserProfile = GraphQLResponse<query::user_profile::ResponseData>;
+pub type Homepage = GraphQLResponse<query::homepage::ResponseData>;
+pub type FindPullRequestResult = GraphQLResponse<query::search_pull_request::ResponseData>;
+pub type FindRepositoriesResult = GraphQLResponse<query::find_repositories::ResponseData>;
 pub type UserProfileViewer = query::user_profile::UserProfileViewer;
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
@@ -41,8 +51,9 @@ impl Client {
     pub async fn load_user_profile(&mut self) -> Result<UserProfile> {
         let q = query::UserProfile::build_query(query::user_profile::Variables);
         let res: UserProfile = self.send_graphql(&q).await?;
+        let data = res.data.as_ref().ok_or(Error::MissingData)?;
 
-        self.user = Some(res.data.viewer.clone());
+        self.user = Some(data.viewer.clone());
 
         Ok(res)
     }
@@ -87,7 +98,7 @@ impl Client {
         self.send_graphql(&q).await
     }
 
-    async fn send_graphql<T, R>(&self, body: &QueryBody<T>) -> Result<ApiResponse<R>>
+    async fn send_graphql<T, R>(&self, body: &QueryBody<T>) -> Result<GraphQLResponse<R>>
     where
         T: Serialize,
         R: DeserializeOwned + Clone + Debug,
@@ -98,20 +109,18 @@ impl Client {
         } = self
             .do_request(self.http.post(GRAPHQL_API_URL).json(body))
             .await?;
-        let response_body: GraphQLResponse<R> = response.json().await?;
+        let response_body: GQLResponse<R> = response.json().await?;
 
-        if let Some(errs) = response_body.errors {
-            let msg = errs
-                .iter()
-                .map(|v| v.message.to_string())
-                .collect::<Vec<String>>()
-                .join(", ");
+        let errors = response_body.errors.map(|errs| {
+            let mut messages: Vec<String> = errs.into_iter().map(|v| v.message).collect();
+            messages.dedup();
+            messages
+        });
 
-            return Err(Error::GraphQLErr(msg));
-        }
-
-        let data = response_body.data.ok_or(Error::MissingData)?;
-
-        Ok(ApiResponse { data, rate_limit })
+        Ok(GraphQLResponse {
+            data: response_body.data,
+            rate_limit,
+            errors,
+        })
     }
 }
