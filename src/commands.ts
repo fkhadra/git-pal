@@ -11,7 +11,7 @@ import type {
 	WorkflowInput,
 	Workflows,
 } from "./models";
-import type { ApiResponse } from "./models/api";
+import type {  GraphQLResponse, RestResponse } from "./models/api";
 import type { ResponseData as FindRepositoriesResponse } from "./models/find-repositories";
 import type { FindRepositoriesRequest } from "./models/graphql";
 import type { ResponseData as HomepageResponse } from "./models/homepage";
@@ -22,7 +22,7 @@ import type {
 } from "./models/user-profile";
 
 function authenticate(token: string) {
-	return invoke<ApiResponse<UserProfileResponse>>("authenticate", { token });
+	return invoke<GraphQLResponse<UserProfileResponse>>("authenticate", { token });
 }
 
 function isAuthenticated() {
@@ -30,17 +30,17 @@ function isAuthenticated() {
 }
 
 function homepage() {
-	return invoke<ApiResponse<HomepageResponse>>("homepage");
+	return invoke<GraphQLResponse<HomepageResponse>>("homepage");
 }
 
 function findPullRequests(filter: FindPullRequestsFilter) {
-	return invoke<ApiResponse<SearchPullRequestsResponse>>("find_pull_requests", {
+	return invoke<GraphQLResponse<SearchPullRequestsResponse>>("find_pull_requests", {
 		filter,
 	});
 }
 
 function findRepositories(params: FindRepositoriesRequest) {
-	return invoke<ApiResponse<FindRepositoriesResponse>>("find_repositories", {
+	return invoke<GraphQLResponse<FindRepositoriesResponse>>("find_repositories", {
 		params,
 	});
 }
@@ -74,11 +74,11 @@ function onThemeChanged(cb: (event: Event<ThemeChangedPayload>) => void) {
 }
 
 function findWorkflows(params: FindWorkflowsRequest) {
-	return invoke<ApiResponse<Workflows>>("find_workflows", { params });
+	return invoke<RestResponse<Workflows>>("find_workflows", { params });
 }
 
 function extractWorkflowVariables(params: FileRequest) {
-	return invoke<ApiResponse<WorkflowInput[]>>("extract_workflow_variables", {
+	return invoke<RestResponse<WorkflowInput[]>>("extract_workflow_variables", {
 		params,
 	});
 }
