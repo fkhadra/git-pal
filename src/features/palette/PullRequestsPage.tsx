@@ -1,6 +1,7 @@
 import { usePrefetchQuery, useSuspenseQuery } from "@tanstack/react-query";
-
+import { useEffect } from "react";
 import commands from "~/commands";
+import { Keybind } from "~/components";
 import { CommandGroup, CommandItem } from "~/components/Cmdk";
 import type { FindPullRequestsFilter, PullRequest } from "~/models";
 import { PullRequestItem } from "./Github";
@@ -52,8 +53,27 @@ function usePullRequestsQuery() {
 
 export function PullRequestsPage() {
 	const { data } = usePullRequestsQuery();
+	const noPRToReview = !data || Object.keys(data).length === 0
 
-	if (!data) return;
+	useEffect(() => {
+			if(noPRToReview) {
+				state.disableEmptySearchResults = true;
+			}
+	}, [noPRToReview]);
+
+	if (!data || Object.keys(data).length === 0)
+		return (
+			<div className="grid place-items-center">
+				<span className="text-6xl">🙌</span>
+				<span className="font-bold text-xl mt-2">
+					No pull requests to review
+				</span>
+				<span className="text-sm flex mt-2">
+					Press <Keybind className="mx-1" keys={["esc"]} /> to go to the
+					previous page
+				</span>
+			</div>
+		);
 
 	return (
 		<>

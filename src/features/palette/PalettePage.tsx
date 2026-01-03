@@ -14,7 +14,7 @@ import {
 } from "./PullRequestsPage";
 import { RepositoryPage } from "./RepositoryPage";
 import { SearchPage } from "./SearchPage";
-import { createPageMapper, useCurrentPage, useGHSearchActive } from "./state";
+import { createPageMapper, useCurrentPage, useDisableEmptySearchResults, useGHSearchActive } from "./state";
 
 const pages = createPageMapper({
 	home: HomePage,
@@ -70,8 +70,9 @@ export function PalettePage() {
 function EmptySearchResults() {
 	const search = useCommandState((s) => s.search);
 	const isGhSearchActive = useGHSearchActive();
+	const disableEmptySearchResults = useDisableEmptySearchResults()
 
-	if (isGhSearchActive || search.length === 0) return null;
+	if (isGhSearchActive || search.length === 0 || disableEmptySearchResults) return null;
 
 	return (
 		<CommandEmpty>
