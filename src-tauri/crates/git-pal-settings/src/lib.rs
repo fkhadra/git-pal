@@ -60,12 +60,12 @@ pub enum SettingValue {
     MonitorInterval(u32),
 }
 
-pub struct SettingsManager {
+pub struct SettingManager {
     filepath: PathBuf,
     pub settings: Settings,
 }
 
-impl SettingsManager {
+impl SettingManager {
     pub fn new<P: Into<PathBuf>>(filename: P) -> Result<Self, io::Error> {
         let filepath: PathBuf = filename.into();
 
