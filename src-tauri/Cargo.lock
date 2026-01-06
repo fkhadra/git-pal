@@ -773,13 +773,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1d728cc89cf3aee9ff92b05e62b19ee65a02b5702cff7d5a377e32c6ae29d8d"
 
 [[package]]
-name = "codegen"
-version = "0.1.0"
-dependencies = [
- "clap",
-]
-
-[[package]]
 name = "color_quant"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1854,15 +1847,12 @@ name = "git-pal"
 version = "0.1.0-beta"
 dependencies = [
  "anyhow",
- "graphql_client",
+ "git-pal-github",
  "keyring",
  "log",
- "oauth2",
  "redb",
- "reqwest",
  "serde",
  "serde_json",
- "serde_yaml",
  "tauri",
  "tauri-build",
  "tauri-plugin-autostart",
@@ -1877,6 +1867,31 @@ dependencies = [
  "ts-rs",
  "url",
  "user-notify",
+]
+
+[[package]]
+name = "git-pal-codegen"
+version = "0.1.0"
+dependencies = [
+ "clap",
+]
+
+[[package]]
+name = "git-pal-github"
+version = "0.1.0"
+dependencies = [
+ "graphql_client",
+ "log",
+ "oauth2",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tauri-plugin-opener",
+ "thiserror 2.0.17",
+ "tokio",
+ "ts-rs",
+ "url",
 ]
 
 [[package]]

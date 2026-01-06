@@ -47,7 +47,11 @@ fn find_tauri_dir() -> String {
         };
     }
 
-    panic!("{1}: {:?}", (), "tauri.conf.json not found in current or parent directories")
+    panic!(
+        "{1}: {:?}",
+        (),
+        "tauri.conf.json not found in current or parent directories"
+    )
 }
 
 struct Codegen {
@@ -60,7 +64,7 @@ impl Codegen {
     fn init() -> Self {
         let tauri_dir = find_tauri_dir();
         let query_filepath = Path::new(&tauri_dir)
-            .join("src/github/query.rs")
+            .join("crates/git-pal-github/src/query.rs")
             .to_string_lossy()
             .into_owned();
 
@@ -79,10 +83,10 @@ impl Codegen {
             .args([
                 "generate",
                 "--schema-path",
-                "./src/github/schema.graphql",
-                "./src/github/query.graphql",
+                "./crates/git-pal-github/src/schema.graphql",
+                "./crates/git-pal-github/src/query.graphql",
                 "-p",
-                "crate::github::custom_scalars",
+                "crate::custom_scalars",
                 "-O",
                 "TS,Debug,Clone,Serialize",
             ])
@@ -115,12 +119,13 @@ impl Codegen {
                 output.push("use ts_rs::TS;".into());
                 is_first = false;
             } else if let Some(m) = current_mod.as_ref()
-                && line.contains("TS") {
-                    output.push(format!(
-                        "#[ts(export, export_to = \"{}{}\")]",
-                        &self.models_dir, m
-                    ));
-                }
+                && line.contains("TS")
+            {
+                output.push(format!(
+                    "#[ts(export, export_to = \"{}{}\")]",
+                    &self.models_dir, m
+                ));
+            }
         }
 
         fs::write(&self.query_filepath, output.join("\n")).expect("unable to save file");

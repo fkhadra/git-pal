@@ -1,11 +1,11 @@
 use std::fmt::Debug;
 
-use reqwest::{header::HeaderMap, Client as HttpClient, RequestBuilder};
+use reqwest::{Client as HttpClient, RequestBuilder, header::HeaderMap};
 
 use serde::{self, Deserialize, Serialize};
 use ts_rs::TS;
 
-use super::query::user_profile;
+use crate::query::user_profile;
 
 pub type Result<T> = std::result::Result<T, Error>;
 

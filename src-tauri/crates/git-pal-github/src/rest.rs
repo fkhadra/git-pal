@@ -6,9 +6,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::github::{Error, RateLimit};
-
-use super::api_client::{Client, Response, Result};
+use crate::api_client::{Client, Error, RateLimit, Response, Result};
 
 const API_URL: &str = "https://api.github.com/";
 
@@ -147,7 +145,7 @@ impl Client {
             None => {
                 return Err(Error::InvalidWorkflowFile(
                     "not a workflow file".to_string(),
-                ))
+                ));
             }
         };
 

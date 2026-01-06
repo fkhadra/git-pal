@@ -2,13 +2,12 @@ use std::fmt::Debug;
 
 use graphql_client::{GraphQLQuery, QueryBody, Response as GQLResponse};
 use serde::Deserialize;
-use serde::{self, de::DeserializeOwned, Serialize};
+use serde::{self, Serialize, de::DeserializeOwned};
 use ts_rs::TS;
 
+use crate::api_client::{Client, Error, Response, Result};
 use crate::github::RateLimit;
-
-use super::api_client::{Client, Error, Response, Result};
-use super::query;
+use crate::query;
 
 const GRAPHQL_API_URL: &str = "https://api.github.com/graphql";
 
@@ -33,6 +32,8 @@ pub type Homepage = GraphQLResponse<query::homepage::ResponseData>;
 pub type FindPullRequestResult = GraphQLResponse<query::search_pull_request::ResponseData>;
 pub type FindRepositoriesResult = GraphQLResponse<query::find_repositories::ResponseData>;
 pub type UserProfileViewer = query::user_profile::UserProfileViewer;
+
+
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
 #[ts(export, export_to = "../../src/models/graphql.ts")]

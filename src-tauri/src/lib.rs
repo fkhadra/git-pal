@@ -1,6 +1,5 @@
 mod commands;
 mod core;
-mod github;
 mod window;
 
 use core::{handle_deeplink, AppState};

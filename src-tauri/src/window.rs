@@ -1,4 +1,4 @@
-use std::{fmt::Debug, sync::atomic::Ordering};
+use std::{fmt::Debug, str::FromStr, sync::atomic::Ordering};
 
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WindowEvent};
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
@@ -153,7 +153,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
 
     register_global_shortcut(handle)?;
 
-    let _cw = window.clone();
+    let cw = window.clone();
     window.on_window_event(move |e| match e {
         WindowEvent::CloseRequested { api, .. } => {
             api.prevent_close();

@@ -6,8 +6,20 @@ use thiserror::Error;
 
 use crate::{
     core::{notification, settings, AppState, JobStatus},
-    github::{self, query::search_pull_request::SearchPullRequestSearchNodes::PullRequest},
     window,
+};
+
+use git_pal_github::{
+    github,
+    graphql::{
+        FindPullRequestResult, FindPullRequestsFilter, FindRepositoriesRequest,
+        FindRepositoriesResult, Homepage, UserProfile, UserProfileViewer,
+    },
+    query::search_pull_request::SearchPullRequestSearchNodes::PullRequest,
+    rest::{
+        FileRequest, FindWorkflowsRequest, RestResponse, RunWorkflowRequest, WorkflowInputs,
+        Workflows,
+    },
 };
 
 #[derive(Debug, Error)]
@@ -40,10 +52,7 @@ impl serde::Serialize for CommandError {
 type Result<T, E = CommandError> = std::result::Result<T, E>;
 
 #[tauri::command]
-pub async fn authenticate(
-    state: State<'_, AppState>,
-    token: String,
-) -> Result<github::UserProfile> {
+pub async fn authenticate(state: State<'_, AppState>, token: String) -> Result<UserProfile> {
     let mut client = state.client.lock().await;
 
     client.set_token(&token);
@@ -56,7 +65,7 @@ pub async fn authenticate(
 }
 
 #[tauri::command]
-pub async fn is_authenticated(state: State<'_, AppState>) -> Result<github::UserProfileViewer> {
+pub async fn is_authenticated(state: State<'_, AppState>) -> Result<UserProfileViewer> {
     let mut client = state.client.lock().await;
 
     if !client.is_token_set() {
@@ -74,16 +83,16 @@ pub async fn is_authenticated(state: State<'_, AppState>) -> Result<github::User
 }
 
 #[tauri::command]
-pub async fn homepage(state: State<'_, AppState>) -> Result<github::Homepage> {
+pub async fn homepage(state: State<'_, AppState>) -> Result<Homepage> {
     Ok(state.client.lock().await.homepage().await?)
 }
 
 #[tauri::command]
 pub async fn find_pull_requests(
     state: State<'_, AppState>,
-    filter: github::FindPullRequestsFilter,
-) -> Result<github::FindPullRequestResult> {
-    let is_review_requested = filter == github::FindPullRequestsFilter::ReviewRequested;
+    filter: FindPullRequestsFilter,
+) -> Result<FindPullRequestResult> {
+    let is_review_requested = filter == FindPullRequestsFilter::ReviewRequested;
     let response = state.client.lock().await.find_pull_requests(filter).await?;
 
     if is_review_requested {
@@ -134,7 +143,7 @@ pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()
                 .client
                 .lock()
                 .await
-                .find_pull_requests(github::FindPullRequestsFilter::ReviewRequested)
+                .find_pull_requests(FindPullRequestsFilter::ReviewRequested)
                 .await;
 
             match response {
@@ -181,8 +190,8 @@ pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()
 #[tauri::command]
 pub async fn find_repositories(
     state: State<'_, AppState>,
-    params: github::FindRepositoriesRequest,
-) -> Result<github::FindRepositoriesResult> {
+    params: FindRepositoriesRequest,
+) -> Result<FindRepositoriesResult> {
     Ok(state.client.lock().await.find_repositories(params).await?)
 }
 
@@ -240,8 +249,8 @@ pub async fn start_oauth_flow(state: State<'_, AppState>) -> Result<()> {
 #[tauri::command]
 pub async fn find_workflows(
     state: State<'_, AppState>,
-    params: github::FindWorkflowsRequest<'_>,
-) -> Result<github::RestResponse<github::Workflows>> {
+    params: FindWorkflowsRequest<'_>,
+) -> Result<RestResponse<Workflows>> {
     let res = state.client.lock().await.find_workflows(params).await?;
 
     Ok(res)
@@ -250,8 +259,8 @@ pub async fn find_workflows(
 #[tauri::command]
 pub async fn extract_workflow_variables(
     state: State<'_, AppState>,
-    params: github::FileRequest<'_>,
-) -> Result<github::RestResponse<github::WorkflowInputs>> {
+    params: FileRequest<'_>,
+) -> Result<RestResponse<WorkflowInputs>> {
     let res = state
         .client
         .lock()
@@ -265,7 +274,7 @@ pub async fn extract_workflow_variables(
 #[tauri::command]
 pub async fn run_workflow(
     state: State<'_, AppState>,
-    params: github::RunWorkflowRequest<'_>,
+    params: RunWorkflowRequest<'_>,
 ) -> Result<()> {
     state.client.lock().await.run_workflow(params).await?;
 

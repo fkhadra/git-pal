@@ -16,9 +16,10 @@ use super::{settings::Store, vault::Vault};
 
 use crate::{
     core::{notification, settings},
-    github::{self, oauth},
     window,
 };
+
+use git_pal_github::{github, oauth, query};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum JobStatus {
@@ -32,7 +33,7 @@ pub struct AppState {
     pub oauth_client: Mutex<oauth::Client>,
     pub should_do_setup: AtomicBool,
     pub settings: Store,
-    pub pull_requests: Mutex<HashMap<String, github::query::search_pull_request::PullRequest>>,
+    pub pull_requests: Mutex<HashMap<String, query::search_pull_request::PullRequest>>,
     pub pull_requests_ch: Sender<JobStatus>,
     pub notification_manager: notification::NotificationManager,
     app_dir: PathBuf,

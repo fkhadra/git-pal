@@ -23,7 +23,7 @@ tauri = { version = "2", features = [
     "tray-icon",
     "image-png",
 ] }
-tauri-plugin-opener = "2"
+tauri-plugin-opener = { workspace = true }
 tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
 tauri-plugin-log = "2"
 tauri-plugin-deep-link = "2"
@@ -32,30 +32,39 @@ tauri-plugin-updater = "2"
 tauri-plugin-global-shortcut = "2"
 
 user-notify = { git = "https://github.com/deltachat/deltachat-desktop" }
-
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-thiserror = "2.0.16"
-graphql_client = "0.14.0"
 keyring = { version = "3", features = [
     "apple-native",
     "windows-native",
     "sync-secret-service",
 ] }
-reqwest = { version = "0.12.23", features = ["json"] }
-tokio = { version = "1.47.1", features = ["full"] }
-log = "0.4"
-ts-rs = "11.0.1"
-oauth2 = "5.0.0"
-url = "2.5.7"
 anyhow = "1.0.100"
-serde_yaml = "0.9.34"
 redb = "3.1.0"
 
+git-pal-github = { path = "./crates/git-pal-github"}
+
+url = { workspace = true }
+tokio = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+ts-rs = { workspace = true }
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2.0.16"
+ts-rs = "11.0.1"
+log = "0.4"
+tokio = { version = "1.47.1", features = ["full"] }
+oauth2 = "5.0.0"
+url = "2.5.7"
+reqwest = { version = "0.12.23", features = ["json"] }
+tauri-plugin-opener = "2"
 
 [workspace]
 resolver = "3"
-members = ["codegen"]
+members = ["crates/*"]
 
 [profile.dev]
 incremental = true
