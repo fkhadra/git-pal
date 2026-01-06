@@ -66,7 +66,7 @@ pub struct SettingsManager {
 }
 
 impl SettingsManager {
-    pub fn load<P: Into<PathBuf>>(filename: P) -> Result<Self, io::Error> {
+    pub fn new<P: Into<PathBuf>>(filename: P) -> Result<Self, io::Error> {
         let filepath: PathBuf = filename.into();
 
         match fs::read_to_string(&filepath) {
