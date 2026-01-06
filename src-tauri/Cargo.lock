@@ -1895,6 +1895,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-pal-settings"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "ts-rs",
+]
+
+[[package]]
 name = "glib"
 version = "0.18.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
