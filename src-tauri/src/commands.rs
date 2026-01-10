@@ -5,7 +5,7 @@ use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
 
 use crate::{
-    core::{notification, settings, AppState, JobStatus},
+    core::{settings, AppState, JobStatus},
     window,
 };
 
@@ -53,30 +53,23 @@ type Result<T, E = CommandError> = std::result::Result<T, E>;
 
 #[tauri::command]
 pub async fn authenticate(state: State<'_, AppState>, token: String) -> Result<UserProfile> {
-    let mut client = state.client.lock().await;
-
-    client.set_token(&token);
-
-    let r = client.load_user_profile().await?;
-
     state.vault.save_token(&token)?;
+    state.github_client.set_token(token);
 
-    Ok(r)
+    Ok(state.github_client.load_user_profile().await?)
 }
 
 #[tauri::command]
 pub async fn is_authenticated(state: State<'_, AppState>) -> Result<UserProfileViewer> {
-    let mut client = state.client.lock().await;
-
-    if !client.is_token_set() {
+    if !state.github_client.is_token_set() {
         return Err(github::Error::MissingToken.into());
     }
 
-    if let Some(user) = client.user.as_ref().cloned() {
-        return Ok(user);
-    }
+    // if let Some(user) = client.user.as_ref().cloned() {
+    //     return Ok(user);
+    // }
 
-    match client.load_user_profile().await?.data {
+    match state.github_client.load_user_profile().await?.data {
         Some(v) => Ok(v.viewer),
         None => Err(github::Error::MissingData.into()),
     }
@@ -84,7 +77,7 @@ pub async fn is_authenticated(state: State<'_, AppState>) -> Result<UserProfileV
 
 #[tauri::command]
 pub async fn homepage(state: State<'_, AppState>) -> Result<Homepage> {
-    Ok(state.client.lock().await.homepage().await?)
+    Ok(state.github_client.homepage().await?)
 }
 
 #[tauri::command]
@@ -93,17 +86,27 @@ pub async fn find_pull_requests(
     filter: FindPullRequestsFilter,
 ) -> Result<FindPullRequestResult> {
     let is_review_requested = filter == FindPullRequestsFilter::ReviewRequested;
-    let response = state.client.lock().await.find_pull_requests(filter).await?;
+    let response = state.github_client.find_pull_requests(filter).await?;
 
     if is_review_requested {
-        let mut prs = state.pull_requests.lock().await;
-
-        if let Some(data) = &response.data {
-            for v in data.search.nodes.iter().flatten().flatten() {
-                if let PullRequest(pr) = v {
-                    prs.insert(pr.id.clone(), pr.clone());
+        let data = response
+            .data
+            .iter()
+            .flat_map(|v| v.search.nodes.iter())
+            .flatten()
+            .flatten()
+            .filter_map(|node| {
+                if let PullRequest(pr) = node {
+                    Some((pr.id.clone(), pr.clone()))
+                } else {
+                    None
                 }
-            }
+            })
+            .collect::<Vec<_>>();
+
+        let mut prs = state.pull_requests.lock().unwrap();
+        for (id, pr) in data {
+            prs.insert(id, pr);
         }
     }
 
@@ -122,7 +125,7 @@ pub async fn stop_monitoring(state: State<'_, AppState>) -> Result<()> {
 pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()> {
     let app = app_handle.clone();
 
-    tokio::task::spawn(async move {
+    tokio::spawn(async move {
         let state: State<'_, AppState> = app.state();
         let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(20));
         let mut rx = state.pull_requests_ch.subscribe();
@@ -131,55 +134,16 @@ pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()
 
         loop {
             tokio::select! {
-            _ = rx.changed() => {
-                if  *rx.borrow() == JobStatus::Stopped {
-                    log::debug!("stopping pull requests monitoring");
-                    break;
-                }
-            }
-            _ = interval.tick() => {
-            log::debug!("Monitoring tick");
-            let response = state
-                .client
-                .lock()
-                .await
-                .find_pull_requests(FindPullRequestsFilter::ReviewRequested)
-                .await;
-
-            match response {
-                Ok(response) => {
-                    let mut prs = state.pull_requests.lock().await;
-
-                    if let Some(data) = response.data {
-                        for v in data.search.nodes.into_iter().flatten().flatten() {
-                            if let PullRequest(pr) = v {
-                                if !prs.contains_key(&pr.id) {
-                                    log::debug!("New PR detected, notifiying {}", &pr.title);
-
-                                    state
-                                        .notification_manager
-                                        .push_notification(
-                                            &format!("Review Requested: {}", pr.repository.name),
-                                            &pr.title,
-                                            Some(notification::Category::ReviewRequested),
-                                            Some(HashMap::from([(
-                                                "url".to_string(),
-                                                pr.url.clone(),
-                                            )])),
-                                        )
-                                        .await;
-                                }
-                                prs.insert(pr.id.to_string(), pr);
-                            }
-                        }
+                _ = rx.changed() => {
+                    if  *rx.borrow() == JobStatus::Stopped {
+                        log::debug!("stopping pull requests monitoring");
+                        break;
                     }
                 }
-                Err(err) => {
-                    log::error!("Error fetching review requested pull requests: {}", err);
+                _ = interval.tick() => {
+                    log::debug!("Monitoring tick");
+                    state.handle_pr_monitor().await;
                 }
-            }
-
-            }
             }
         }
     });
@@ -192,7 +156,7 @@ pub async fn find_repositories(
     state: State<'_, AppState>,
     params: FindRepositoriesRequest,
 ) -> Result<FindRepositoriesResult> {
-    Ok(state.client.lock().await.find_repositories(params).await?)
+    Ok(state.github_client.find_repositories(params).await?)
 }
 
 #[tauri::command]
@@ -238,12 +202,15 @@ pub async fn show_window(w: tauri::Window) -> Result<()> {
 
 #[tauri::command]
 pub async fn start_oauth_flow(state: State<'_, AppState>) -> Result<()> {
-    state
+    if let Ok(pending_auth) = state
         .oauth_client
-        .lock()
-        .await
         .start_auth_flow()
         .map_err(|_| CommandError::UnableToDeleteToken)
+    {
+        state.pending_auth.lock().unwrap().replace(pending_auth);
+    }
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -251,7 +218,7 @@ pub async fn find_workflows(
     state: State<'_, AppState>,
     params: FindWorkflowsRequest<'_>,
 ) -> Result<RestResponse<Workflows>> {
-    let res = state.client.lock().await.find_workflows(params).await?;
+    let res = state.github_client.find_workflows(params).await?;
 
     Ok(res)
 }
@@ -262,9 +229,7 @@ pub async fn extract_workflow_variables(
     params: FileRequest<'_>,
 ) -> Result<RestResponse<WorkflowInputs>> {
     let res = state
-        .client
-        .lock()
-        .await
+        .github_client
         .extract_workflow_variables(params)
         .await?;
 
@@ -276,7 +241,7 @@ pub async fn run_workflow(
     state: State<'_, AppState>,
     params: RunWorkflowRequest<'_>,
 ) -> Result<()> {
-    state.client.lock().await.run_workflow(params).await?;
+    state.github_client.run_workflow(params).await?;
 
     Ok(())
 }

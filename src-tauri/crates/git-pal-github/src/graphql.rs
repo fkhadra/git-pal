@@ -33,8 +33,6 @@ pub type FindPullRequestResult = GraphQLResponse<query::search_pull_request::Res
 pub type FindRepositoriesResult = GraphQLResponse<query::find_repositories::ResponseData>;
 pub type UserProfileViewer = query::user_profile::UserProfileViewer;
 
-
-
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
 #[ts(export, export_to = "../../src/models/graphql.ts")]
 pub struct FindRepositoriesRequest {
@@ -49,12 +47,12 @@ impl std::fmt::Display for FindRepositoriesRequest {
 }
 
 impl Client {
-    pub async fn load_user_profile(&mut self) -> Result<UserProfile> {
+    pub async fn load_user_profile(&self) -> Result<UserProfile> {
         let q = query::UserProfile::build_query(query::user_profile::Variables);
         let res: UserProfile = self.send_graphql(&q).await?;
-        let data = res.data.as_ref().ok_or(Error::MissingData)?;
+        // let data = res.data.as_ref().ok_or(Error::MissingData)?;
 
-        self.user = Some(data.viewer.clone());
+        // self.user = Some(data.viewer.clone());
 
         Ok(res)
     }
@@ -89,11 +87,12 @@ impl Client {
             FindPullRequestsFilter::ReviewRequested => "review-requested",
         };
 
-        let user = self.user.as_ref().ok_or(Error::MissingData)?;
+        // let user = self.user.as_ref().ok_or(Error::MissingData)?;
 
         let q = query::SearchPullRequest::build_query(query::search_pull_request::Variables {
             count: 20,
-            query: format!("is:open is:pr archived:false {}:{}", f, &user.login),
+            query: format!("is:open is:pr archived:false {}:{}", f, "fkhadra"),
+            // &user.login),
         });
 
         self.send_graphql(&q).await
@@ -119,7 +118,7 @@ impl Client {
         });
 
         Ok(GraphQLResponse {
-            data: response_body.data,
+            data:  response_body.data,
             rate_limit,
             errors,
         })

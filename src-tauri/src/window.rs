@@ -1,4 +1,4 @@
-use std::{fmt::Debug, str::FromStr, sync::atomic::Ordering};
+use std::fmt::Debug;
 
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WindowEvent};
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
@@ -41,11 +41,7 @@ type Result<T = ()> = std::result::Result<T, Error>;
 pub fn show_app(app: &AppHandle) -> Result {
     // bro still doing setup
     if let Some(setup_window) = app.get_webview_window(SETUP_WINDOW_LABEL) {
-        if app
-            .state::<AppState>()
-            .should_do_setup
-            .load(Ordering::Relaxed)
-        {
+        if !app.state::<AppState>().github_client.is_token_set() {
             return show_window(&setup_window);
         }
     }
@@ -76,7 +72,7 @@ pub fn show_settings(app: &AppHandle) -> Result {
 pub fn on_app_start(handle: &AppHandle) -> Result {
     let state = handle.state::<AppState>();
 
-    match state.should_do_setup.load(Ordering::Relaxed) {
+    match state.github_client.is_token_set() {
         false => {
             log::debug!("No need to do setup");
             create_main_window(handle)?
@@ -153,7 +149,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
 
     register_global_shortcut(handle)?;
 
-    let cw = window.clone();
+    let _cw = window.clone();
     window.on_window_event(move |e| match e {
         WindowEvent::CloseRequested { api, .. } => {
             api.prevent_close();

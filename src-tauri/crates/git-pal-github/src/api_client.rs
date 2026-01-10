@@ -1,4 +1,7 @@
-use std::fmt::Debug;
+use std::{
+    fmt::Debug,
+    sync::{self, Arc, Mutex, OnceLock},
+};
 
 use reqwest::{Client as HttpClient, RequestBuilder, header::HeaderMap};
 
@@ -38,30 +41,35 @@ pub(super) struct Response {
 }
 
 pub struct Client {
-    pub(super) token: Option<String>,
-    pub user: Option<user_profile::UserProfileViewer>,
+    pub(super) token: Mutex<Arc<Option<String>>>,
     pub(super) http: HttpClient,
 }
 
 impl Client {
     pub fn new(token: Option<String>) -> Self {
         Client {
-            token,
-            user: None,
             http: reqwest::Client::new(),
+            token: Mutex::new(Arc::new(token)),
         }
     }
 
-    pub fn set_token(&mut self, token: &str) {
-        self.token = Some(token.to_string());
+    pub fn set_token(&self, token: String) {
+        let mut guard = self.token.lock().unwrap();
+        *guard = Arc::new(Some(token));
     }
 
     pub fn is_token_set(&self) -> bool {
-        self.token.is_some()
+        self.token.lock().unwrap().is_some()
     }
 
     pub(super) async fn do_request(&self, req: RequestBuilder) -> Result<Response> {
-        let token = self.token.as_ref().ok_or(Error::MissingToken)?;
+        let snapshot = {
+            let guard = self.token.lock().unwrap();
+            guard.as_ref().clone()
+        };
+
+        let token = snapshot.ok_or(Error::MissingToken)?;
+
         let res = req
             .bearer_auth(token)
             .header("user-agent", "hey-github-wanna-hire-me?")

@@ -22,8 +22,8 @@ pub enum Error {
     MissingVerifier,
     #[error("csrf token missing in client")]
     MissingCsrf,
-    #[error("csrf token mismatch: {csrf:} - {state:}")]
-    CsrfMismatch { csrf: String, state: String },
+    #[error("csrf token mismatch")]
+    CsrfMismatch,
     #[error("failed to get token: {0}")]
     FailedToGetToken(String),
 }
@@ -39,13 +39,15 @@ impl serde::Serialize for Error {
 
 type Result<T = ()> = std::result::Result<T, Error>;
 
-pub struct Client {
-    client: BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>,
-    pkce_verifier: Option<PkceCodeVerifier>,
-    csrf_token: Option<CsrfToken>,
+pub struct PendingAuth {
+    pub csrf_token: CsrfToken,
+    pub pkce_verifier: PkceCodeVerifier,
 }
 
-#[allow(dead_code)]
+pub struct Client {
+    client: BasicClient<EndpointSet, EndpointNotSet, EndpointNotSet, EndpointNotSet, EndpointSet>,
+}
+
 pub struct OAuthCredentials {
     pub access_token: String,
     pub scope: Vec<String>,
@@ -68,17 +70,11 @@ impl Client {
                     .expect("valid callback uri"),
             );
 
-        Self {
-            client,
-            pkce_verifier: None,
-            csrf_token: None,
-        }
+        Self { client }
     }
 
-    pub fn start_auth_flow(&mut self) -> Result<()> {
+    pub fn start_auth_flow(&self) -> Result<PendingAuth> {
         let (pkce_challenge, pkce_verifier) = PkceCodeChallenge::new_random_sha256();
-
-        self.pkce_verifier = Some(pkce_verifier);
 
         let (auth_url, csrf_token) = self
             .client
@@ -91,13 +87,20 @@ impl Client {
             .set_pkce_challenge(pkce_challenge)
             .url();
 
-        self.csrf_token = Some(csrf_token);
-
         tauri_plugin_opener::open_url(auth_url, None::<&str>)
-            .map_err(|e| Error::FailedToOpenBrowser(e.to_string()))
+            .map_err(|e| Error::FailedToOpenBrowser(e.to_string()))?;
+
+        Ok(PendingAuth {
+            csrf_token,
+            pkce_verifier,
+        })
     }
 
-    pub async fn exchange_code(&mut self, callback_url: Url) -> Result<OAuthCredentials> {
+    pub async fn exchange_code(
+        &self,
+        callback_url: Url,
+        pending_auth: PendingAuth,
+    ) -> Result<OAuthCredentials> {
         let code = callback_url
             .query_pairs()
             .find(|(k, _)| k == "code")
@@ -108,18 +111,9 @@ impl Client {
             .find(|(k, _)| k == "state")
             .map(|(_, v)| v.to_string())
             .ok_or_else(|| Error::MissingState(callback_url.to_string()))?;
-        let pkce_code_verifier = self.pkce_verifier.take().ok_or(Error::MissingVerifier)?;
-        let csrf_token = self
-            .csrf_token
-            .take()
-            .ok_or(Error::MissingCsrf)?
-            .into_secret();
 
-        if state != csrf_token {
-            return Err(Error::CsrfMismatch {
-                csrf: csrf_token,
-                state,
-            });
+        if state != pending_auth.csrf_token.into_secret() {
+            return Err(Error::CsrfMismatch);
         }
 
         let http_client = reqwest::ClientBuilder::new()
@@ -130,7 +124,7 @@ impl Client {
         let token_result = self
             .client
             .exchange_code(code)
-            .set_pkce_verifier(pkce_code_verifier)
+            .set_pkce_verifier(pending_auth.pkce_verifier)
             .request_async(&http_client)
             .await
             .map_err(|e| Error::FailedToGetToken(e.to_string()))?;

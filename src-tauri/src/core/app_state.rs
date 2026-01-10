@@ -2,11 +2,12 @@ use std::{
     collections::HashMap,
     env, fs,
     path::PathBuf,
-    sync::atomic::{AtomicBool, Ordering},
+    sync::{self, Arc, Mutex},
 };
 
+use git_pal_settings::SettingManager;
 use serde::Serialize;
-use tauri::{async_runtime::Mutex, AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_updater::UpdaterExt;
 use tokio::sync::watch::{self, Sender};
 use ts_rs::TS;
@@ -19,7 +20,12 @@ use crate::{
     window,
 };
 
-use git_pal_github::{github, oauth, query};
+use git_pal_github::{
+    github,
+    graphql::FindPullRequestsFilter,
+    oauth::{self, PendingAuth},
+    query::{self, search_pull_request::SearchPullRequestSearchNodes::PullRequest, user_profile},
+};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum JobStatus {
@@ -28,14 +34,16 @@ pub enum JobStatus {
 }
 
 pub struct AppState {
-    pub client: Mutex<github::Client>,
+    pub github_client: github::Client,
+    pub oauth_client: oauth::Client,
+    // pub user: Mutex<Option<user_profile::UserProfileViewer>>,
     pub vault: Vault,
-    pub oauth_client: Mutex<oauth::Client>,
-    pub should_do_setup: AtomicBool,
     pub settings: Store,
     pub pull_requests: Mutex<HashMap<String, query::search_pull_request::PullRequest>>,
     pub pull_requests_ch: Sender<JobStatus>,
     pub notification_manager: notification::NotificationManager,
+    pub setting_manager: SettingManager,
+    pub pending_auth: Mutex<Option<PendingAuth>>,
     app_dir: PathBuf,
 }
 
@@ -43,21 +51,24 @@ impl AppState {
     pub fn new() -> Self {
         let vault = Vault::new("git-pal", "token").expect("vault should build");
         let token = vault.get_token().ok();
-        let should_do_setup = token.is_none();
         let app_dir = app_dir();
         let db_path = app_dir.join("db");
         let (tx, _) = watch::channel(JobStatus::Idle);
 
+        let setting_manager = SettingManager::new(app_dir.join("settings.json")).unwrap();
+
         AppState {
             vault,
-            client: Mutex::new(github::Client::new(token)),
-            oauth_client: Mutex::new(oauth::Client::new()),
-            should_do_setup: AtomicBool::new(should_do_setup),
+            github_client: github::Client::new(token),
+            oauth_client: oauth::Client::new(),
             pull_requests: Mutex::new(HashMap::new()),
+            // user: Arc::new(Mutex::new(None)),
             app_dir,
             notification_manager: notification::NotificationManager::new(),
             settings: Store::new(db_path.to_str().expect("should always be set")),
             pull_requests_ch: tx,
+            setting_manager,
+            pending_auth: sync::Mutex::new(None),
         }
     }
 
@@ -76,59 +87,133 @@ impl AppState {
     pub fn app_dir(&self) -> PathBuf {
         self.app_dir.clone()
     }
+
+    pub fn set_user(&self, user: user_profile::UserProfileViewer) {
+        self.user.lock().unwrap().replace(user);
+    }
+
+    pub async fn handle_pr_monitor(&self) {
+        let response = self
+            .github_client
+            .find_pull_requests(FindPullRequestsFilter::ReviewRequested)
+            .await;
+
+        match response {
+            Ok(response) => {
+                let data = response
+                    .data
+                    .iter()
+                    .flat_map(|v| v.search.nodes.iter())
+                    .flatten()
+                    .flatten()
+                    .filter_map(|node| {
+                        if let PullRequest(pr) = node {
+                            Some((pr.id.clone(), pr.clone()))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                let mut queue: Vec<query::search_pull_request::PullRequest> = Vec::new();
+                {
+                    let mut prs = self.pull_requests.lock().unwrap();
+
+                    for (id, pr) in data {
+                        if !prs.contains_key(&id) {
+                            queue.push(pr.clone());
+                        }
+                        prs.insert(id, pr);
+                    }
+                }
+
+                for pr in queue {
+                    self.notification_manager
+                        .push_notification(
+                            &format!("Review Requested: {}", pr.repository.name),
+                            &pr.title,
+                            Some(notification::Category::ReviewRequested),
+                            Some(HashMap::from([("url".to_string(), pr.url)])),
+                        )
+                        .await;
+                }
+            }
+            Err(err) => {
+                log::error!("Error fetching review requested pull requests: {}", err);
+            }
+        }
+    }
 }
 
 pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
-    let app_handle = app_handle.to_owned();
+    let app_handle = app_handle.clone();
 
     tauri::async_runtime::spawn(async move {
         for url in urls {
-            if let Some(host) = url.host() {
-                if host.to_string() == "github" && url.path() == "/auth-callback" {
-                    let state = app_handle.state::<AppState>();
-                    let mut client = state.oauth_client.lock().await;
+            let Some(host) = url.host() else {
+                return;
+            };
 
-                    match client.exchange_code(url).await {
-                        Ok(res) => {
-                            state.should_do_setup.store(false, Ordering::Relaxed);
-                            state.client.lock().await.set_token(&res.access_token);
+            if !matches!(host, url::Host::Domain("github")) || url.path() != "/auth-callback" {
+                return;
+            }
 
-                            log::info!("successfully authenticated");
-                            emit_event(
-                                &app_handle,
-                                Event::AuthMessage(AuthPayload {
-                                    msg: None,
-                                    ok: true,
-                                }),
-                            );
+            let state = app_handle.state::<AppState>();
+            let maybe_pending_auth = {
+                let mut lock = state.pending_auth.lock().unwrap();
+                lock.take()
+            };
 
-                            window::create_main_window(&app_handle).unwrap_or_else(|err| {
-                                log::error!("Failed to create main window after auth {}", err)
-                            });
+            let Some(pending_auth) = maybe_pending_auth else {
+                emit_event(
+                    &app_handle,
+                    Event::AuthMessage(AuthPayload {
+                        ok: false,
+                        msg: Some(
+                            "failed to authenticated: pending auth state missing".to_string(),
+                        ),
+                    }),
+                );
 
-                            state
-                                .vault
-                                .save_token(&res.access_token)
-                                .unwrap_or_else(|err| log::error!("Failed to save token {}", err));
+                return;
+            };
 
-                            let s = app_handle.get_webview_window("Setup").unwrap();
+            match state.oauth_client.exchange_code(url, pending_auth).await {
+                Ok(res) => {
+                    state
+                        .vault
+                        .save_token(&res.access_token)
+                        .unwrap_or_else(|err| log::error!("Failed to save token {}", err));
+                    state.github_client.set_token(res.access_token);
 
-                            window::show_window(&s).unwrap_or_else(|_| {
-                                log::error!("Failed to display setup window again")
-                            })
-                        }
-                        Err(err) => {
-                            log::error!("Failed to exchange code {}", err);
+                    log::info!("successfully authenticated");
+                    emit_event(
+                        &app_handle,
+                        Event::AuthMessage(AuthPayload {
+                            msg: None,
+                            ok: true,
+                        }),
+                    );
 
-                            emit_event(
-                                &app_handle,
-                                Event::AuthMessage(AuthPayload {
-                                    ok: false,
-                                    msg: Some(err.to_string()),
-                                }),
-                            );
-                        }
-                    }
+                    window::create_main_window(&app_handle).unwrap_or_else(|err| {
+                        log::error!("Failed to create main window after auth {}", err)
+                    });
+
+                    let s = app_handle.get_webview_window("Setup").unwrap();
+
+                    window::show_window(&s)
+                        .unwrap_or_else(|_| log::error!("Failed to display setup window again"))
+                }
+                Err(err) => {
+                    log::error!("Failed to exchange code {}", err);
+
+                    emit_event(
+                        &app_handle,
+                        Event::AuthMessage(AuthPayload {
+                            ok: false,
+                            msg: Some(err.to_string()),
+                        }),
+                    );
                 }
             }
         }
