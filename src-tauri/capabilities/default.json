@@ -2,12 +2,15 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["*"],
+  "windows": [
+    "*"
+  ],
   "permissions": [
     "core:default",
     "opener:default",
     "log:default",
     "core:window:allow-hide",
-    "autostart:default"
+    "autostart:default",
+    "updater:default"
   ]
 }
