@@ -1,6 +1,6 @@
 use std::{
     fmt::Debug,
-    sync::{self, Arc, Mutex, OnceLock},
+    sync::{Arc, Mutex},
 };
 
 use reqwest::{Client as HttpClient, RequestBuilder, header::HeaderMap};
@@ -20,6 +20,8 @@ pub enum Error {
     BadRequest { message: String, status: u16 },
     #[error("no data")]
     MissingData,
+    #[error("missing user")]
+    MissingUser,
     #[error("invalid workflow file: {0}")]
     InvalidWorkflowFile(String),
     #[error(transparent)]
@@ -43,14 +45,30 @@ pub(super) struct Response {
 pub struct Client {
     pub(super) token: Mutex<Arc<Option<String>>>,
     pub(super) http: HttpClient,
+    pub(super) user: Mutex<Option<user_profile::UserProfileViewer>>,
 }
 
 impl Client {
     pub fn new(token: Option<String>) -> Self {
         Client {
+            user: Mutex::new(None),
             http: reqwest::Client::new(),
             token: Mutex::new(Arc::new(token)),
         }
+    }
+
+    pub fn get_user(&self) -> Option<user_profile::UserProfileViewer> {
+        self.user.lock().unwrap().clone()
+    }
+
+    pub fn with_user<F, R>(&self, f: F) -> Result<R>
+    where
+        F: FnOnce(&user_profile::UserProfileViewer) -> R,
+    {
+        let guard = self.user.lock().unwrap();
+        let user = guard.as_ref().ok_or(Error::MissingUser)?;
+
+        Ok(f(user))
     }
 
     pub fn set_token(&self, token: String) {
@@ -96,7 +114,7 @@ impl Client {
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/api.ts")]
+#[ts(export, export_to = "../../../../src/models/api.ts")]
 pub struct RateLimit {
     pub limit: u32,
     pub remaining: u32,

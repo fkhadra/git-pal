@@ -17,6 +17,8 @@ pub fn run() {
     let app_state = AppState::new();
     let log_path = app_state.app_dir();
 
+    log::info!("Starting APP");
+
     tauri::Builder::default()
         .manage(app_state)
         .plugin(tauri_plugin_single_instance::init(|app, _, __| {
@@ -35,7 +37,7 @@ pub fn run() {
                     path: log_path,
                     file_name: Some(String::from("git-pal")),
                 }))
-                .level(log::LevelFilter::Info)
+                // .level(log::LevelFilter::Info)
                 .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
                 .build(),
         )
@@ -117,8 +119,7 @@ pub fn run() {
             commands::find_workflows,
             commands::run_workflow,
             commands::update_setting,
-            commands::get_setting,
-            commands::get_all_settings,
+            commands::get_settings,
             commands::monitor_review_requested,
             commands::stop_monitoring
         ])

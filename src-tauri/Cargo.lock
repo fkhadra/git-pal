@@ -1848,6 +1848,7 @@ version = "0.1.0-beta"
 dependencies = [
  "anyhow",
  "git-pal-github",
+ "git-pal-settings",
  "keyring",
  "log",
  "redb",

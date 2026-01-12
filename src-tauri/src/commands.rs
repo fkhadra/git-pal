@@ -1,11 +1,10 @@
-use std::collections::HashMap;
 
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use thiserror::Error;
 
 use crate::{
-    core::{settings, AppState, JobStatus},
+    core::{AppState, JobStatus},
     window,
 };
 
@@ -65,9 +64,9 @@ pub async fn is_authenticated(state: State<'_, AppState>) -> Result<UserProfileV
         return Err(github::Error::MissingToken.into());
     }
 
-    // if let Some(user) = client.user.as_ref().cloned() {
-    //     return Ok(user);
-    // }
+    if let Some(user) = state.github_client.get_user() {
+        return Ok(user);
+    }
 
     match state.github_client.load_user_profile().await?.data {
         Some(v) => Ok(v.viewer),
@@ -247,22 +246,15 @@ pub async fn run_workflow(
 }
 
 #[tauri::command]
-pub async fn update_setting(app_handle: tauri::AppHandle, params: settings::Value) -> Result<()> {
+pub async fn update_setting(
+    app_handle: tauri::AppHandle,
+    params: git_pal_settings::SettingValue,
+) -> Result<git_pal_settings::Settings> {
     let state: State<'_, AppState> = app_handle.state();
-
-    state.update_setting(&app_handle, params)?;
-    Ok(())
+    Ok(state.update_setting(&app_handle, params))
 }
 
 #[tauri::command]
-pub async fn get_setting(
-    state: State<'_, AppState>,
-    params: settings::Key,
-) -> Result<Option<String>> {
-    Ok(state.settings.get(params)?)
-}
-
-#[tauri::command]
-pub async fn get_all_settings(state: State<'_, AppState>) -> Result<HashMap<String, String>> {
-    Ok(state.settings.get_all()?)
+pub async fn get_settings(state: State<'_, AppState>) -> Result<git_pal_settings::Settings> {
+    Ok(state.get_settings())
 }

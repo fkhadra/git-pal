@@ -5,14 +5,14 @@ use serde::Deserialize;
 use serde::{self, Serialize, de::DeserializeOwned};
 use ts_rs::TS;
 
-use crate::api_client::{Client, Error, Response, Result};
+use crate::api_client::{Client, Response, Result};
 use crate::github::RateLimit;
 use crate::query;
 
 const GRAPHQL_API_URL: &str = "https://api.github.com/graphql";
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq, Eq)]
-#[ts(export, export_to = "../../src/models/graphql.ts")]
+#[ts(export, export_to = "../../../../src/models/graphql.ts")]
 #[serde(rename_all = "camelCase")]
 pub enum FindPullRequestsFilter {
     Mentionned,
@@ -20,7 +20,7 @@ pub enum FindPullRequestsFilter {
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/api.ts")]
+#[ts(export, export_to = "../../../../src/models/api.ts")]
 pub struct GraphQLResponse<T> {
     pub rate_limit: RateLimit,
     pub data: Option<T>,
@@ -34,7 +34,7 @@ pub type FindRepositoriesResult = GraphQLResponse<query::find_repositories::Resp
 pub type UserProfileViewer = query::user_profile::UserProfileViewer;
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
-#[ts(export, export_to = "../../src/models/graphql.ts")]
+#[ts(export, export_to = "../../../../src/models/graphql.ts")]
 pub struct FindRepositoriesRequest {
     pub owner: String,
     pub query: String,
@@ -50,9 +50,10 @@ impl Client {
     pub async fn load_user_profile(&self) -> Result<UserProfile> {
         let q = query::UserProfile::build_query(query::user_profile::Variables);
         let res: UserProfile = self.send_graphql(&q).await?;
-        // let data = res.data.as_ref().ok_or(Error::MissingData)?;
 
-        // self.user = Some(data.viewer.clone());
+        if let Some(user) = res.data.as_ref() {
+            self.user.lock().unwrap().replace(user.viewer.clone());
+        }
 
         Ok(res)
     }
@@ -87,13 +88,12 @@ impl Client {
             FindPullRequestsFilter::ReviewRequested => "review-requested",
         };
 
-        // let user = self.user.as_ref().ok_or(Error::MissingData)?;
-
-        let q = query::SearchPullRequest::build_query(query::search_pull_request::Variables {
-            count: 20,
-            query: format!("is:open is:pr archived:false {}:{}", f, "fkhadra"),
-            // &user.login),
-        });
+        let q = self.with_user(|user| {
+            query::SearchPullRequest::build_query(query::search_pull_request::Variables {
+                count: 20,
+                query: format!("is:open is:pr archived:false {}:{}", f, user.login),
+            })
+        })?;
 
         self.send_graphql(&q).await
     }
@@ -118,7 +118,7 @@ impl Client {
         });
 
         Ok(GraphQLResponse {
-            data:  response_body.data,
+            data: response_body.data,
             rate_limit,
             errors,
         })

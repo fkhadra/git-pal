@@ -3,7 +3,7 @@ use std::{
     env,
     fs::{self, File},
     io::{self, BufRead},
-    path::Path,
+    path::{Path, PathBuf},
     process,
 };
 
@@ -37,13 +37,13 @@ fn main() {
     }
 }
 
-fn find_tauri_dir() -> String {
+fn find_tauri_dir() -> PathBuf {
     let current_dir = env::current_dir().expect("unable to get current dir");
 
     for dir in current_dir.ancestors() {
         let config = dir.join("tauri.conf.json");
         if config.exists() {
-            return dir.to_string_lossy().to_string();
+            return dir.to_path_buf();
         };
     }
 
@@ -55,26 +55,21 @@ fn find_tauri_dir() -> String {
 }
 
 struct Codegen {
-    tauri_dir: String,
-    query_filepath: String,
-    models_dir: String,
+    tauri_dir: PathBuf,
+    query_filepath: PathBuf,
 }
 
 impl Codegen {
     fn init() -> Self {
         let tauri_dir = find_tauri_dir();
-        let query_filepath = Path::new(&tauri_dir)
-            .join("crates/git-pal-github/src/query.rs")
-            .to_string_lossy()
-            .into_owned();
+        let query_filepath = Path::new(&tauri_dir).join("crates/git-pal-github/src/query.rs");
 
-        println!("tauri_dir: {}", tauri_dir);
-        println!("query_filepath: {}", query_filepath);
+        println!("tauri_dir: {}", tauri_dir.display());
+        println!("query_filepath: {}", query_filepath.display());
 
         Codegen {
             tauri_dir,
             query_filepath,
-            models_dir: String::from("../../src/models/"),
         }
     }
 
@@ -110,21 +105,18 @@ impl Codegen {
 
             if line.starts_with("pub mod") {
                 if let Some(el) = line.split_whitespace().nth(2) {
-                    let mut m = el.to_owned().replace("_", "-");
-                    m.push_str(".ts");
+                    let mut mod_name = el.to_owned().replace("_", "-");
+                    mod_name.push_str(".ts");
 
-                    current_mod = Some(m);
+                    current_mod = Some(mod_name);
                 }
             } else if is_first {
                 output.push("use ts_rs::TS;".into());
                 is_first = false;
-            } else if let Some(m) = current_mod.as_ref()
+            } else if let Some(mod_name) = current_mod.as_ref()
                 && line.contains("TS")
             {
-                output.push(format!(
-                    "#[ts(export, export_to = \"{}{}\")]",
-                    &self.models_dir, m
-                ));
+                output.push(format!("#[ts(export, export_to = \"{}\")]", mod_name));
             }
         }
 
@@ -135,10 +127,19 @@ impl Codegen {
 
     fn generate_ts_bindings(&self) -> &Self {
         process::Command::new("cargo")
-            .arg("test")
+            .args(["test", "export_bindings"])
             .current_dir(&self.tauri_dir)
             .status()
             .expect("failed to generate bindings");
+
+        for pkg in ["git-pal-settings", "git-pal-github"] {
+            process::Command::new("cargo")
+                .args(["test", "export_bindings", "-p", pkg])
+                .current_dir(&self.tauri_dir)
+                .status()
+                .expect("failed to generate bindings");
+        }
+
         self
     }
 }

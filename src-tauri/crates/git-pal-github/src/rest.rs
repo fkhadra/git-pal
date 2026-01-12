@@ -11,14 +11,14 @@ use crate::api_client::{Client, Error, RateLimit, Response, Result};
 const API_URL: &str = "https://api.github.com/";
 
 #[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/api.ts")]
+#[ts(export, export_to = "../../../../src/models/api.ts")]
 pub struct RestResponse<T> {
     pub rate_limit: RateLimit,
     pub data: T,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
-#[ts(export, export_to = "../../src/models/rest.ts")]
+#[ts(export, export_to = "../../../../src/models/rest.ts")]
 pub struct Workflow {
     pub id: i32,
     pub node_id: String,
@@ -33,14 +33,14 @@ pub struct Workflow {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
-#[ts(export, export_to = "../../src/models/rest.ts")]
+#[ts(export, export_to = "../../../../src/models/rest.ts")]
 pub struct Workflows {
     pub total_count: i32,
     pub workflows: Vec<Workflow>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/rest.ts")]
+#[ts(export, export_to = "../../../../src/models/rest.ts")]
 pub struct WorkflowInput {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -71,7 +71,7 @@ struct WorkflowTrigger {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/rest.ts")]
+#[ts(export, export_to = "../../../../src/models/rest.ts")]
 pub struct FileRequest<'a> {
     pub owner: &'a str,
     pub repository: &'a str,
@@ -79,7 +79,7 @@ pub struct FileRequest<'a> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/rest.ts")]
+#[ts(export, export_to = "../../../../src/models/rest.ts")]
 pub struct RunWorkflowRequest<'a> {
     pub owner: &'a str,
     pub repository: &'a str,
@@ -90,7 +90,7 @@ pub struct RunWorkflowRequest<'a> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/rest.ts")]
+#[ts(export, export_to = "../../../../src/models/rest.ts")]
 pub struct FindWorkflowsRequest<'a> {
     pub owner: &'a str,
     pub repository: &'a str,

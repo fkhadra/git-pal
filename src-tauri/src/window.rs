@@ -73,11 +73,11 @@ pub fn on_app_start(handle: &AppHandle) -> Result {
     let state = handle.state::<AppState>();
 
     match state.github_client.is_token_set() {
-        false => {
+        true => {
             log::debug!("No need to do setup");
             create_main_window(handle)?
         }
-        true => {
+        false => {
             log::debug!("should do setup");
 
             create_window(

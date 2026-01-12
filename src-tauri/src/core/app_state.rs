@@ -2,10 +2,10 @@ use std::{
     collections::HashMap,
     env, fs,
     path::PathBuf,
-    sync::{self, Arc, Mutex},
+    sync::{self, Mutex},
 };
 
-use git_pal_settings::SettingManager;
+use git_pal_settings::{SettingManager, Settings, Theme};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_updater::UpdaterExt;
@@ -13,18 +13,15 @@ use tokio::sync::watch::{self, Sender};
 use ts_rs::TS;
 use url::Url;
 
-use super::{settings::Store, vault::Vault};
+use super::vault::Vault;
 
-use crate::{
-    core::{notification, settings},
-    window,
-};
+use crate::{core::notification, window};
 
 use git_pal_github::{
     github,
     graphql::FindPullRequestsFilter,
     oauth::{self, PendingAuth},
-    query::{self, search_pull_request::SearchPullRequestSearchNodes::PullRequest, user_profile},
+    query::{self, search_pull_request::SearchPullRequestSearchNodes::PullRequest},
 };
 
 #[derive(Debug, PartialEq, Eq)]
@@ -36,14 +33,12 @@ pub enum JobStatus {
 pub struct AppState {
     pub github_client: github::Client,
     pub oauth_client: oauth::Client,
-    // pub user: Mutex<Option<user_profile::UserProfileViewer>>,
     pub vault: Vault,
-    pub settings: Store,
     pub pull_requests: Mutex<HashMap<String, query::search_pull_request::PullRequest>>,
     pub pull_requests_ch: Sender<JobStatus>,
     pub notification_manager: notification::NotificationManager,
-    pub setting_manager: SettingManager,
     pub pending_auth: Mutex<Option<PendingAuth>>,
+    setting_manager: Mutex<SettingManager>,
     app_dir: PathBuf,
 }
 
@@ -52,20 +47,17 @@ impl AppState {
         let vault = Vault::new("git-pal", "token").expect("vault should build");
         let token = vault.get_token().ok();
         let app_dir = app_dir();
-        let db_path = app_dir.join("db");
         let (tx, _) = watch::channel(JobStatus::Idle);
-
-        let setting_manager = SettingManager::new(app_dir.join("settings.json")).unwrap();
+        let setting_manager =
+            Mutex::new(SettingManager::new(app_dir.join("settings.json")).unwrap());
 
         AppState {
             vault,
             github_client: github::Client::new(token),
             oauth_client: oauth::Client::new(),
             pull_requests: Mutex::new(HashMap::new()),
-            // user: Arc::new(Mutex::new(None)),
             app_dir,
             notification_manager: notification::NotificationManager::new(),
-            settings: Store::new(db_path.to_str().expect("should always be set")),
             pull_requests_ch: tx,
             setting_manager,
             pending_auth: sync::Mutex::new(None),
@@ -75,21 +67,24 @@ impl AppState {
     pub fn update_setting(
         &self,
         handle: &AppHandle,
-        value: settings::Value,
-    ) -> Result<(), redb::Error> {
-        if let settings::Value::Theme(ref v) = value {
-            emit_event(handle, Event::ThemeChanged(v.to_owned()));
+        value: git_pal_settings::SettingValue,
+    ) -> Settings {
+        if let git_pal_settings::SettingValue::Theme(ref v) = value {
+            emit_event(handle, Event::ThemeChanged(v.clone()));
         }
 
-        self.settings.set(value)
+        let mut guard = self.setting_manager.lock().unwrap();
+        guard.set(value);
+
+        guard.settings.clone()
+    }
+
+    pub fn get_settings(&self) -> Settings {
+        self.setting_manager.lock().unwrap().settings.clone()
     }
 
     pub fn app_dir(&self) -> PathBuf {
         self.app_dir.clone()
-    }
-
-    pub fn set_user(&self, user: user_profile::UserProfileViewer) {
-        self.user.lock().unwrap().replace(user);
     }
 
     pub async fn handle_pr_monitor(&self) {
@@ -244,18 +239,18 @@ pub async fn handle_app_update(app: AppHandle) -> tauri_plugin_updater::Result<(
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "../../src/models/events.ts")]
+#[ts(export, export_to = "events.ts")]
 pub struct AuthPayload {
     msg: Option<String>,
     ok: bool,
 }
 
 #[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "../../src/models/events.ts")]
+#[ts(export, export_to = "events.ts")]
 #[serde(rename_all = "camelCase")]
 pub enum Event {
     AuthMessage(AuthPayload),
-    ThemeChanged(settings::Theme),
+    ThemeChanged(Theme),
 }
 
 pub fn emit_event(handle: &AppHandle, event: Event) {

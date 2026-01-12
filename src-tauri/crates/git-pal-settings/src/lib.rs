@@ -8,7 +8,8 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/settings.ts")]
+#[ts(export, export_to = "settings.ts")]
+#[serde(rename_all = "camelCase")]
 pub enum Theme {
     System,
     Light,
@@ -16,14 +17,15 @@ pub enum Theme {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/settings.ts")]
+#[ts(export, export_to = "settings.ts")]
 pub enum AuthMethod {
     OAuth,
-    TestVal,
+    PAT,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, TS)]
-#[ts(export, export_to = "../../src/models/settings.ts")]
+#[ts(export, export_to = "settings.ts")]
+#[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub theme: Theme,
     pub hotkey: String,
@@ -49,7 +51,8 @@ impl Default for Settings {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../src/models/settings.ts")]
+#[ts(export, export_to = "settings.ts")]
+#[serde(rename_all = "camelCase")]
 pub enum SettingValue {
     Theme(Theme),
     Hotkey(String),

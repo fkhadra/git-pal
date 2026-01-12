@@ -41,6 +41,7 @@ anyhow = "1.0.100"
 redb = "3.1.0"
 
 git-pal-github = { path = "./crates/git-pal-github"}
+git-pal-settings = { path = "./crates/git-pal-settings"}
 
 url = { workspace = true }
 tokio = { workspace = true }
