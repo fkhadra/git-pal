@@ -14,8 +14,11 @@ function useAppQuery() {
 				return {};
 			}
 
+			console.log(globalThis.settings);
+
 			const userProfile = await commands.isAuthenticated();
-			const theme = await commands.getSetting("theme");
+			const theme = globalThis.settings.theme;
+
 			userProfile.organizations.nodes?.forEach((org) => {
 				if (org?.name) {
 					state.setItem(org.name, { kind: "org", data: org });
@@ -27,7 +30,7 @@ function useAppQuery() {
 	});
 }
 
-const Views: Record<typeof globalThis["currentView"], React.FC> = {
+const Views: Record<(typeof globalThis)["currentView"], React.FC> = {
 	settings: SettingsPage,
 	setup: SetupPage,
 	palette: PalettePage,

@@ -25,6 +25,8 @@ pub enum Error {
     UnableToHideWindow { label: String, err: String },
     #[error("unable to register global shortcut: {0}")]
     UnableToRegisterGlobalShortcut(String),
+    #[error("unable to parse settings: {0}")]
+    UnableToParse(#[from] serde_json::Error),
 }
 
 impl serde::Serialize for Error {
@@ -125,7 +127,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
         MAIN_WINDOW_LABEL,
         WebviewUrl::App("palette".into()),
     )
-    .initialization_script(hydrate_global(handle, "palette"))
+    .initialization_script(hydrate_global(handle, "palette")?)
     .title("Git Pal")
     .inner_size(800.0, 600.0)
     .transparent(true)
@@ -196,7 +198,7 @@ struct WindowConfig<'a> {
 fn create_window(handle: &AppHandle, config: WindowConfig) -> Result {
     tauri::WebviewWindowBuilder::new(handle, config.label, WebviewUrl::App(config.url.into()))
         .title(config.title)
-        .initialization_script(hydrate_global(handle, config.current_view))
+        .initialization_script(hydrate_global(handle, config.current_view)?)
         .inner_size(config.width, config.height)
         .resizable(false)
         .minimizable(false)
@@ -233,14 +235,17 @@ fn register_global_shortcut(app_handle: &AppHandle) -> Result {
     Ok(())
 }
 
-fn hydrate_global(app_handle: &AppHandle, current_view: &str) -> String {
+fn hydrate_global(app_handle: &AppHandle, current_view: &str) -> Result<String> {
     let version = app_handle.package_info().version.to_string();
+    let state = app_handle.state::<AppState>();
+    let settings = serde_json::to_string(&state.get_settings())?;
 
-    format!(
+    Ok(format!(
         r#"
-    globalThis.currentView = "{}";
-    globalThis.appVersion = "{}";
-    "#,
-        current_view, version
-    )
+        globalThis.currentView = "{}";
+        globalThis.appVersion = "{}";
+        globalThis.settings = {};
+        "#,
+        current_view, version, settings
+    ))
 }
