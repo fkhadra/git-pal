@@ -1,9 +1,10 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { PalettePage, state } from "~/features/palette";
 import commands from "./commands";
-import { AppContext } from "./common";
+
 import { SettingsPage } from "./features/settings";
 import { SetupPage } from "./features/setup";
+import { AppProvider } from "./features/shared";
 import { useColorScheme } from "./libs/useColorScheme";
 
 function useAppQuery() {
@@ -47,8 +48,10 @@ export function App() {
 	const View = Views[window.currentView];
 
 	return (
-		<AppContext value={{ userProfile: data.userProfile, theme: data.theme }}>
+		<AppProvider
+			value={{ userProfile: data.userProfile, settings: globalThis.settings }}
+		>
 			<View />
-		</AppContext>
+		</AppProvider>
 	);
 }
