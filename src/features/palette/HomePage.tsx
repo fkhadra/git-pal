@@ -6,7 +6,7 @@ import {
 	MessageCircleMore,
 } from "lucide-react";
 import commands from "~/commands";
-import { useAppContext } from "~/common";
+
 import { CommandGroup, CommandItem } from "~/components/Cmdk";
 import {
 	OrganizationItem,
@@ -15,6 +15,7 @@ import {
 	RepositoryItem,
 } from "~/features/palette/Github";
 import { nil } from "~/libs/utils";
+import { useAppContext } from "../shared";
 import { state } from "./state";
 import { openUrl } from "./utils";
 
@@ -25,11 +26,11 @@ function useHomePageQuery() {
 			const { data } = await commands.homepage();
 
 			queueMicrotask(() => {
-				data.viewer.pullRequests.nodes?.forEach((pr) => {
+				data?.viewer.pullRequests.nodes?.forEach((pr) => {
 					if (pr) state.setItem(pr.id, { kind: "pr", data: pr });
 				});
 
-				data.viewer.topRepositories.nodes?.forEach((repo) => {
+				data?.viewer.topRepositories.nodes?.forEach((repo) => {
 					if (repo) state.setItem(repo.id, { kind: "repo", data: repo });
 				});
 			});
@@ -106,7 +107,7 @@ export function HomePage() {
 				</CommandItem>
 			</CommandGroup>
 			<CommandGroup heading="Open Pull Requests">
-				{data.viewer.pullRequests.nodes?.filter(nil).map((v) => (
+				{data?.viewer.pullRequests.nodes?.filter(nil).map((v) => (
 					<CommandItem
 						value={v.id}
 						key={v.id}
@@ -138,7 +139,7 @@ export function HomePage() {
 				</CommandGroup>
 			)}
 			<CommandGroup heading="Repositories">
-				{data.viewer.topRepositories?.nodes?.filter(nil).map((v) => (
+				{data?.viewer.topRepositories?.nodes?.filter(nil).map((v) => (
 					<CommandItem
 						value={v.id}
 						key={v.id}

@@ -87,12 +87,12 @@ function runWorkflow(params: RunWorkflowRequest) {
 	return invoke<void>("run_workflow", { params });
 }
 
-function updateSetting(params: settings.Value) {
-	return invoke<void>("update_setting", { params });
+function updateSetting(params: settings.SettingValue) {
+	return invoke<settings.Settings>("update_setting", { params });
 }
 
-function getSetting(params: settings.Key) {
-	return invoke<string>("get_setting", { params });
+function getSettings() {
+	return invoke<settings.Settings>("get_settings");
 }
 
 function monitorPullRequests() {
@@ -120,7 +120,7 @@ export default {
 	extractWorkflowVariables,
 	runWorkflow,
 	updateSetting,
-	getSetting,
+	getSettings,
 	monitorPullRequests,
-	stopMonitoring
+	stopMonitoring,
 };
