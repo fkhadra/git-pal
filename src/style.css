@@ -103,6 +103,7 @@ body:has([data-with-decoration]) {
 #root {
   min-height: 100dvh;
   background-color: var(--body-bg);
+  transition: background-color .2s; 
 }
 
 html {

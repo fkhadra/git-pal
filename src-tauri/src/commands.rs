@@ -1,6 +1,8 @@
+use std::str::FromStr;
 
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 use thiserror::Error;
 
 use crate::{
@@ -37,6 +39,8 @@ pub enum CommandError {
     Autostart(#[from] tauri_plugin_autostart::Error),
     #[error(transparent)]
     Settings(#[from] redb::Error),
+    #[error("invalid shortcut: {0}")]
+    Shortcut(String),
 }
 
 impl serde::Serialize for CommandError {
@@ -257,4 +261,34 @@ pub async fn update_setting(
 #[tauri::command]
 pub async fn get_settings(state: State<'_, AppState>) -> Result<git_pal_settings::Settings> {
     Ok(state.get_settings())
+}
+
+#[tauri::command]
+pub async fn replace_global_shortcut(app_handle: tauri::AppHandle, params: String) -> Result<()> {
+    let new_shortcut =
+        Shortcut::from_str(&params).map_err(|err| CommandError::Shortcut(err.to_string()))?;
+
+    let state: State<'_, AppState> = app_handle.state();
+    let old_shortcut = {
+        state
+            .setting_manager
+            .lock()
+            .unwrap()
+            .replace_global_shortcut(params.clone())
+    };
+
+    let old_str =
+        Shortcut::from_str(&old_shortcut).map_err(|err| CommandError::Shortcut(err.to_string()))?;
+
+    app_handle
+        .global_shortcut()
+        .unregister(old_str)
+        .map_err(|err| CommandError::Shortcut(err.to_string()))?;
+
+    app_handle
+        .global_shortcut()
+        .register(new_shortcut)
+        .map_err(|err| CommandError::Shortcut(err.to_string()))?;
+
+    Ok(())
 }

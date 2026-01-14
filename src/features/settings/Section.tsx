@@ -1,19 +1,19 @@
-import { SlotableComponent, Typography } from "~/components";
+import { type SlotableComponent, Typography } from "~/components";
 
 interface Props {
-  icon: SlotableComponent;
-  title: string;
-  children: React.ReactNode;
+	icon?: SlotableComponent;
+	title: string;
+	children: React.ReactNode;
 }
 
 export function Section({ icon: Icon, title, children }: Props) {
-  return (
-    <section>
-      <Typography.h4 className="mb-2 flex items-center">
-        <Icon className="mr-2" />
-        {title}
-      </Typography.h4>
-      {children}
-    </section>
-  );
+	return (
+		<section>
+			<Typography.h4 className="mb-2 flex items-center text-muted-foreground">
+				{Icon && <Icon className="mr-2 size-4" />}
+				{title}
+			</Typography.h4>
+			{children}
+		</section>
+	);
 }

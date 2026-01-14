@@ -1,6 +1,8 @@
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { motion } from "motion/react";
+import { useState } from "react";
 import { cn } from "~/libs/utils";
+import { Button } from "../Button";
 
 export interface InputProps extends React.ComponentPropsWithRef<"input"> {
   leftSlot?: React.ReactElement | false;
@@ -137,3 +139,30 @@ export function Label({
     </label>
   );
 }
+
+
+export const PasswordInput: React.FC<InputProps> = (props) => {
+    const [passwordVisible, setPasswordVisible] = useState(false);
+
+    return (
+      <Input
+        {...props}
+        type={passwordVisible ? "text" : "password"}
+        rightSlot={
+          <Button
+            type="button"
+            onClick={() => {
+              setPasswordVisible(!passwordVisible);
+            }}
+            role="switch"
+            aria-checked={passwordVisible}
+            size="iconSm"
+            variant="outline"
+            aria-label="Show Password"
+          >
+            {passwordVisible ? <EyeOff size={18} /> : <Eye size={18} />}
+          </Button>
+        }
+      />
+    );
+  };

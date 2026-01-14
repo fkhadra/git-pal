@@ -103,6 +103,10 @@ function stopMonitoring() {
 	return invoke<void>("stop_monitoring");
 }
 
+function replaceGlobalShortcut(shortcut: string) {
+	return invoke<void>("replace_global_shortcut", {params: shortcut});
+}
+
 export default {
 	authenticate,
 	homepage,
@@ -123,4 +127,5 @@ export default {
 	getSettings,
 	monitorPullRequests,
 	stopMonitoring,
+	replaceGlobalShortcut
 };

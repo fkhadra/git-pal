@@ -28,7 +28,7 @@ pub enum AuthMethod {
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub theme: Theme,
-    pub hotkey: String,
+    pub global_shortcut: String,
     pub auto_update: bool,
     pub auth_method: AuthMethod,
     pub display_rate_limit: bool,
@@ -40,7 +40,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             theme: Theme::System,
-            hotkey: "super+g".to_string(),
+            global_shortcut: "cmd+G".to_string(),
             auto_update: true,
             auth_method: AuthMethod::OAuth,
             display_rate_limit: false,
@@ -55,7 +55,7 @@ impl Default for Settings {
 #[serde(rename_all = "camelCase")]
 pub enum SettingValue {
     Theme(Theme),
-    Hotkey(String),
+    GlobalShortcut(String),
     AutoUpdate(bool),
     AuthMethod(AuthMethod),
     DisplayRateLimit(bool),
@@ -95,11 +95,15 @@ impl SettingManager {
             SettingValue::AuthMethod(val) => self.settings.auth_method = val,
             SettingValue::AutoUpdate(val) => self.settings.auto_update = val,
             SettingValue::DisplayRateLimit(val) => self.settings.display_rate_limit = val,
-            SettingValue::Hotkey(val) => self.settings.hotkey = val,
+            SettingValue::GlobalShortcut(val) => self.settings.global_shortcut = val,
             SettingValue::MonitorInterval(val) => self.settings.monitor_interval = val,
             SettingValue::MonitorPullRequests(val) => self.settings.monitor_pull_requests = val,
             SettingValue::Theme(val) => self.settings.theme = val,
         }
+    }
+
+    pub fn replace_global_shortcut(&mut self, shortcut: String) -> String {
+        std::mem::replace(&mut self.settings.global_shortcut, shortcut)
     }
 
     pub fn save(&self) -> Result<(), io::Error> {

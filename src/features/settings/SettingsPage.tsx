@@ -1,85 +1,56 @@
-import { useSuspenseQuery } from "@tanstack/react-query";
-import {
-	Cog,
-	Info,
-	Keyboard,
-	Lock,
-	LockKeyhole,
-	Palette,
-	Power,
-	Settings,
-} from "lucide-react";
+import { Info, LockKeyhole, Settings } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import commands from "~/commands";
-import { Button, Hr, ThemePicker } from "~/components";
 import { useWindowReady } from "~/hooks";
 import { cn } from "~/libs/utils";
-import { AutoStart } from "./AutoStart";
-import { HotKey } from "./HotKey";
-import { Section } from "./Section";
-
-function useSettingsQuery() {
-	return useSuspenseQuery({
-		queryKey: ["settings"],
-		queryFn: async () => {
-			return {
-				autoStartEnabled: await commands.isAutoStartEnabled(),
-			};
-		},
-	});
-}
+import { AboutSection } from "./AboutSection";
+import { GeneralSection } from "./GeneralSection";
+import { SecuritySection } from "./SecuritySection";
 
 export function SettingsPage() {
-	const {
-		data: { autoStartEnabled },
-	} = useSettingsQuery();
 	const [activeSection, setActiveSection] = useState("#general");
 
 	useWindowReady();
+	const currentSection = sections.find((v) => v.href === activeSection);
 
 	return (
 		<div data-with-decoration className="grid grid-cols-[168px_1fr]">
 			<nav className="mx-auto  w-full h-full p-2 border-r bg-zinc-800 border-r-pink-200/10 flex flex-col gap-2">
-				{sections.map((v) => (
+				{sections.map((section) => (
 					<a
-						href={v.href}
-						key={v.href}
+						href={section.href}
+						key={section.href}
 						onClick={() => {
-							setActiveSection(v.href)
+							setActiveSection(section.href);
 						}}
-						className={cn("flex px-2 py-2 gap-2 items-center", activeSection === v.href && "bg-zinc-200/20 rounded-md" )}
+						className={cn(
+							"flex px-2 py-2 gap-2 items-center",
+							activeSection === section.href && "bg-zinc-200/20 rounded-md",
+						)}
 					>
-						<span className={cn("p-2 rounded-md", v.bg)}>
-							<v.icon className={cn("size-4", v.color)} />
+						<span className={cn("p-2 rounded-md", section.bg)}>
+							<section.icon className={cn("size-4", section.color)} />
 						</span>{" "}
-						<span>{v.label}</span>
+						<span>{section.label}</span>
 					</a>
 				))}
 			</nav>
-			<div className="flex h-dvh flex-col gap-7 p-4">
-				<Section icon={Power} title="Startup">
-					<AutoStart autoStartEnabled={autoStartEnabled} />
-				</Section>
-				<Hr />
-				<Section icon={Palette} title="Theme">
-					<ThemePicker />
-				</Section>
-				<Hr />
-				<Section icon={Keyboard} title="Hotkey">
-					<HotKey />
-				</Section>
-
-				<div>
-					<span>Test Auth</span>
-					<Button
-						onClick={() => {
-							commands.startAuthFlow();
-						}}
-					>
-						Authorize
-					</Button>
-				</div>
-			</div>
+			<AnimatePresence mode="popLayout" initial={false}>
+				<motion.div
+					transition={
+						{
+							// type: "tween",
+						}
+					}
+					initial={{ opacity: 0, x: "0%" }}
+					animate={{ opacity: 1, x: 0 }}
+					exit={{ opacity: 0, x: "100%" }}
+					key={currentSection?.href}
+					className="flex h-dvh flex-col gap-7 p-4"
+				>
+					{currentSection && <currentSection.component />}
+				</motion.div>
+			</AnimatePresence>
 		</div>
 	);
 }
@@ -91,6 +62,7 @@ const sections = [
 		href: "#general",
 		bg: "bg-blue-300",
 		color: "text-blue-700",
+		component: GeneralSection,
 	},
 	{
 		label: "Security",
@@ -98,6 +70,7 @@ const sections = [
 		href: "#security",
 		bg: "bg-yellow-300",
 		color: "text-yellow-700",
+		component: SecuritySection,
 	},
 	{
 		label: "About",
@@ -105,5 +78,6 @@ const sections = [
 		href: "#about",
 		bg: "bg-primary",
 		color: "text-white",
+		component: AboutSection,
 	},
 ];

@@ -38,7 +38,7 @@ pub struct AppState {
     pub pull_requests_ch: Sender<JobStatus>,
     pub notification_manager: notification::NotificationManager,
     pub pending_auth: Mutex<Option<PendingAuth>>,
-    setting_manager: Mutex<SettingManager>,
+    pub setting_manager: Mutex<SettingManager>,
     app_dir: PathBuf,
 }
 

@@ -1,5 +1,5 @@
 import { Command, useCommandState } from "cmdk";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import commands from "~/commands";
 import { SkeletonRows } from "~/components";
 import { CommandEmpty } from "~/components/Cmdk";
@@ -14,7 +14,12 @@ import {
 } from "./PullRequestsPage";
 import { RepositoryPage } from "./RepositoryPage";
 import { SearchPage } from "./SearchPage";
-import { createPageMapper, useCurrentPage, useDisableEmptySearchResults, useGHSearchActive } from "./state";
+import {
+	createPageMapper,
+	useCurrentPage,
+	useDisableEmptySearchResults,
+	useGHSearchActive,
+} from "./state";
 
 const pages = createPageMapper({
 	home: HomePage,
@@ -30,11 +35,15 @@ export function PalettePage() {
 	// const [v, setV] = useState("");
 	const currentPage = useCurrentPage();
 	const Page = pages[currentPage.to];
+	const timeoutId = useRef<ReturnType<typeof setTimeout>>(undefined);
 
 	usePreloadPullRequestsQueries();
 
 	useEffect(() => {
-		commands.monitorPullRequests();
+		clearTimeout(timeoutId.current);
+		timeoutId.current = setTimeout(() => {
+			commands.monitorPullRequests();
+		}, 20_000);
 
 		return () => {
 			commands.stopMonitoring();
@@ -70,9 +79,10 @@ export function PalettePage() {
 function EmptySearchResults() {
 	const search = useCommandState((s) => s.search);
 	const isGhSearchActive = useGHSearchActive();
-	const disableEmptySearchResults = useDisableEmptySearchResults()
+	const disableEmptySearchResults = useDisableEmptySearchResults();
 
-	if (isGhSearchActive || search.length === 0 || disableEmptySearchResults) return null;
+	if (isGhSearchActive || search.length === 0 || disableEmptySearchResults)
+		return null;
 
 	return (
 		<CommandEmpty>

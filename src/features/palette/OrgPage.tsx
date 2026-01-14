@@ -20,7 +20,7 @@ function useOrgPageQuery() {
 			});
 
 			queueMicrotask(() => {
-				data.search.nodes?.forEach((repo) => {
+				data?.search.nodes?.forEach((repo) => {
 					if (repo && repo.__typename === "Repository") {
 						state.setItem(repo.id, { kind: "repo", data: repo });
 					}
@@ -37,7 +37,7 @@ export function OrgPage() {
 
 	return (
 		<CommandGroup heading="Repositories">
-			{data.search?.nodes?.filter(nil).map((repo) => {
+			{data?.search?.nodes?.filter(nil).map((repo) => {
 				const v = repo as Repository;
 
 				return (

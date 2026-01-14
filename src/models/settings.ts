@@ -2,8 +2,8 @@
 
 export type AuthMethod = "OAuth" | "PAT";
 
-export type SettingValue = { "theme": Theme } | { "hotkey": string } | { "autoUpdate": boolean } | { "authMethod": AuthMethod } | { "displayRateLimit": boolean } | { "monitorPullRequests": boolean } | { "monitorInterval": number };
+export type SettingValue = { "theme": Theme } | { "globalShortcut": string } | { "autoUpdate": boolean } | { "authMethod": AuthMethod } | { "displayRateLimit": boolean } | { "monitorPullRequests": boolean } | { "monitorInterval": number };
 
-export type Settings = { theme: Theme, hotkey: string, autoUpdate: boolean, authMethod: AuthMethod, displayRateLimit: boolean, monitorPullRequests: boolean, monitorInterval: number, };
+export type Settings = { theme: Theme, globalShortcut: string, autoUpdate: boolean, authMethod: AuthMethod, displayRateLimit: boolean, monitorPullRequests: boolean, monitorInterval: number, };
 
 export type Theme = "system" | "light" | "dark";

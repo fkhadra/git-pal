@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, str::FromStr};
 
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WindowEvent};
 use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
@@ -214,7 +214,21 @@ fn create_window(handle: &AppHandle, config: WindowConfig) -> Result {
 }
 
 fn register_global_shortcut(app_handle: &AppHandle) -> Result {
-    let hotkey = Shortcut::new(Some(Modifiers::SUPER), Code::KeyG);
+    let state = app_handle.state::<AppState>();
+    let hotkey = match Shortcut::from_str(
+        &state
+            .setting_manager
+            .lock()
+            .unwrap()
+            .settings
+            .global_shortcut,
+    ) {
+        Ok(shortcut) => shortcut,
+        Err(err) => {
+            log::error!("failed to parse shortcut, using default one: {}", err);
+            Shortcut::new(Some(Modifiers::SUPER), Code::KeyG)
+        }
+    };
 
     app_handle
         .plugin(
