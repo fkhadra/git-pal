@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { type KeyboardEvent, useRef, useState } from "react";
 import commands from "~/commands";
 import { Kbd } from "~/components";
-import { FormControl, Input } from "~/components/Form";
+import { FormControl, Input, Label } from "~/components/Form";
 import { useAppContext } from "~/features/shared";
 import {
 	captureShortcut,
@@ -60,14 +60,14 @@ export function GlobalShortcut() {
 	};
 
 	return (
-		<FormControl className="flex-col">
-			<div>
-				<span>Show Git Pal</span>
-			</div>
+		<FormControl className="flex-col mt-4">
+			<Label htmlFor="shortcut">Show Git Pal</Label>
 			<div className="relative flex items-center gap-2">
 				<Input
 					ref={inputRef}
 					error={error}
+					id="shortcut"
+					name="shortcut"
 					onKeyDown={handleKeyDown}
 					className="w-60"
 					onFocus={() => setIsRecording(true)}

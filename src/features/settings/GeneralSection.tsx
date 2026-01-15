@@ -21,7 +21,7 @@ export function GeneralSection() {
 				<ThemePicker />
 			</Section>
 			<Hr />
-			<Section icon={Keyboard} title="Hotkey">
+			<Section icon={Keyboard} title="Shortcut">
 				<GlobalShortcut />
 			</Section>
 		</>
