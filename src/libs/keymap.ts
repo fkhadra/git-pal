@@ -127,29 +127,49 @@ export const ModifierSymbol: Record<string, string> = {
 	cmd: "⌘",
 };
 
-export type Shortcut = ReturnType<typeof captureShortcut>;
-export type Modifier = { symbol: string; key: string };
+export const MainKeySymbol: Record<string, string> = {
+	Backspace: "⌫",
+	Enter: "↵",
+	ArrowUp: "↑",
+	ArrowDown: "↓",
+	ArrowLeft: "←",
+	ArrowRight: "→",
+};
 
-export function captureShortcut(event: KeyboardEvent<HTMLElement>) {
-	const modifiers: Modifier[] = [];
+export type Shortcut = {
+	modifiers: Key[];
+	mainKey: Key;
+};
+export type Key = { symbol: string; value: string };
+
+export function captureShortcut(event: KeyboardEvent<HTMLElement>): Shortcut {
+	const modifiers: Key[] = [];
 
 	if (event.shiftKey)
-		modifiers.push({ key: "shift", symbol: ModifierSymbol.shift });
+		modifiers.push({ value: "shift", symbol: ModifierSymbol.shift });
 	if (event.ctrlKey)
-		modifiers.push({ key: "ctrl", symbol: ModifierSymbol.ctrl });
-	if (event.metaKey) modifiers.push({ key: "cmd", symbol: ModifierSymbol.cmd });
-	if (event.altKey) modifiers.push({ key: "alt", symbol: ModifierSymbol.alt });
+		modifiers.push({ value: "ctrl", symbol: ModifierSymbol.ctrl });
+	if (event.metaKey)
+		modifiers.push({ value: "cmd", symbol: ModifierSymbol.cmd });
+	if (event.altKey)
+		modifiers.push({ value: "alt", symbol: ModifierSymbol.alt });
 
-	return { modifiers, mainKey: Keymap[event.code] };
+	return {
+		modifiers,
+		mainKey: {
+			symbol: MainKeySymbol[event.code] || Keymap[event.code],
+			value: Keymap[event.code],
+		},
+	};
 }
 
 export function shortcutToString(s?: Shortcut) {
 	if (!s) return;
 
-	const keys = s?.modifiers.map((v) => v.key);
+	const keys = s?.modifiers.map((v) => v.value);
 
 	if (keys && s.mainKey) {
-		keys.push(s.mainKey);
+		keys.push(s.mainKey.value);
 	}
 
 	return keys.join("+");
@@ -157,19 +177,23 @@ export function shortcutToString(s?: Shortcut) {
 
 export function parseShortcut(s: string) {
 	const keys = s.split("+");
-	const modifiers: Modifier[] = [];
-	let mainKey = "";
+	const modifiers: Key[] = [];
+	const mainKey: Key = {
+		symbol: "",
+		value: "",
+	};
 
 	for (const key of keys) {
 		const modifierSymbol = ModifierSymbol[key];
 
 		if (modifierSymbol) {
 			modifiers.push({
-				key,
+				value: key,
 				symbol: modifierSymbol,
 			});
 		} else {
-			mainKey = key;
+			mainKey.symbol = MainKeySymbol[key] || key;
+			mainKey.value = key;
 		}
 	}
 
