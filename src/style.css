@@ -51,7 +51,7 @@
   --popover: oklch(0.21 0.006 285.885);
   --popover-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
+  --secondary-foreground: oklch(81.093% 0.00009 271.152);
   --muted: oklch(0.274 0.006 286.033);
   --muted-foreground: oklch(0.705 0.015 286.067);
   --accent: oklch(0.274 0.006 286.033);
@@ -103,7 +103,8 @@ body:has([data-with-decoration]) {
 #root {
   min-height: 100dvh;
   background-color: var(--body-bg);
-  transition: background-color .2s; 
+  transition: background-color 0.2s;
+  isolation: isolate;
 }
 
 html {
