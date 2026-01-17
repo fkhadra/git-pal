@@ -15,8 +15,6 @@ function useAppQuery() {
 				return {};
 			}
 
-			console.log(globalThis.settings);
-
 			const userProfile = await commands.isAuthenticated();
 			const theme = globalThis.settings.theme;
 
