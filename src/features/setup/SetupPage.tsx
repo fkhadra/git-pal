@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import commands from "~/commands";
 import { Button, Keybind, Typography, Vortex } from "~/components";
 
@@ -10,6 +10,11 @@ import { PATForm } from "./PATForm";
 export function SetupPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [openPATDialog, togglePATDialog] = useState(false);
+  const closeDialog = useCallback(() => togglePATDialog(false), []);
+  const onAuthSuccess = useCallback(() => {
+    togglePATDialog(false);
+    setIsAuthenticated(true);
+  }, []);
 
   useWindowReady();
 
@@ -81,7 +86,9 @@ export function SetupPage() {
           open={openPATDialog}
           onOpenChange={togglePATDialog}
           title="Configure via PAT"
-          content={PATForm}
+          content={
+            <PATForm onCancel={closeDialog} onAuthSuccess={onAuthSuccess} />
+          }
         />
       </div>
     </main>

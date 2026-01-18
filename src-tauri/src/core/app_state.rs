@@ -5,7 +5,7 @@ use std::{
     sync::{self, Mutex},
 };
 
-use git_pal_settings::{SettingManager, Settings, Theme};
+use git_pal_settings::{SettingManager, SettingValue, Settings, Theme};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_updater::UpdaterExt;
@@ -69,8 +69,13 @@ impl AppState {
         handle: &AppHandle,
         value: git_pal_settings::SettingValue,
     ) -> Settings {
-        if let git_pal_settings::SettingValue::Theme(ref v) = value {
-            emit_event(handle, Event::ThemeChanged(v.clone()));
+        match &value {
+            git_pal_settings::SettingValue::Theme(theme) => {
+                emit_event(handle, Event::ThemeChanged(theme.clone()));
+            }
+            rest => {
+                emit_event(handle, Event::SettingChanged(rest.clone()));
+            }
         }
 
         let mut guard = self.setting_manager.lock().unwrap();
@@ -175,10 +180,10 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
 
             match state.oauth_client.exchange_code(url, pending_auth).await {
                 Ok(res) => {
-                    state
-                        .vault
-                        .save_token(&res.access_token)
-                        .unwrap_or_else(|err| log::error!("Failed to save token {}", err));
+                    if let Err(err) = state.vault.save_token(&res.access_token) {
+                        log::error!("Failed to save token {}", err)
+                    }
+
                     state.github_client.set_token(res.access_token);
 
                     log::info!("successfully authenticated");
@@ -190,14 +195,7 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
                         }),
                     );
 
-                    window::create_main_window(&app_handle).unwrap_or_else(|err| {
-                        log::error!("Failed to create main window after auth {}", err)
-                    });
-
-                    let s = app_handle.get_webview_window("Setup").unwrap();
-
-                    window::show_window(&s)
-                        .unwrap_or_else(|_| log::error!("Failed to display setup window again"))
+                    window::handle_setup_completed(&app_handle);
                 }
                 Err(err) => {
                     log::error!("Failed to exchange code {}", err);
@@ -251,12 +249,14 @@ pub struct AuthPayload {
 pub enum Event {
     AuthMessage(AuthPayload),
     ThemeChanged(Theme),
+    SettingChanged(SettingValue),
 }
 
 pub fn emit_event(handle: &AppHandle, event: Event) {
     let ev = match &event {
         Event::AuthMessage(_) => "AuthMessage",
         Event::ThemeChanged(_) => "ThemeChanged",
+        Event::SettingChanged(_) => "SettingChanged",
     };
 
     handle

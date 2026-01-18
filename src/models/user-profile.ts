@@ -4,6 +4,8 @@ export type Organization = { login: string, name: string | null, avatarUrl: stri
 
 export type ResponseData = { viewer: UserProfileViewer, };
 
+export type UserProfile = { login: string, avatarUrl: string, email: string, url: string, organizations: UserProfileViewerOrganizations, tokenExpireAt: string | null, };
+
 export type UserProfileViewer = { login: string, avatarUrl: string, email: string, url: string, organizations: UserProfileViewerOrganizations, };
 
 export type UserProfileViewerOrganizations = { nodes: Array<UserProfileViewerOrganizationsNodes | null> | null, };

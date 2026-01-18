@@ -99,6 +99,17 @@ pub fn on_app_start(handle: &AppHandle) -> Result {
     Ok(())
 }
 
+pub fn handle_setup_completed(app_handle: &AppHandle) {
+    if let Err(err) = create_main_window(app_handle) {
+        log::error!("Failed to create main window after auth: {}", err)
+    }
+
+    let s = app_handle.get_webview_window("Setup").unwrap();
+    if let Err(err) = show_window(&s) {
+        log::error!("Failed to display setup window again: {}", err)
+    }
+}
+
 pub fn show_window(w: &WebviewWindow) -> Result {
     if !w
         .is_visible()
@@ -134,7 +145,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
     .decorations(false)
     .resizable(false)
     .shadow(false)
-    .visible(true)
+    .visible(false)
     .always_on_top(true)
     .center()
     .background_throttling(tauri::utils::config::BackgroundThrottlingPolicy::Throttle)
@@ -150,13 +161,28 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
         .expect("Failed to set activation policy");
 
     register_global_shortcut(handle)?;
+    handle_window_events(window);
 
-    let _cw = window.clone();
+    Ok(())
+}
+
+#[cfg(debug_assertions)]
+fn handle_window_events(window: WebviewWindow) {
     window.on_window_event(move |e| match e {
         WindowEvent::CloseRequested { api, .. } => {
             api.prevent_close();
-            #[cfg(not(debug_assertions))]
-            cw.hide().unwrap_or_else(|err| {
+        }
+        _ => {}
+    });
+}
+
+#[cfg(not(debug_assertions))]
+fn handle_window_events(window: WebviewWindow) {
+    let cw = window.clone();
+    window.on_window_event(move |e| match e {
+        WindowEvent::CloseRequested { api, .. } => {
+            api.prevent_close();
+            if let Err(err) = cw.hide() {
                 log::error!(
                     "On window close, {}",
                     Error::UnableToHideWindow {
@@ -164,26 +190,23 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
                         err: err.to_string()
                     }
                 )
-            });
+            }
         }
         WindowEvent::Focused(focused) => {
             if !focused {
-                #[cfg(not(debug_assertions))]
-                cw.hide().unwrap_or_else(|err| {
+                if let Err(err) = cw.hide() {
                     log::error!(
-                        "On window focus change, {}",
+                        "On window focus, {}",
                         Error::UnableToHideWindow {
                             label: MAIN_WINDOW_LABEL.to_string(),
                             err: err.to_string()
                         }
                     )
-                });
+                }
             }
         }
         _ => {}
     });
-
-    Ok(())
 }
 
 struct WindowConfig<'a> {

@@ -1,9 +1,12 @@
 use std::str::FromStr;
 
+use serde::Serialize;
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
+use tauri_plugin_updater::UpdaterExt;
 use thiserror::Error;
+use ts_rs::TS;
 
 use crate::{
     core::{AppState, JobStatus},
@@ -14,7 +17,7 @@ use git_pal_github::{
     github,
     graphql::{
         FindPullRequestResult, FindPullRequestsFilter, FindRepositoriesRequest,
-        FindRepositoriesResult, Homepage, UserProfile, UserProfileViewer,
+        FindRepositoriesResult, Homepage, UserProfile,
     },
     query::search_pull_request::SearchPullRequestSearchNodes::PullRequest,
     rest::{
@@ -41,6 +44,8 @@ pub enum CommandError {
     Settings(#[from] redb::Error),
     #[error("invalid shortcut: {0}")]
     Shortcut(String),
+    #[error(transparent)]
+    Updater(#[from] tauri_plugin_updater::Error),
 }
 
 impl serde::Serialize for CommandError {
@@ -55,15 +60,25 @@ impl serde::Serialize for CommandError {
 type Result<T, E = CommandError> = std::result::Result<T, E>;
 
 #[tauri::command]
-pub async fn authenticate(state: State<'_, AppState>, token: String) -> Result<UserProfile> {
-    state.vault.save_token(&token)?;
-    state.github_client.set_token(token);
+pub async fn authenticate(
+    state: State<'_, AppState>,
+    app_handle: tauri::AppHandle,
+    token: String,
+) -> Result<UserProfile> {
+    state.github_client.set_token(token.clone());
 
-    Ok(state.github_client.load_user_profile().await?)
+    let response = state.github_client.load_user_profile().await?;
+
+    #[cfg(not(debug_assertions))]
+    state.vault.save_token(&token)?;
+
+    window::handle_setup_completed(&app_handle);
+
+    Ok(response)
 }
 
 #[tauri::command]
-pub async fn is_authenticated(state: State<'_, AppState>) -> Result<UserProfileViewer> {
+pub async fn is_authenticated(state: State<'_, AppState>) -> Result<UserProfile> {
     if !state.github_client.is_token_set() {
         return Err(github::Error::MissingToken.into());
     }
@@ -72,10 +87,9 @@ pub async fn is_authenticated(state: State<'_, AppState>) -> Result<UserProfileV
         return Ok(user);
     }
 
-    match state.github_client.load_user_profile().await?.data {
-        Some(v) => Ok(v.viewer),
-        None => Err(github::Error::MissingData.into()),
-    }
+    let user = state.github_client.load_user_profile().await?;
+
+    Ok(user)
 }
 
 #[tauri::command]
@@ -263,6 +277,7 @@ pub async fn get_settings(state: State<'_, AppState>) -> Result<git_pal_settings
     Ok(state.get_settings())
 }
 
+// TODO: Refactor
 #[tauri::command]
 pub async fn replace_global_shortcut(app_handle: tauri::AppHandle, params: String) -> Result<()> {
     let new_shortcut =
@@ -291,4 +306,33 @@ pub async fn replace_global_shortcut(app_handle: tauri::AppHandle, params: Strin
         .map_err(|err| CommandError::Shortcut(err.to_string()))?;
 
     Ok(())
+}
+
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "updater.ts")]
+
+pub struct Update {
+    pub body: Option<String>,
+    /// Version used to check for update
+    pub current_version: String,
+    /// Version announced
+    pub version: String,
+    /// Update publish date
+    pub date: Option<String>,
+}
+
+#[tauri::command]
+pub async fn check_for_update(app_handle: tauri::AppHandle) -> Result<Option<Update>> {
+    if let Some(update) = app_handle.updater()?.check().await? {
+        let u = Update {
+            body: update.body,
+            current_version: update.current_version,
+            version: update.version,
+            date: update.date.map(|v| v.to_string()),
+        };
+
+        return Ok(Some(u));
+    }
+
+    Ok(None)
 }

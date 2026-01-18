@@ -8,7 +8,7 @@ use reqwest::{Client as HttpClient, RequestBuilder, header::HeaderMap};
 use serde::{self, Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::query::user_profile;
+use crate::graphql::UserProfile;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -41,7 +41,7 @@ pub(super) struct Response {
 pub struct Client {
     pub(super) token: Mutex<Arc<Option<String>>>,
     pub(super) http: HttpClient,
-    pub(super) user: Mutex<Option<user_profile::UserProfileViewer>>,
+    pub(super) user: Mutex<Option<UserProfile>>,
 }
 
 impl Client {
@@ -53,13 +53,13 @@ impl Client {
         }
     }
 
-    pub fn get_user(&self) -> Option<user_profile::UserProfileViewer> {
+    pub fn get_user(&self) -> Option<UserProfile> {
         self.user.lock().unwrap().clone()
     }
 
     pub fn with_user<F, R>(&self, f: F) -> Result<R>
     where
-        F: FnOnce(&user_profile::UserProfileViewer) -> R,
+        F: FnOnce(&UserProfile) -> R,
     {
         let guard = self.user.lock().unwrap();
         let user = guard.as_ref().ok_or(Error::MissingUser)?;

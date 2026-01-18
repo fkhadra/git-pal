@@ -6,8 +6,9 @@ use serde::{self, Serialize, de::DeserializeOwned};
 use ts_rs::TS;
 
 use crate::api_client::{Client, Response, Result};
-use crate::github::Metadata;
-use crate::query;
+use crate::github::{Error, Metadata};
+use crate::query::user_profile::UserProfileViewerOrganizations;
+use crate::query::{self};
 
 const GRAPHQL_API_URL: &str = "https://api.github.com/graphql";
 
@@ -27,7 +28,18 @@ pub struct GraphQLResponse<T> {
     pub errors: Option<Vec<String>>,
 }
 
-pub type UserProfile = GraphQLResponse<query::user_profile::ResponseData>;
+#[derive(Debug, Serialize, TS, Clone)]
+#[ts(export, export_to = "user-profile.ts")]
+#[serde(rename_all = "camelCase")]
+pub struct UserProfile {
+    pub login: String,
+    pub avatar_url: String,
+    pub email: String,
+    pub url: String,
+    pub organizations: UserProfileViewerOrganizations,
+    pub token_expire_at: Option<String>,
+}
+
 pub type Homepage = GraphQLResponse<query::homepage::ResponseData>;
 pub type FindPullRequestResult = GraphQLResponse<query::search_pull_request::ResponseData>;
 pub type FindRepositoriesResult = GraphQLResponse<query::find_repositories::ResponseData>;
@@ -49,13 +61,24 @@ impl std::fmt::Display for FindRepositoriesRequest {
 impl Client {
     pub async fn load_user_profile(&self) -> Result<UserProfile> {
         let q = query::UserProfile::build_query(query::user_profile::Variables);
-        let res: UserProfile = self.send_graphql(&q).await?;
+        let res: GraphQLResponse<query::user_profile::ResponseData> = self.send_graphql(&q).await?;
 
-        if let Some(user) = res.data.as_ref() {
-            self.user.lock().unwrap().replace(user.viewer.clone());
+        if let Some(user) = res.data {
+            let user_profile = UserProfile {
+                token_expire_at: res.metadata.token_expiration,
+                avatar_url: user.viewer.avatar_url,
+                email: user.viewer.email,
+                login: user.viewer.login,
+                organizations: user.viewer.organizations,
+                url: user.viewer.url,
+            };
+
+            self.user.lock().unwrap().replace(user_profile.clone());
+
+            return Ok(user_profile);
         }
 
-        Ok(res)
+        Err(Error::MissingUser)
     }
 
     pub async fn homepage(&self) -> Result<Homepage> {
