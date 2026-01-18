@@ -6,19 +6,20 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-use crate::api_client::{Client, Error, RateLimit, Response, Result};
+use crate::api_client::{Client, Error, Response, Result};
+use crate::github::Metadata;
 
 const API_URL: &str = "https://api.github.com/";
 
-#[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../../../src/models/api.ts")]
+#[derive(Debug, Serialize, TS)]
+#[ts(export, export_to = "api.ts")]
 pub struct RestResponse<T> {
-    pub rate_limit: RateLimit,
+    pub metadata: Metadata,
     pub data: T,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
-#[ts(export, export_to = "../../../../src/models/rest.ts")]
+#[ts(export, export_to = "rest.ts")]
 pub struct Workflow {
     pub id: i32,
     pub node_id: String,
@@ -33,14 +34,14 @@ pub struct Workflow {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
-#[ts(export, export_to = "../../../../src/models/rest.ts")]
+#[ts(export, export_to = "rest.ts")]
 pub struct Workflows {
     pub total_count: i32,
     pub workflows: Vec<Workflow>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../../../src/models/rest.ts")]
+#[ts(export, export_to = "rest.ts")]
 pub struct WorkflowInput {
     pub name: Option<String>,
     pub description: Option<String>,
@@ -71,7 +72,7 @@ struct WorkflowTrigger {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../../../src/models/rest.ts")]
+#[ts(export, export_to = "rest.ts")]
 pub struct FileRequest<'a> {
     pub owner: &'a str,
     pub repository: &'a str,
@@ -79,7 +80,7 @@ pub struct FileRequest<'a> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../../../src/models/rest.ts")]
+#[ts(export, export_to = "rest.ts")]
 pub struct RunWorkflowRequest<'a> {
     pub owner: &'a str,
     pub repository: &'a str,
@@ -90,7 +91,7 @@ pub struct RunWorkflowRequest<'a> {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../../../src/models/rest.ts")]
+#[ts(export, export_to = "rest.ts")]
 pub struct FindWorkflowsRequest<'a> {
     pub owner: &'a str,
     pub repository: &'a str,
@@ -119,14 +120,11 @@ impl Client {
             ))
             .header("Accept", "application/vnd.github.raw+json");
 
-        let Response {
-            rate_limit,
-            response,
-        } = self.do_request(req).await?;
+        let Response { metadata, response } = self.do_request(req).await?;
         let file_content = response.text().await?;
 
         Ok(RestResponse {
-            rate_limit,
+            metadata,
             data: file_content,
         })
     }
@@ -166,7 +164,7 @@ impl Client {
             .unwrap_or_default();
 
         Ok(RestResponse {
-            rate_limit: res.rate_limit,
+            metadata: res.metadata,
             data: variables,
         })
     }
@@ -204,12 +202,9 @@ impl Client {
         R: DeserializeOwned + Clone + Debug,
     {
         let req = req.header("Accept", "application/vnd.github+json");
-        let Response {
-            rate_limit,
-            response,
-        } = self.do_request(req).await?;
+        let Response { metadata, response } = self.do_request(req).await?;
         let data: R = response.json().await?;
 
-        Ok(RestResponse { rate_limit, data })
+        Ok(RestResponse { metadata, data })
     }
 }

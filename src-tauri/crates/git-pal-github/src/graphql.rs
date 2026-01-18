@@ -6,23 +6,23 @@ use serde::{self, Serialize, de::DeserializeOwned};
 use ts_rs::TS;
 
 use crate::api_client::{Client, Response, Result};
-use crate::github::RateLimit;
+use crate::github::Metadata;
 use crate::query;
 
 const GRAPHQL_API_URL: &str = "https://api.github.com/graphql";
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq, Eq)]
-#[ts(export, export_to = "../../../../src/models/graphql.ts")]
+#[ts(export, export_to = "graphql.ts")]
 #[serde(rename_all = "camelCase")]
 pub enum FindPullRequestsFilter {
     Mentionned,
     ReviewRequested,
 }
 
-#[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../../../src/models/api.ts")]
+#[derive(Debug, Serialize, TS)]
+#[ts(export, export_to = "api.ts")]
 pub struct GraphQLResponse<T> {
-    pub rate_limit: RateLimit,
+    pub metadata: Metadata,
     pub data: Option<T>,
     pub errors: Option<Vec<String>>,
 }
@@ -34,7 +34,7 @@ pub type FindRepositoriesResult = GraphQLResponse<query::find_repositories::Resp
 pub type UserProfileViewer = query::user_profile::UserProfileViewer;
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
-#[ts(export, export_to = "../../../../src/models/graphql.ts")]
+#[ts(export, export_to = "graphql.ts")]
 pub struct FindRepositoriesRequest {
     pub owner: String,
     pub query: String,
@@ -103,10 +103,7 @@ impl Client {
         T: Serialize,
         R: DeserializeOwned + Clone + Debug,
     {
-        let Response {
-            rate_limit,
-            response,
-        } = self
+        let Response { metadata, response } = self
             .do_request(self.http.post(GRAPHQL_API_URL).json(body))
             .await?;
         let response_body: GQLResponse<R> = response.json().await?;
@@ -119,7 +116,7 @@ impl Client {
 
         Ok(GraphQLResponse {
             data: response_body.data,
-            rate_limit,
+            metadata,
             errors,
         })
     }

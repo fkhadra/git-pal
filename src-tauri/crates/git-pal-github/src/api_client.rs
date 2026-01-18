@@ -16,8 +16,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error("token is missing")]
     MissingToken,
-    #[error("invalid request: {status:} {message:}")]
-    BadRequest { message: String, status: u16 },
+    #[error("invalid request:  {0}")]
+    BadRequest(String),
     #[error("no data")]
     MissingData,
     #[error("missing user")]
@@ -28,17 +28,13 @@ pub enum Error {
     Other(#[from] reqwest::Error),
 }
 
-impl serde::Serialize for Error {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        serializer.serialize_str(&self.to_string())
-    }
+#[derive(Debug, Deserialize)]
+struct ErrorResponse {
+    message: String,
 }
 
 pub(super) struct Response {
-    pub(super) rate_limit: RateLimit,
+    pub(super) metadata: Metadata,
     pub(super) response: reqwest::Response,
 }
 
@@ -95,26 +91,24 @@ impl Client {
             .await?;
 
         if !res.status().is_success() {
-            let status = res.status().as_u16();
-            return Err(Error::BadRequest {
-                status,
-                message: res.text().await?,
-            });
+            return Err(Error::BadRequest(
+                res.json::<ErrorResponse>().await?.message,
+            ));
         }
 
-        let rate_limit = RateLimit::extract(res.headers());
+        let metadata = Metadata::extract(res.headers());
 
-        log::debug!("Rate limit: {:?}", rate_limit);
+        log::debug!("Rate limit: {:?}", metadata.rate_limit);
 
         Ok(Response {
-            rate_limit,
+            metadata,
             response: res,
         })
     }
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "../../../../src/models/api.ts")]
+#[ts(export, export_to = "api.ts")]
 pub struct RateLimit {
     pub limit: u32,
     pub remaining: u32,
@@ -122,9 +116,16 @@ pub struct RateLimit {
     pub used: u32,
 }
 
-impl RateLimit {
+#[derive(Debug, Serialize, TS)]
+#[ts(export, export_to = "api.ts")]
+pub struct Metadata {
+    pub rate_limit: RateLimit,
+    pub token_expiration: Option<String>,
+}
+
+impl Metadata {
     pub(super) fn extract(headers: &HeaderMap) -> Self {
-        let get_value = |k: &str| {
+        let get_int_value = |k: &str| {
             headers
                 .get(k)
                 .and_then(|f| f.to_str().ok())
@@ -132,11 +133,17 @@ impl RateLimit {
                 .unwrap_or(0)
         };
 
-        RateLimit {
-            limit: get_value("X-RateLimit-Limit"),
-            remaining: get_value("X-RateLimit-Remaining"),
-            reset: get_value("X-RateLimit-Reset"),
-            used: get_value("X-RateLimit-Used"),
+        Metadata {
+            rate_limit: RateLimit {
+                limit: get_int_value("X-RateLimit-Limit"),
+                remaining: get_int_value("X-RateLimit-Remaining"),
+                reset: get_int_value("X-RateLimit-Reset"),
+                used: get_int_value("X-RateLimit-Used"),
+            },
+            token_expiration: headers
+                .get("github-authentication-token-expiration")
+                .and_then(|f| f.to_str().ok())
+                .and_then(|f| f.parse::<String>().ok()),
         }
     }
 }
