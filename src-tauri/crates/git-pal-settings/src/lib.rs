@@ -16,13 +16,6 @@ pub enum Theme {
     Dark,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "settings.ts")]
-pub enum AuthMethod {
-    OAuth,
-    PAT,
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug, TS)]
 #[ts(export, export_to = "settings.ts")]
 #[serde(rename_all = "camelCase")]
@@ -30,7 +23,6 @@ pub struct Settings {
     pub theme: Theme,
     pub global_shortcut: String,
     pub auto_update: bool,
-    pub auth_method: AuthMethod,
     pub display_rate_limit: bool,
     pub monitor_pull_requests: bool,
     pub monitor_interval: u32,
@@ -42,7 +34,6 @@ impl Default for Settings {
             theme: Theme::System,
             global_shortcut: "cmd+G".to_string(),
             auto_update: true,
-            auth_method: AuthMethod::OAuth,
             display_rate_limit: false,
             monitor_pull_requests: true,
             monitor_interval: 20,
@@ -57,7 +48,6 @@ pub enum SettingValue {
     Theme(Theme),
     GlobalShortcut(String),
     AutoUpdate(bool),
-    AuthMethod(AuthMethod),
     DisplayRateLimit(bool),
     MonitorPullRequests(bool),
     MonitorInterval(u32),
@@ -92,7 +82,6 @@ impl SettingManager {
 
     pub fn set(&mut self, value: SettingValue) {
         match value {
-            SettingValue::AuthMethod(val) => self.settings.auth_method = val,
             SettingValue::AutoUpdate(val) => self.settings.auto_update = val,
             SettingValue::DisplayRateLimit(val) => self.settings.display_rate_limit = val,
             SettingValue::GlobalShortcut(val) => self.settings.global_shortcut = val,
