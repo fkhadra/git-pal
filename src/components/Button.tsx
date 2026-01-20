@@ -21,6 +21,8 @@ export const buttonVariants = tv({
     focus-visible:ring-offset-1
     font-medium
     outline-none
+    leading-6
+    select-none
     `,
   variants: {
     variant: {
@@ -28,7 +30,7 @@ export const buttonVariants = tv({
       outline: "border-2 bg-transparent disabled:opacity-60",
     },
     size: {
-      default: "h-10 px-4 py-2",
+      default: "h-10 px-3.5 py-2 min-w-32",
       sm: "h-8 rounded-md px-3",
       lg: "h-11 rounded-md px-8",
       icon: "size-9 min-h-9 min-w-9 [&>svg]:size-6",
@@ -107,9 +109,9 @@ export function Button({
       {isLoading && (
         <span className="mr-2 size-5 animate-spin rounded-full border-2 border-zinc-200 border-r-zinc-400" />
       )}
-      {LeftSlot && !isLoading && <LeftSlot className="mr-2 size-5" />}
+      {LeftSlot && !isLoading && <LeftSlot className="mr-1 size-4" />}
       {children}
-      {RightSlot && <RightSlot className="ml-2 size-5" />}
+      {RightSlot && <RightSlot className="ml-1 size-5" />}
     </button>
   );
 }

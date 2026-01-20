@@ -9,3 +9,4 @@ export * from "./ThemePicker";
 export * from "./types";
 export * from "./Typography";
 export * from "./Vortex";
+export * from "./Tooltip";
