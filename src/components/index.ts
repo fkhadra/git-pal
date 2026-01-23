@@ -1,3 +1,4 @@
+export * from "./AlertDialog";
 export * from "./AnimatedBeam";
 export * from "./Button";
 export * from "./Dialog";
@@ -6,7 +7,7 @@ export * from "./Separator";
 export * from "./SkeletonRows";
 export * from "./Spinner";
 export * from "./ThemePicker";
+export * from "./Tooltip";
 export * from "./types";
 export * from "./Typography";
 export * from "./Vortex";
-export * from "./Tooltip";
