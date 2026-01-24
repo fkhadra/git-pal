@@ -1,16 +1,32 @@
-import { Dialog as BaseDialog } from "@base-ui/react/dialog";
+import { ComponentRenderFn } from "@base-ui/react";
+import {
+  Dialog as BaseDialog,
+  DialogTriggerState,
+} from "@base-ui/react/dialog";
+import { HTMLProps, JSXElementConstructor, ReactElement } from "react";
 
 export interface DialogProps extends React.ComponentProps<
   typeof BaseDialog.Root
 > {
+  trigger?:
+    | ReactElement<unknown, string | JSXElementConstructor<any>>
+    | ComponentRenderFn<HTMLProps<any>, DialogTriggerState>
+    | undefined;
   title?: React.ReactNode;
   description?: React.ReactNode;
   content?: React.ReactNode;
 }
 
-export function Dialog({ title, description, content, ...rest }: DialogProps) {
+export function Dialog({
+  title,
+  description,
+  content,
+  trigger,
+  ...rest
+}: DialogProps) {
   return (
     <BaseDialog.Root {...rest}>
+      {trigger && <BaseDialog.Trigger render={trigger} />}
       <BaseDialog.Portal>
         <BaseDialog.Backdrop className="fixed inset-0 min-h-dvh bg-black/10 backdrop-blur-xs transition-all duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-[-webkit-touch-callout:none]:absolute" />
         <BaseDialog.Popup className="text-primary-foreground fixed top-1/2 left-1/2 -mt-8 w-96 max-w-[calc(100vw-3rem)] -translate-x-1/2 -translate-y-1/2 rounded-lg bg-gray-50 p-6 outline-1 outline-pink-200/20 transition-all duration-150 data-ending-style:scale-90 data-ending-style:opacity-0 data-starting-style:scale-90 data-starting-style:opacity-0 dark:bg-black">

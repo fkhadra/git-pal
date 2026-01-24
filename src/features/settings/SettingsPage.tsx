@@ -48,7 +48,7 @@ export function SettingsPage() {
             bounce: 0,
             duration: 0.2,
           }}
-          className="flex h-dvh flex-col gap-7 p-4"
+          className="flex h-dvh flex-col gap-7 px-4 py-2"
         >
           {currentSection && <currentSection.component />}
         </motion.div>

@@ -1,9 +1,9 @@
-import { openUrl } from "@tauri-apps/plugin-opener";
 import { AnimatePresence, motion } from "motion/react";
 import { FormEvent, useState } from "react";
 import commands from "~/commands";
 import { Button, Spinner } from "~/components";
 import { Input } from "~/components/Form";
+import { createPAT } from "~/libs/createPAT";
 import { withDelay } from "~/libs/utils";
 
 interface Props {
@@ -37,11 +37,7 @@ export function PATForm({ onCancel, onAuthSuccess }: Props) {
         <button
           type="button"
           className="cursor-pointer text-sm font-semibold text-indigo-400 underline"
-          onClick={() => {
-            openUrl(
-              "https://github.com/settings/tokens/new?description=Git Pal&scopes=repo,read:org,gist,read:user,user:email&default_expires_at=none",
-            );
-          }}
+          onClick={createPAT}
         >
           Create Token
         </button>{" "}
@@ -55,12 +51,11 @@ export function PATForm({ onCancel, onAuthSuccess }: Props) {
       />
 
       <div className="mt-4 flex items-center justify-between">
-        <Button color="secondary" onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           Cancel
         </Button>
         <Button
           type="submit"
-          color="primary"
           className="relative w-32 overflow-hidden"
           disabled={!!!token || formStatus === "inFlight"}
         >

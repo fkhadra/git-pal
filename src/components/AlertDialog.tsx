@@ -21,7 +21,7 @@ export interface AlertDialogProps extends React.ComponentProps<
     | ComponentRenderFn<HTMLProps<any>, DialogCloseState>;
 }
 
-export default function AlertDialog({
+export function AlertDialog({
   trigger,
   title,
   description,
