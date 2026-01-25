@@ -100,13 +100,16 @@ pub fn on_app_start(handle: &AppHandle) -> Result {
 }
 
 pub fn handle_setup_completed(app_handle: &AppHandle) {
-    if let Err(err) = create_main_window(app_handle) {
-        log::error!("Failed to create main window after auth: {}", err)
+    if let None = app_handle.get_webview_window(MAIN_WINDOW_LABEL) {
+        if let Err(err) = create_main_window(app_handle) {
+            log::error!("Failed to create main window after auth: {}", err)
+        }
     }
 
-    let s = app_handle.get_webview_window("Setup").unwrap();
-    if let Err(err) = show_window(&s) {
-        log::error!("Failed to display setup window again: {}", err)
+    if let Some(setup_window) = app_handle.get_webview_window(SETUP_WINDOW_LABEL) {
+        if let Err(err) = show_window(&setup_window) {
+            log::error!("Failed to display setup window again: {}", err)
+        }
     }
 }
 

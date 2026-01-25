@@ -51,7 +51,14 @@ export function SecuritySection() {
           </span>
           <div className="flex items-center">
             <div className="flex items-center gap-2">
-              <Button>Login with GitHub</Button> or
+              <Button
+                onClick={() => {
+                  commands.startAuthFlow();
+                }}
+              >
+                Login with GitHub
+              </Button>{" "}
+              or
               <Button variant="outline" onClick={() => togglePATDialog(true)}>
                 Configure via PAT
               </Button>
