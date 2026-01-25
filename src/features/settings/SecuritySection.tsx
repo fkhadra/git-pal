@@ -1,12 +1,14 @@
-import { Clock, Copy, Info, KeyRound, Trash } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Check, Clock, Copy, Eye, EyeOff, KeyRound, Trash } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useMemo, useState } from "react";
-import { Button, Dialog, Hr, Typography } from "~/components";
+import commands from "~/commands";
+import { Button, Dialog, Hr, Tooltip } from "~/components";
 import { AlertDialog } from "~/components/AlertDialog";
-import { FormControl, Label, PasswordInput } from "~/components/Form";
+import { FormControl, Input, Label } from "~/components/Form";
+import { PATForm } from "../setup";
 import { useAppContext } from "../shared";
 import { Section } from "./Section";
-import { Alert, AlertTitle, AlertDescription } from "~/components/Alert";
-import { PATForm } from "../setup";
 
 export function SecuritySection() {
   const { userProfile } = useAppContext();
@@ -34,9 +36,9 @@ export function SecuritySection() {
       >
         <FormControl>
           <Label>GitHub Token</Label>
-          <div className="flex items-center">
-            <PasswordInput value={"x".repeat(16)} readOnly />
-            <div className="text-muted-foreground ml-4 flex items-center text-sm">
+          <div className="flex flex-col gap-3">
+            <Token />
+            <div className="text-muted-foreground flex items-center text-sm">
               <Clock className="mr-1 size-4" />
               <span>Expires on {tokenExpireAt}</span>
             </div>
@@ -68,14 +70,6 @@ export function SecuritySection() {
 
         <div className="mt-auto flex flex-col gap-2">
           <Hr />
-
-          {/* <Alert className="mb-4">
-            <Info className="text-info" />
-            <AlertDescription>
-              Your token is stored securely in the system keychain and never
-              leaves this computer.
-            </AlertDescription>
-          </Alert> */}
           <AlertDialog
             title="Delete GitHub Token?"
             trigger={
@@ -93,26 +87,64 @@ export function SecuritySection() {
             }
           />
         </div>
-
-        {/* <div className="mt-auto">
-          <AlertDialog
-            title="Delete GitHub Token?"
-            trigger={
-              <Button className="ml-auto" variant="destructive">
-                <Trash />
-                Delete Token
-              </Button>
-            }
-            description="This action cannot be undone and you will need to re-authenticate."
-            action={
-              <Button variant="destructive">
-                <Trash />
-                Delete
-              </Button>
-            }
-          />
-        </div> */}
       </Section>
     </>
+  );
+}
+
+function Token() {
+  const [displayToken, setDisplayToken] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
+  const { data = "" } = useQuery({
+    queryKey: ["get_token"],
+    queryFn: commands.getToken,
+  });
+
+  const copyToken = async () => {
+    try {
+      setIsCopying(true);
+      await navigator.clipboard.writeText(data);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    } finally {
+      setTimeout(() => {
+        setIsCopying(false);
+      }, 600);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2">
+      <Input disabled type={displayToken ? "text" : "password"} value={data} />
+      <Tooltip content="Show password">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => setDisplayToken(!displayToken)}
+        >
+          {!displayToken ? <EyeOff /> : <Eye />}
+        </Button>
+      </Tooltip>
+      <Tooltip content="Copy password">
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={copyToken}
+          className="relative overflow-hidden"
+        >
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              transition={{ type: "spring", duration: 0.3, bounce: 0 }}
+              initial={{ opacity: 0, y: -25 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 25 }}
+              key={`${isCopying}`}
+            >
+              {isCopying ? <Check className="text-success" /> : <Copy />}
+            </motion.span>
+          </AnimatePresence>
+        </Button>
+      </Tooltip>
+    </div>
   );
 }

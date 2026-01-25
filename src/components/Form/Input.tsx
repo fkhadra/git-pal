@@ -27,8 +27,9 @@ export function Input({
     rounded-lg border-1 px-3 py-2 transition-colors file:border-0
     file:bg-transparent shadow file:text-sm file:font-medium
     focus-visible:outline-hidden disabled:cursor-not-allowed disabled:border-none
-    disabled:bg-zinc-500 disabled:opacity-50 focus-visible:shadow-primary
+     disabled:opacity-50 focus-visible:shadow-primary
     focus-visible:shadow-[0_0_4px_1px] transition-shadow hover:ring-primary/70
+    disabled:bg-input/50 dark:disabled:bg-input/80
     hover:ring-1`,
     !!error &&
       `focus-visible:shadow-alert caret-alert ring-1 ring-alert hover:ring-alert

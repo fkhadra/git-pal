@@ -336,3 +336,9 @@ pub async fn check_for_update(app_handle: tauri::AppHandle) -> Result<Option<Upd
 
     Ok(None)
 }
+
+#[tauri::command]
+pub async fn get_token(state: State<'_, AppState>) -> Result<String> {
+    let token = state.vault.get_token()?;
+    Ok(token)
+}
