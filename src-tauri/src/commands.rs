@@ -1,15 +1,13 @@
 use std::str::FromStr;
 
-use serde::Serialize;
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 use tauri_plugin_updater::UpdaterExt;
 use thiserror::Error;
-use ts_rs::TS;
 
 use crate::{
-    core::{AppState, JobStatus},
+    core::{AppState, AppUpdate, JobStatus},
     window,
 };
 
@@ -308,23 +306,10 @@ pub async fn replace_global_shortcut(app_handle: tauri::AppHandle, params: Strin
     Ok(())
 }
 
-#[derive(Debug, Clone, Serialize, TS)]
-#[ts(export, export_to = "updater.ts")]
-
-pub struct Update {
-    pub body: Option<String>,
-    /// Version used to check for update
-    pub current_version: String,
-    /// Version announced
-    pub version: String,
-    /// Update publish date
-    pub date: Option<String>,
-}
-
 #[tauri::command]
-pub async fn check_for_update(app_handle: tauri::AppHandle) -> Result<Option<Update>> {
+pub async fn check_for_update(app_handle: tauri::AppHandle) -> Result<Option<AppUpdate>> {
     if let Some(update) = app_handle.updater()?.check().await? {
-        let u = Update {
+        let u = AppUpdate {
             body: update.body,
             current_version: update.current_version,
             version: update.version,

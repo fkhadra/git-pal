@@ -2,7 +2,7 @@ mod commands;
 mod core;
 mod window;
 
-use core::{handle_deeplink, AppState};
+use core::{handle_deeplink, start_updater, AppState};
 use std::env;
 
 use tauri::{image::Image, menu::MenuBuilder, tray::TrayIconBuilder, Manager};
@@ -46,14 +46,8 @@ pub fn run() {
         .setup(|app| {
             let _app_handle = app.handle().clone();
 
-            //  uncomment to enable update
-            // tauri::async_runtime::spawn(async move {
-            //     if let Err(err) = handle_app_update(app_handle).await {
-            //         log::error!("failed to handle update: {}", err)
-            //     }
-            // });
-
             on_app_start(app.handle())?;
+            start_updater(app.handle().clone());
 
             app.state::<AppState>()
                 .notification_manager

@@ -24,6 +24,19 @@ use git_pal_github::{
     query::{self, search_pull_request::SearchPullRequestSearchNodes::PullRequest},
 };
 
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "updater.ts")]
+
+pub struct AppUpdate {
+    pub body: Option<String>,
+    /// Version used to check for update
+    pub current_version: String,
+    /// Version announced
+    pub version: String,
+    /// Update publish date
+    pub date: Option<String>,
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum JobStatus {
     Idle,
@@ -213,11 +226,24 @@ pub fn handle_deeplink(app_handle: &AppHandle, urls: Vec<Url>) {
     });
 }
 
-pub async fn handle_app_update(app: AppHandle) -> tauri_plugin_updater::Result<()> {
-    if let Some(update) = app.updater()?.check().await? {
+pub fn start_updater(app_handle: AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        let mut interval = tokio::time::interval(tokio::time::Duration::from_hours(1));
+
+        loop {
+            let app = app_handle.clone();
+            interval.tick().await;
+            if let Err(err) = check_for_update(app).await {
+                log::error!("updater error: {}", err)
+            }
+        }
+    });
+}
+
+pub async fn check_for_update(app_handle: AppHandle) -> tauri_plugin_updater::Result<()> {
+    if let Some(update) = app_handle.updater()?.check().await? {
         let mut downloaded = 0;
 
-        // alternatively we could also call update.download() and update.install() separately
         update
             .download_and_install(
                 |chunk_length, content_length| {
@@ -229,9 +255,17 @@ pub async fn handle_app_update(app: AppHandle) -> tauri_plugin_updater::Result<(
                 },
             )
             .await?;
-
         log::info!("update installed");
-        // app.restart();
+
+        emit_event(
+            &app_handle,
+            Event::UpdateInstalled(AppUpdate {
+                body: update.body,
+                current_version: update.current_version,
+                version: update.version,
+                date: update.date.map(|v| v.to_string()),
+            }),
+        );
     }
     Ok(())
 }
@@ -250,6 +284,7 @@ pub enum Event {
     AuthMessage(AuthPayload),
     ThemeChanged(Theme),
     SettingChanged(SettingValue),
+    UpdateInstalled(AppUpdate),
 }
 
 pub fn emit_event(handle: &AppHandle, event: Event) {
@@ -257,6 +292,7 @@ pub fn emit_event(handle: &AppHandle, event: Event) {
         Event::AuthMessage(_) => "AuthMessage",
         Event::ThemeChanged(_) => "ThemeChanged",
         Event::SettingChanged(_) => "SettingChanged",
+        Event::UpdateInstalled(_) => "UpdateInstalled",
     };
 
     handle
