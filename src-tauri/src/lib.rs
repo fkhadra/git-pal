@@ -26,6 +26,7 @@ pub fn run() {
                 log::error!("Single Instance -> failed to show app. {}", err)
             });
         }))
+        .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
@@ -118,7 +119,8 @@ pub fn run() {
             commands::stop_monitoring,
             commands::replace_global_shortcut,
             commands::check_for_update,
-            commands::get_token
+            commands::get_token,
+            commands::restart_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

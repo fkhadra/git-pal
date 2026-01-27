@@ -327,3 +327,8 @@ pub async fn get_token(state: State<'_, AppState>) -> Result<String> {
     let token = state.vault.get_token()?;
     Ok(token)
 }
+
+#[tauri::command]
+pub fn restart_app(app_handle: tauri::AppHandle) {
+    app_handle.restart()
+}

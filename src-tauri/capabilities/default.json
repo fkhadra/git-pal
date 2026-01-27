@@ -11,6 +11,7 @@
     "log:default",
     "core:window:allow-hide",
     "autostart:default",
-    "updater:default"
+    "updater:default",
+    "process:default"
   ]
 }

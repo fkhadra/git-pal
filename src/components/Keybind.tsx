@@ -13,11 +13,11 @@ export function Keybind({
 		<div className={cn("text-foreground flex items-center gap-1", className)}>
 			{label && <span>{label}</span>}
 			{keys.length > 1 ? (
-				<Group>
+				<KbdGroup>
 					{keys.map((v, i) => (
 						<Kbd key={`kbd-${i}`}>{v}</Kbd>
 					))}
-				</Group>
+				</KbdGroup>
 			) : (
 				keys.map((v, i) => <Kbd key={`kbd-${i}`}>{v}</Kbd>)
 			)}
@@ -31,7 +31,7 @@ function Separator() {
 
 Keybind.Separator = Separator;
 
-function Group({ children }: { children: React.ReactNode }) {
+export function KbdGroup({ children }: { children: React.ReactNode }) {
 	return <div className="flex gap-1">{children}</div>;
 }
 

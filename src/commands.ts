@@ -16,6 +16,7 @@ import type { ResponseData as FindRepositoriesResponse } from "./models/find-rep
 import type { FindRepositoriesRequest } from "./models/graphql";
 import type { ResponseData as HomepageResponse } from "./models/homepage";
 import type { ResponseData as SearchPullRequestsResponse } from "./models/search-pull-request";
+import { AppUpdate } from "./models/updater";
 import type {
   ResponseData as UserProfileResponse,
   UserProfileViewer,
@@ -77,6 +78,10 @@ function onAuthMessage(cb: (event: Event<AuthenticatedPayload>) => void) {
   return listen<AuthenticatedPayload>("AuthMessage", cb);
 }
 
+function onAppUpdated(cb: (event: Event<AppUpdate>) => void) {
+  return listen<AppUpdate>("UpdateInstalled", cb);
+}
+
 function onThemeChanged(cb: (event: Event<ThemeChangedPayload>) => void) {
   return listen<ThemeChangedPayload>("ThemeChanged", cb);
 }
@@ -119,6 +124,10 @@ function getToken() {
   return invoke<string>("get_token");
 }
 
+function restartApp() {
+  return invoke<void>("restart_app");
+}
+
 export default {
   authenticate,
   homepage,
@@ -131,6 +140,7 @@ export default {
   showCurrentWindow,
   startAuthFlow,
   onAuthMessage,
+  onAppUpdated,
   onThemeChanged,
   findWorkflows,
   extractWorkflowVariables,
@@ -141,4 +151,5 @@ export default {
   stopMonitoring,
   replaceGlobalShortcut,
   getToken,
+  restartApp,
 };
