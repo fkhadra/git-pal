@@ -6,8 +6,8 @@ import { CommandEmpty } from "~/components/Cmdk";
 import { useFullHeightRef } from "~/libs/useFullHeight";
 import { CommandInput } from "./CommandInput";
 import { HomePage } from "./HomePage";
-import { PaletteFooter } from "./PaletteFooter";
 import { OrgPage } from "./OrgPage";
+import { PaletteFooter } from "./PaletteFooter";
 import {
   PullRequestsPage,
   usePreloadPullRequestsQueries,
@@ -16,9 +16,11 @@ import { RepositoryPage } from "./RepositoryPage";
 import { SearchPage } from "./SearchPage";
 import {
   createPageMapper,
+  state,
   useCurrentPage,
   useDisableEmptySearchResults,
   useGHSearchActive,
+  useSyncStateSnapshot,
 } from "./state";
 
 const pages = createPageMapper({
@@ -32,7 +34,7 @@ const pages = createPageMapper({
 export function PalettePage() {
   const listBox = useFullHeightRef<HTMLDivElement>({ bottomPadding: 52 });
   const isGhSearchActive = useGHSearchActive();
-  // const [v, setV] = useState("");
+  const snapshot = useSyncStateSnapshot();
   const currentPage = useCurrentPage();
   const Page = pages[currentPage.to];
   const timeoutId = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -58,10 +60,8 @@ export function PalettePage() {
         loop
         className="relative h-full overflow-hidden"
         shouldFilter={!isGhSearchActive}
-        // value={v}
-        // onValueChange={(value) => {
-        // 	setV(value);
-        // }}
+        value={snapshot.selectedValue}
+        onValueChange={state.setSelectedValue}
       >
         <CommandInput />
         <Command.List ref={listBox.setRef} className="px-2">
