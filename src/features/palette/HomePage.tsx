@@ -1,11 +1,11 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import {
   CircleDot,
-  Github,
   GitPullRequestArrow,
   MessageCircleMore,
 } from "lucide-react";
 import commands from "~/commands";
+import GithubLogo from "./github.svg";
 
 import { CommandGroup, CommandItem } from "~/components/Cmdk";
 import {
@@ -94,7 +94,11 @@ export function HomePage() {
             openUrl("http://github.com");
           }}
         >
-          <Page icon={<Github />}>Dashboard</Page>
+          <Page
+            icon={<img src={GithubLogo} className="size-8" alt="github logo" />}
+          >
+            Dashboard
+          </Page>
         </CommandItem>
         <CommandItem
           value="issues"
