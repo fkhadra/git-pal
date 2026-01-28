@@ -16,7 +16,7 @@ export function PullRequestItem({ pullRequest, hideAvatar }: Props) {
 
       <div className="flex flex-col">
         <span>{pullRequest.title}</span>
-        <div className="text-muted-foreground flex items-center gap-1 text-xs">
+        <div className="text-muted-foreground flex items-center gap-1 text-xs group-data-[selected=true]:text-white">
           <span>
             {pullRequest.repository.owner.login}/{pullRequest.repository.name}
           </span>
