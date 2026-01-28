@@ -16,11 +16,21 @@ export function PaletteFooter() {
 
   return (
     <Container>
-      <Keybind label="Help" keys={["⌘", "?"]} className="mr-auto" />
+      {/* <Keybind label="Help" keys={["⌘", "?"]} className="mr-auto" /> */}
       {(selectedItem?.supportGithubSearch() ||
         rootItem?.supportGithubSearch()) && (
-        <Keybind label="Code Search" keys={["⌘", "/"]} />
+        <>
+          <Keybind label="Code Search" keys={["⌘", "/"]} />
+          <Keybind.Separator />
+        </>
       )}
+      {(selectedItem?.kind === "org" || selectedItem?.kind === "repo") && (
+        <>
+          <Keybind label="View" keys={["tab"]} />
+          <Keybind.Separator />
+        </>
+      )}
+
       <Keybind label={isPage ? "View" : "Open"} keys={["↵"]} />
     </Container>
   );
