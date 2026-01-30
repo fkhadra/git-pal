@@ -1,10 +1,11 @@
-import { Info, LockKeyhole, Settings } from "lucide-react";
+import { Activity, Info, LockKeyhole, Settings } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { useWindowReady } from "~/hooks";
 import { cn } from "~/libs/utils";
 import { AboutSection } from "./AboutSection";
 import { GeneralSection } from "./GeneralSection";
+import { MonitoringSection } from "./MonitoringSection";
 import { SecuritySection } from "./SecuritySection";
 
 export function SettingsPage() {
@@ -65,6 +66,14 @@ const sections = [
     bg: "bg-blue-300",
     color: "text-blue-700",
     component: GeneralSection,
+  },
+  {
+    label: "Monitoring",
+    icon: Activity,
+    href: "#monitoring",
+    bg: "bg-green-300",
+    color: "text-green-700",
+    component: MonitoringSection,
   },
   {
     label: "Security",

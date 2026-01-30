@@ -53,6 +53,17 @@ pub enum SettingValue {
     MonitorInterval(u32),
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SettingKey {
+    Theme,
+    GlobalShortcut,
+    AutoUpdate,
+    DisplayRateLimit,
+    MonitorPullRequests,
+    MonitorInterval,
+}
+
 pub struct SettingManager {
     filepath: PathBuf,
     pub settings: Settings,
@@ -77,6 +88,25 @@ impl SettingManager {
                 let settings: Settings = serde_json::from_str(&content)?;
                 Ok(Self { filepath, settings })
             }
+        }
+    }
+
+    pub fn get(&self, key: SettingKey) -> SettingValue {
+        match key {
+            SettingKey::AutoUpdate => SettingValue::AutoUpdate(self.settings.auto_update),
+            SettingKey::DisplayRateLimit => {
+                SettingValue::DisplayRateLimit(self.settings.display_rate_limit)
+            }
+            SettingKey::GlobalShortcut => {
+                SettingValue::GlobalShortcut(self.settings.global_shortcut.clone())
+            }
+            SettingKey::MonitorInterval => {
+                SettingValue::MonitorInterval(self.settings.monitor_interval)
+            }
+            SettingKey::MonitorPullRequests => {
+                SettingValue::MonitorPullRequests(self.settings.monitor_pull_requests)
+            }
+            SettingKey::Theme => SettingValue::Theme(self.settings.theme.clone()),
         }
     }
 

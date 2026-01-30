@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use git_pal_settings::SettingValue;
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
@@ -142,7 +143,21 @@ pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()
 
     tokio::spawn(async move {
         let state: State<'_, AppState> = app.state();
-        let mut interval = tokio::time::interval(tokio::time::Duration::from_secs(20));
+        let setting_value = {
+            state
+                .setting_manager
+                .lock()
+                .unwrap()
+                .get(git_pal_settings::SettingKey::MonitorInterval)
+        };
+
+        let interval_value = match setting_value {
+            SettingValue::MonitorInterval(i) => i,
+            _ => 20,
+        };
+
+        let mut interval =
+            tokio::time::interval(tokio::time::Duration::from_secs(interval_value as u64));
         let mut rx = state.pull_requests_ch.subscribe();
 
         log::debug!("Starting pull request monitoring");

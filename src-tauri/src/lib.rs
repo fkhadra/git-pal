@@ -2,10 +2,10 @@ mod commands;
 mod core;
 mod window;
 
-use core::{handle_deeplink, start_updater, AppState};
+use core::{AppState, handle_deeplink, start_updater};
 use std::env;
 
-use tauri::{image::Image, menu::MenuBuilder, tray::TrayIconBuilder, Manager};
+use tauri::{Manager, image::Image, menu::MenuBuilder, tray::TrayIconBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_log::{Target, TargetKind};

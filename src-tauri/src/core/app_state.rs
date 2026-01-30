@@ -93,6 +93,9 @@ impl AppState {
 
         let mut guard = self.setting_manager.lock().unwrap();
         guard.set(value);
+        if let Err(e) = guard.save() {
+            log::error!("Failed to save settings: {}", e);
+        }
 
         guard.settings.clone()
     }

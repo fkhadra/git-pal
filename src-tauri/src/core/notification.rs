@@ -2,7 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use tauri_plugin_opener::open_url;
 
-use user_notify::{get_notification_manager, NotificationCategory, NotificationCategoryAction};
+use user_notify::{NotificationCategory, NotificationCategoryAction, get_notification_manager};
 
 const APP_ID: &str = "com.gugu.git-pal";
 const ACTION_REVIEW: &str = "com.gugu.git-pal.action.review";
