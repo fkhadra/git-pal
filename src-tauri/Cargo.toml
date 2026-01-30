@@ -3,7 +3,7 @@ name = "git-pal"
 version = "0.1.0-beta"
 description = "A Tauri App"
 authors = ["you"]
-edition = "2021"
+edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -24,14 +24,14 @@ tauri = { version = "2", features = [
     "image-png",
 ] }
 tauri-plugin-opener = { workspace = true }
-tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
-tauri-plugin-log = "2"
+tauri-plugin-single-instance = { version = "2.3.7", features = ["deep-link"] }
+tauri-plugin-log = "2.8.0"
 tauri-plugin-deep-link = "2"
 tauri-plugin-autostart = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-global-shortcut = "2"
 
-user-notify = { git = "https://github.com/deltachat/deltachat-desktop" }
+
 keyring = { version = "3", features = [
     "apple-native",
     "windows-native",
@@ -51,18 +51,19 @@ serde_json = { workspace = true }
 thiserror = { workspace = true }
 ts-rs = { workspace = true }
 tauri-plugin-process = "2.3.1"
+user-notify = "0.4.2"
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-thiserror = "2.0.16"
+serde_json = "1.0.149"
+thiserror = "2.0.18"
 ts-rs = "11.0.1"
 log = "0.4"
-tokio = { version = "1.47.1", features = ["full"] }
+tokio = { version = "1.49.0", features = ["full"] }
 oauth2 = "5.0.0"
-url = "2.5.7"
+url = "2.5.8"
 reqwest = { version = "0.12.23", features = ["json"] }
-tauri-plugin-opener = "2"
+tauri-plugin-opener = "2.5.3"
 
 [workspace]
 resolver = "3"
