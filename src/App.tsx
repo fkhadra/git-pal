@@ -8,48 +8,49 @@ import { AppProvider } from "./features/shared";
 import { useColorScheme } from "./libs/useColorScheme";
 
 function useAppQuery() {
-	return useSuspenseQuery({
-		queryKey: ["app"],
-		queryFn: async () => {
-			if (globalThis.currentView === "setup") {
-				return {};
-			}
+  return useSuspenseQuery({
+    queryKey: ["app"],
+    queryFn: async () => {
+      if (globalThis.currentView === "setup") {
+        return {};
+      }
 
-			const userProfile = await commands.isAuthenticated();
-			const theme = globalThis.settings.theme;
+      const userProfile = await commands.isAuthenticated();
+      const theme = globalThis.settings.theme;
 
-			userProfile.organizations.nodes?.forEach((org) => {
-				if (org?.name) {
-					state.setItem(org.name, { kind: "org", data: org });
-				}
-			});
+      userProfile.organizations.nodes?.forEach((org) => {
+        if (org?.name) {
+          state.setItem(org.name, { kind: "org", data: org });
+        }
+      });
 
-			return { userProfile, theme };
-		},
-	});
+      return { userProfile, theme };
+    },
+  });
 }
 
 const Views: Record<(typeof globalThis)["currentView"], React.FC> = {
-	settings: SettingsPage,
-	setup: SetupPage,
-	palette: PalettePage,
+  settings: SettingsPage,
+  setup: SetupPage,
+  palette: PalettePage,
 };
 
 export function App() {
-	const { data } = useAppQuery();
-	useColorScheme(data?.theme);
+  const { data } = useAppQuery();
+  // TODO: replace once theming reenabled
+  useColorScheme("dark");
 
-	if (!data?.userProfile) {
-		return <SetupPage />;
-	}
+  if (!data?.userProfile) {
+    return <SetupPage />;
+  }
 
-	const View = Views[window.currentView];
+  const View = Views[window.currentView];
 
-	return (
-		<AppProvider
-			value={{ userProfile: data.userProfile, settings: globalThis.settings }}
-		>
-			<View />
-		</AppProvider>
-	);
+  return (
+    <AppProvider
+      value={{ userProfile: data.userProfile, settings: globalThis.settings }}
+    >
+      <View />
+    </AppProvider>
+  );
 }

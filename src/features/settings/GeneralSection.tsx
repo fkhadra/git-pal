@@ -1,7 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Keyboard, Palette } from "lucide-react";
+import { Keyboard } from "lucide-react";
 import commands from "~/commands";
-import { ThemePicker } from "~/components";
 import { AutoStart } from "./AutoStart";
 import { GlobalShortcut } from "./GlobalShortcut";
 import { Section } from "./Section";
@@ -15,9 +14,9 @@ export function GeneralSection() {
     <>
       <AutoStart autoStartEnabled={autoStartEnabled} />
       {/* <Hr /> */}
-      <Section icon={Palette} title="Theme">
+      {/* <Section icon={Palette} title="Theme">
         <ThemePicker />
-      </Section>
+      </Section> */}
       {/* <Hr /> */}
       <Section icon={Keyboard} title="Shortcut">
         <GlobalShortcut />

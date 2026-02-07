@@ -21,8 +21,6 @@ pub enum Error {
     UnableToShowWindow { label: String, err: String },
     #[error("unable to create window '{label:}'. {err:}")]
     UnableToCreateWindow { label: String, err: String },
-    #[error("unable to hide window '{label:}'. {err:}")]
-    UnableToHideWindow { label: String, err: String },
     #[error("unable to register global shortcut: {0}")]
     UnableToRegisterGlobalShortcut(String),
     #[error("unable to parse settings: {0}")]

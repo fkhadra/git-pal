@@ -39,8 +39,6 @@ pub enum CommandError {
     Window(#[from] window::Error),
     #[error(transparent)]
     Autostart(#[from] tauri_plugin_autostart::Error),
-    #[error(transparent)]
-    Settings(#[from] redb::Error),
     #[error("invalid shortcut: {0}")]
     Shortcut(String),
     #[error(transparent)]

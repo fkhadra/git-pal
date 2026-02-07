@@ -1,8 +1,8 @@
 [package]
 name = "git-pal"
-version = "0.1.0-beta"
-description = "A Tauri App"
-authors = ["you"]
+version = "0.1.0"
+description = "Git Pal - Git in your flow not in your way"
+authors = ["Fadi Khadra"]
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -15,20 +15,20 @@ name = "git_pal_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { version = "2.5.5", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [
+tauri = { version = "2.10.2", features = [
     "macos-private-api",
     "tray-icon",
     "image-png",
 ] }
 tauri-plugin-opener = { workspace = true }
-tauri-plugin-single-instance = { version = "2.3.7", features = ["deep-link"] }
+tauri-plugin-single-instance = { version = "2.4.0", features = ["deep-link"] }
 tauri-plugin-log = "2.8.0"
-tauri-plugin-deep-link = "2"
+tauri-plugin-deep-link = "2.4.7"
 tauri-plugin-autostart = "2"
-tauri-plugin-updater = "2"
+tauri-plugin-updater = "2.10.0"
 tauri-plugin-global-shortcut = "2"
 
 
@@ -37,12 +37,7 @@ keyring = { version = "3", features = [
     "windows-native",
     "sync-secret-service",
 ] }
-anyhow = "1.0.100"
-redb = "3.1.0"
-
-git-pal-github = { path = "./crates/git-pal-github"}
-git-pal-settings = { path = "./crates/git-pal-settings"}
-
+anyhow = "1.0.101"
 url = { workspace = true }
 tokio = { workspace = true }
 log = { workspace = true }
@@ -52,6 +47,9 @@ thiserror = { workspace = true }
 ts-rs = { workspace = true }
 tauri-plugin-process = "2.3.1"
 user-notify = "0.4.2"
+
+git-pal-github = { path = "./crates/git-pal-github"}
+git-pal-settings = { path = "./crates/git-pal-settings"}
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
