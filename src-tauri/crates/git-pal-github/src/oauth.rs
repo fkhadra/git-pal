@@ -8,7 +8,7 @@ use url::Url;
 
 const CLIENT_ID: &str = "Ov23liM8AmuuLbQqhdUf";
 // https://docs.github.com/en/enterprise-cloud@latest/apps/creating-github-apps/about-creating-github-apps/best-practices-for-creating-a-github-app#client-secrets
-const CLIENT_SECRET: &str = "2c283461887cb1fd83664d5291b84834e638e8e4";
+const NOT_SO_SECRET_CLIENT_SECRET: &str = "2c283461887cb1fd83664d5291b84834e638e8e4";
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -60,7 +60,7 @@ impl Client {
                 AuthUrl::new("https://github.com/login/oauth/authorize".to_string())
                     .expect("valid auth uri"),
             )
-            .set_client_secret(ClientSecret::new(CLIENT_SECRET.to_string()))
+            .set_client_secret(ClientSecret::new(NOT_SO_SECRET_CLIENT_SECRET.to_string()))
             .set_token_uri(
                 TokenUrl::new("https://github.com/login/oauth/access_token".to_string())
                     .expect("valid token uri"),

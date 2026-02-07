@@ -26,9 +26,8 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDNEMzQwQ0ZFM0Q1MzdDNkYKUldSdmZGTTkvZ3cwUFJrVFpaKzl5RkN3S1c0L3VTV2REc1hIelp1UTJHN3NVQ0pFaTFmOUEwNk8K",
       "endpoints": [
-        "http://localhost:8080/latest.json"
-      ],
-      "dangerousInsecureTransportProtocol": true
+        "https://pushpull.sh/git-pal/latest.json"
+      ]
     }
   },
   "bundle": {
