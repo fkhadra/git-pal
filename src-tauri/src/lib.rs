@@ -61,7 +61,6 @@ pub fn run() {
 
             let menu = MenuBuilder::new(app)
                 .text("show", "Show Git Pal")
-                .text("about", "About")
                 .separator()
                 .text("settings", "Settings")
                 .text("quit", "Quit Git Pal")
@@ -81,7 +80,6 @@ pub fn run() {
                             log::error!("Tray -> failed to show app. {}", err)
                         });
                     }
-                    "about" => {}
                     "settings" => {
                         show_settings(app).unwrap_or_else(|err| {
                             log::error!("Tray -> failed to show settings. {}", err)
