@@ -67,14 +67,14 @@ const sections = [
     color: "text-blue-700",
     component: GeneralSection,
   },
-  {
-    label: "Monitoring",
-    icon: Activity,
-    href: "#monitoring",
-    bg: "bg-green-300",
-    color: "text-green-700",
-    component: MonitoringSection,
-  },
+  // {
+  //   label: "Monitoring",
+  //   icon: Activity,
+  //   href: "#monitoring",
+  //   bg: "bg-green-300",
+  //   color: "text-green-700",
+  //   component: MonitoringSection,
+  // },
   {
     label: "Security",
     icon: LockKeyhole,
