@@ -108,7 +108,14 @@ pub fn handle_setup_completed(app_handle: &AppHandle) {
 
     if let Some(setup_window) = app_handle.get_webview_window(SETUP_WINDOW_LABEL) {
         if let Err(err) = show_window(&setup_window) {
-            log::error!("Failed to display setup window again: {}", err)
+            log::error!("Failed to display setup window after auth: {}", err)
+        }
+        return;
+    }
+
+    if let Some(setting_window) = app_handle.get_webview_window(SETTINGS_WINDOW_LABEL) {
+        if let Err(err) = show_window(&setting_window) {
+            log::error!("Failed to display setting window after auth: {}", err)
         }
     }
 }

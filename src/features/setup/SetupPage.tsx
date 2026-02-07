@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import commands from "~/commands";
 import { Button, Keybind, Typography, Vortex } from "~/components";
 
@@ -18,17 +18,11 @@ export function SetupPage() {
 
   useWindowReady();
 
-  useEffect(() => {
-    const listener = commands.onAuthMessage((event) => {
-      if (event.payload.authMessage.ok) {
-        setIsAuthenticated(true);
-      }
-    });
-
-    return () => {
-      listener.then((unsub) => unsub());
-    };
-  }, []);
+  commands.useOnAuthMessage((event) => {
+    if (event.payload.authMessage.ok) {
+      setIsAuthenticated(true);
+    }
+  });
 
   return (
     <main

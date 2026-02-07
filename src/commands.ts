@@ -11,16 +11,17 @@ import type {
   WorkflowInput,
   Workflows,
 } from "./models";
-import type { GraphQLResponse, RestResponse } from "./models/api";
+import type { GraphQLResponse, RestResponse, Token } from "./models/api";
 import type { ResponseData as FindRepositoriesResponse } from "./models/find-repositories";
 import type { FindRepositoriesRequest } from "./models/graphql";
 import type { ResponseData as HomepageResponse } from "./models/homepage";
 import type { ResponseData as SearchPullRequestsResponse } from "./models/search-pull-request";
 import { AppUpdate } from "./models/updater";
 import type {
+  UserProfile,
   ResponseData as UserProfileResponse,
-  UserProfileViewer,
 } from "./models/user-profile";
+import { useEffect, useEffectEvent } from "react";
 
 function authenticate(token: string) {
   return invoke<GraphQLResponse<UserProfileResponse>>("authenticate", {
@@ -29,7 +30,7 @@ function authenticate(token: string) {
 }
 
 function isAuthenticated() {
-  return invoke<UserProfileViewer>("is_authenticated");
+  return invoke<UserProfile>("is_authenticated");
 }
 
 function homepage() {
@@ -121,14 +122,31 @@ function replaceGlobalShortcut(shortcut: string) {
 }
 
 function getToken() {
-  return invoke<string>("get_token");
+  return invoke<Token>("get_token");
 }
 
 function restartApp() {
   return invoke<void>("restart_app");
 }
 
+function deleteToken() {
+  return invoke<void>("delete_token");
+}
+
+function useOnAuthMessage(cb: Parameters<typeof onAuthMessage>[0]) {
+  const handler = useEffectEvent(cb);
+  
+  useEffect(() => {
+    const listener = onAuthMessage(handler);
+
+    return () => {
+      listener.then((unsub) => unsub());
+    };
+  }, []);
+}
+
 export default {
+  useOnAuthMessage,
   authenticate,
   homepage,
   isAuthenticated,
@@ -152,4 +170,5 @@ export default {
   replaceGlobalShortcut,
   getToken,
   restartApp,
+  deleteToken,
 };

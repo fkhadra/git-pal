@@ -1,4 +1,4 @@
-import { Hr, type SlotableComponent, Typography } from "~/components";
+import { type SlotableComponent, Typography } from "~/components";
 
 interface Props {
   icon?: SlotableComponent;

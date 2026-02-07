@@ -33,6 +33,13 @@ struct ErrorResponse {
     message: String,
 }
 
+#[derive(Debug, Serialize, TS)]
+#[ts(export, export_to = "api.ts")]
+pub struct Token {
+    pub value: String,
+    pub expire_at: Option<String>,
+}
+
 pub(super) struct Response {
     pub(super) metadata: Metadata,
     pub(super) response: reqwest::Response,
@@ -55,6 +62,19 @@ impl Client {
 
     pub fn get_user(&self) -> Option<UserProfile> {
         self.user.lock().unwrap().clone()
+    }
+
+    pub fn get_token(&self) -> Result<Token> {
+        Ok(Token {
+            value: self
+                .token
+                .lock()
+                .unwrap()
+                .as_ref()
+                .clone()
+                .unwrap_or("".to_string()),
+            expire_at: self.with_user(|u| u.token_expire_at.clone())?,
+        })
     }
 
     pub fn with_user<F, R>(&self, f: F) -> Result<R>

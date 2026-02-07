@@ -13,7 +13,7 @@ use crate::{
 };
 
 use git_pal_github::{
-    github,
+    github::{self, Token},
     graphql::{
         FindPullRequestResult, FindPullRequestsFilter, FindRepositoriesRequest,
         FindRepositoriesResult, Homepage, UserProfile,
@@ -338,8 +338,9 @@ pub async fn check_for_update(app_handle: tauri::AppHandle) -> Result<Option<App
 }
 
 #[tauri::command]
-pub async fn get_token(state: State<'_, AppState>) -> Result<String> {
-    let token = state.vault.get_token()?;
+pub async fn get_token(state: State<'_, AppState>) -> Result<Token> {
+    let token = state.github_client.get_token()?;
+
     Ok(token)
 }
 
