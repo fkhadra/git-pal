@@ -2,7 +2,10 @@ use std::{collections::HashMap, sync::Arc};
 
 use tauri_plugin_opener::open_url;
 
-use user_notify::{NotificationCategory, NotificationCategoryAction, get_notification_manager};
+use user_notify::{
+    NotificationCategory, NotificationCategoryAction, NotificationResponse,
+    get_notification_manager,
+};
 
 const APP_ID: &str = "com.gugu.git-pal";
 const ACTION_REVIEW: &str = "com.gugu.git-pal.action.review";
@@ -20,7 +23,7 @@ impl Category {
 }
 
 pub struct NotificationManager {
-    manager: Arc<dyn user_notify::NotificationManager>,
+    pub manager: Arc<dyn user_notify::NotificationManager>,
 }
 
 impl NotificationManager {
@@ -46,30 +49,19 @@ impl NotificationManager {
                 Box::new(|response| {
                     log::debug!("Notification handler callback triggered");
 
-                    match response.action {
+                    match &response.action {
                         user_notify::NotificationResponseAction::Other(action_id) => {
-                            log::debug!("Received other action: {}", action_id);
-
                             if action_id == ACTION_REVIEW {
                                 log::debug!("Review requested");
-
-                                if let Some(url) = response.user_info.get("url") {
-                                    log::debug!("Opening url from notification");
-
-                                    if let Err(err) = open_url(url, None::<&str>) {
-                                        log::error!(
-                                            "Notification callback failed to open url: {}",
-                                            err
-                                        );
-                                    }
-                                }
+                                open_pull_request(response);
                             }
-                        }
-                        user_notify::NotificationResponseAction::Dismiss => {
-                            log::debug!("Notification dismissed");
                         }
                         user_notify::NotificationResponseAction::Default => {
                             log::debug!("Notification clicked");
+                            open_pull_request(response);
+                        }
+                        _ => {
+                            // noop
                         }
                     }
                 }),
@@ -106,6 +98,14 @@ impl NotificationManager {
             Ok(_) => {
                 log::debug!("Notification sent successfully");
             }
+        }
+    }
+}
+
+fn open_pull_request(response: NotificationResponse) {
+    if let Some(url) = response.user_info.get("url") {
+        if let Err(err) = open_url(url, None::<&str>) {
+            log::error!("Notification callback failed to open url: {}", err);
         }
     }
 }

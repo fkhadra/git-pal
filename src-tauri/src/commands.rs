@@ -43,6 +43,8 @@ pub enum CommandError {
     Shortcut(String),
     #[error(transparent)]
     Updater(#[from] tauri_plugin_updater::Error),
+    #[error(transparent)]
+    Notification(#[from] user_notify::Error),
 }
 
 impl serde::Serialize for CommandError {
@@ -345,4 +347,25 @@ pub async fn get_token(state: State<'_, AppState>) -> Result<Token> {
 #[tauri::command]
 pub fn restart_app(app_handle: tauri::AppHandle) {
     app_handle.restart()
+}
+
+#[tauri::command]
+pub async fn notification_ask_permissions(state: State<'_, AppState>) -> Result<()> {
+    let authorized = state
+        .notification_manager
+        .manager
+        .get_notification_permission_state()
+        .await
+        .map_err(|err| CommandError::Notification(err))?;
+
+    if !authorized {
+        state
+            .notification_manager
+            .manager
+            .first_time_ask_for_notification_permission()
+            .await
+            .map_err(|err| CommandError::Notification(err))?;
+    }
+
+    Ok(())
 }

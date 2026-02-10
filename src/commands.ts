@@ -133,9 +133,13 @@ function deleteToken() {
   return invoke<void>("delete_token");
 }
 
+function notificationAskPermission() {
+  return invoke<void>("notification_ask_permissions");
+}
+
 function useOnAuthMessage(cb: Parameters<typeof onAuthMessage>[0]) {
   const handler = useEffectEvent(cb);
-  
+
   useEffect(() => {
     const listener = onAuthMessage(handler);
 
@@ -171,4 +175,5 @@ export default {
   getToken,
   restartApp,
   deleteToken,
+  notificationAskPermission,
 };
