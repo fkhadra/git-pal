@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "git-pal",
+  "productName": "Git Pal",
   "version": "0.1.0",
   "identifier": "com.gugu.git-pal",
   "build": {
@@ -31,6 +31,11 @@
     }
   },
   "bundle": {
+    "macOS": {
+      "dmg": {
+        "background": "./installer-bg.jpg"
+      }
+    },
     "createUpdaterArtifacts": true,
     "active": true,
     "targets": "all",
