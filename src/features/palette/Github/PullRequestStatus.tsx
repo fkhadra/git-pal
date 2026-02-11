@@ -1,12 +1,6 @@
-import {
-  GitPullRequest,
-  GitPullRequestClosed,
-  GitPullRequestDraft,
-  OctagonAlert,
-} from "lucide-react";
-import { Spinner } from "~/components/Spinner";
 import type { PullRequest } from "~/models";
 import { IconWrapper } from "../Layout";
+import { PullRequestStatusIcon } from "./PullRequestStatusIcon";
 
 export function PullRequestStatus({
   pullRequest,
@@ -16,27 +10,25 @@ export function PullRequestStatus({
   let component: React.ReactNode;
 
   if (pullRequest.isDraft) {
-    component = <GitPullRequestDraft />;
+    component = <PullRequestStatusIcon.Draft />;
   } else if (
     pullRequest.isInMergeQueue ||
     pullRequest.statusCheckRollup?.state === "PENDING"
   ) {
-    component = (
-      <Spinner className="fill-yellow-300 stroke-yellow-300" showCenter />
-    );
+    component = <PullRequestStatusIcon.Building />;
   } else if (pullRequest.state === "MERGED") {
-    component = <GitPullRequest className="text-purple-500" />;
+    component = <PullRequestStatusIcon.Merged />;
   } else if (
     pullRequest.statusCheckRollup?.state === "ERROR" ||
     pullRequest.statusCheckRollup?.state === "FAILURE"
   ) {
-    component = <GitPullRequestClosed className="text-alert" />;
+    component = <PullRequestStatusIcon.Failed />;
   } else if (pullRequest.mergeable === "CONFLICTING") {
-    component = <OctagonAlert className="text-warning" />;
+    component = <PullRequestStatusIcon.Conflict />;
   } else if (pullRequest.reviewDecision === "CHANGES_REQUESTED") {
-    component = <GitPullRequest className="text-warning" />;
+    component = <PullRequestStatusIcon.ChangesRequested />;
   } else if (pullRequest.mergeable === "MERGEABLE") {
-    component = <GitPullRequest className="text-success size-5" />;
+    component = <PullRequestStatusIcon.Ready />;
   }
 
   return <IconWrapper>{component}</IconWrapper>;

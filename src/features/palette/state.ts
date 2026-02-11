@@ -108,6 +108,7 @@ export const state = proxy({
   disableEmptySearchResults: false,
   path: "",
   query: "",
+  displayHelp: false,
   clearPath() {
     state.path = "";
   },
@@ -154,6 +155,9 @@ export const state = proxy({
   },
   getItem(key: string) {
     return paletteItems.get(key) as PaletteItem;
+  },
+  toggleHelp(v: boolean) {
+    state.displayHelp = v;
   },
 });
 

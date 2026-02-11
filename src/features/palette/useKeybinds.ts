@@ -6,6 +6,7 @@ const Key = {
   Esc: "Escape",
   Tab: "Tab",
   Slash: "/",
+  QuestionMark: "?",
 };
 
 export function useKeybinds() {
@@ -15,6 +16,11 @@ export function useKeybinds() {
   const handleKeyboard = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     const { key, metaKey } = e;
     const canGoBack = state.canGoBack();
+
+    if (metaKey && key === Key.Slash) {
+      state.toggleHelp(true);
+      return;
+    }
 
     // back to previous page
     if ((key === Key.Backspace || key === Key.Esc) && canGoBack && !filter) {
@@ -67,7 +73,7 @@ export function useKeybinds() {
     // code search, selected item first then root if any
     if (
       metaKey &&
-      key === Key.Slash &&
+      key === "f" &&
       (selectedItem?.supportGithubSearch() || parentItem?.supportGithubSearch())
     ) {
       state.clearFilter();

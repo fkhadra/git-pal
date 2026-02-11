@@ -1,10 +1,11 @@
 import { Command, useCommandState } from "cmdk";
 import { Suspense, useEffect, useRef } from "react";
 import commands from "~/commands";
-import { SkeletonRows } from "~/components";
+import { Dialog, SkeletonRows } from "~/components";
 import { CommandEmpty } from "~/components/Cmdk";
 import { useFullHeightRef } from "~/libs/useFullHeight";
 import { CommandInput } from "./CommandInput";
+import { Help } from "./Help";
 import { HomePage } from "./HomePage";
 import { OrgPage } from "./OrgPage";
 import { PaletteFooter } from "./PaletteFooter";
@@ -72,6 +73,14 @@ export function PalettePage() {
         </Command.List>
         <PaletteFooter />
       </Command>
+      <Dialog
+        size="lg"
+        open={snapshot.displayHelp}
+        onOpenChange={state.toggleHelp}
+        title="Status Legend"
+        content={<Help />}
+        withCloseButton
+      />
     </div>
   );
 }
