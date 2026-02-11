@@ -5,6 +5,7 @@ pub mod graphql;
 pub mod oauth;
 pub mod query;
 pub mod rest;
+pub mod status;
 
 pub mod github {
     pub use super::api_client::*;

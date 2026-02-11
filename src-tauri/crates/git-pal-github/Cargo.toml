@@ -14,6 +14,7 @@ oauth2 = { workspace = true }
 reqwest = { workspace = true }
 tokio = { workspace = true }
 tauri-plugin-opener = { workspace = true }
+anyhow = {workspace = true}
 
 graphql_client = "0.14.0"
 serde_yaml = "0.9.34"

@@ -1881,6 +1881,7 @@ dependencies = [
 name = "git-pal-github"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "graphql_client",
  "log",
  "oauth2",
