@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{str::FromStr, time::Duration};
 
 use git_pal_settings::SettingValue;
 use tauri::{Manager, State};
@@ -8,7 +8,7 @@ use tauri_plugin_updater::UpdaterExt;
 use thiserror::Error;
 
 use crate::{
-    core::{AppState, AppUpdate, JobStatus},
+    core::{AppState, AppUpdate},
     window,
 };
 
@@ -29,8 +29,8 @@ use git_pal_github::{
 pub enum CommandError {
     #[error("unable to delete token")]
     UnableToDeleteToken,
-    #[error("failed to stop monitoring")]
-    FailedToStopMonitoring,
+    #[error("failed to stop job <{0}> : {1}")]
+    FailedToStopMonitoring(String, String),
     #[error(transparent)]
     GithubApi(#[from] github::Error),
     #[error(transparent)]
@@ -131,52 +131,40 @@ pub async fn find_pull_requests(
 
 #[tauri::command]
 pub async fn stop_monitoring(state: State<'_, AppState>) -> Result<()> {
+    let job_name = "monitor_pr";
     state
-        .pull_requests_ch
-        .send(JobStatus::Stopped)
-        .map_err(|_| CommandError::FailedToStopMonitoring)
+        .job_runner
+        .stop_job(job_name)
+        .map_err(|e| CommandError::FailedToStopMonitoring(job_name.to_string(), e.to_string()))?;
+
+    Ok(())
 }
 
 #[tauri::command]
 pub async fn monitor_review_requested(app_handle: tauri::AppHandle) -> Result<()> {
-    let app = app_handle.clone();
+    let state: State<'_, AppState> = app_handle.state();
+    let interval = match state
+        .setting_manager
+        .lock()
+        .unwrap()
+        .get(git_pal_settings::SettingKey::MonitorInterval)
+    {
+        SettingValue::MonitorInterval(i) => Duration::from_secs(i as u64),
+        _ => Duration::from_secs(20),
+    };
 
-    tokio::spawn(async move {
-        let state: State<'_, AppState> = app.state();
-        let setting_value = {
-            state
-                .setting_manager
-                .lock()
-                .unwrap()
-                .get(git_pal_settings::SettingKey::MonitorInterval)
-        };
+    let captured_handle = app_handle.clone();
 
-        let interval_value = match setting_value {
-            SettingValue::MonitorInterval(i) => i,
-            _ => 20,
-        };
-
-        let mut interval =
-            tokio::time::interval(tokio::time::Duration::from_secs(interval_value as u64));
-        let mut rx = state.pull_requests_ch.subscribe();
-
-        log::debug!("Starting pull request monitoring");
-
-        loop {
-            tokio::select! {
-                _ = rx.changed() => {
-                    if  *rx.borrow() == JobStatus::Stopped {
-                        log::debug!("stopping pull requests monitoring");
-                        break;
-                    }
-                }
-                _ = interval.tick() => {
-                    log::debug!("Monitoring tick");
-                    state.handle_pr_monitor().await;
-                }
+    state
+        .job_runner
+        .start_job("monitor_pr".to_string(), interval, move || {
+            let handle = captured_handle.clone();
+            async move {
+                log::debug!("Monitoring tick");
+                let state: State<'_, AppState> = handle.state();
+                state.handle_pr_monitor().await;
             }
-        }
-    });
+        });
 
     Ok(())
 }

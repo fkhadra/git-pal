@@ -5,11 +5,11 @@ use std::{
     sync::{self, Mutex},
 };
 
+use git_pal_job_runner::JobRunner;
 use git_pal_settings::{SettingManager, SettingValue, Settings, Theme};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_updater::UpdaterExt;
-use tokio::sync::watch::{self, Sender};
 use ts_rs::TS;
 use url::Url;
 
@@ -26,7 +26,6 @@ use git_pal_github::{
 
 #[derive(Debug, Clone, Serialize, TS)]
 #[ts(export, export_to = "updater.ts")]
-
 pub struct AppUpdate {
     pub body: Option<String>,
     /// Version used to check for update
@@ -37,21 +36,15 @@ pub struct AppUpdate {
     pub date: Option<String>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum JobStatus {
-    Idle,
-    Stopped,
-}
-
 pub struct AppState {
     pub github_client: github::Client,
     pub oauth_client: oauth::Client,
     pub vault: Vault,
     pub pull_requests: Mutex<HashMap<String, query::search_pull_request::PullRequest>>,
-    pub pull_requests_ch: Sender<JobStatus>,
     pub notification_manager: notification::NotificationManager,
     pub pending_auth: Mutex<Option<PendingAuth>>,
     pub setting_manager: Mutex<SettingManager>,
+    pub job_runner: JobRunner,
     app_dir: PathBuf,
 }
 
@@ -60,7 +53,6 @@ impl AppState {
         let vault = Vault::new("git-pal", "token").expect("vault should build");
         let token = vault.get_token().ok();
         let app_dir = app_dir();
-        let (tx, _) = watch::channel(JobStatus::Idle);
         let setting_manager =
             Mutex::new(SettingManager::new(app_dir.join("settings.json")).unwrap());
 
@@ -71,9 +63,9 @@ impl AppState {
             pull_requests: Mutex::new(HashMap::new()),
             app_dir,
             notification_manager: notification::NotificationManager::new(),
-            pull_requests_ch: tx,
             setting_manager,
             pending_auth: sync::Mutex::new(None),
+            job_runner: JobRunner::new(),
         }
     }
 

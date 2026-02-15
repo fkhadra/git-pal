@@ -1848,6 +1848,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "git-pal-github",
+ "git-pal-job-runner",
  "git-pal-settings",
  "keyring",
  "log",
@@ -1894,6 +1895,13 @@ dependencies = [
  "tokio",
  "ts-rs",
  "url",
+]
+
+[[package]]
+name = "git-pal-job-runner"
+version = "0.1.0"
+dependencies = [
+ "tokio",
 ]
 
 [[package]]
