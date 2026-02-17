@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { type Event, listen } from "@tauri-apps/api/event";
+import type { NewFeedback } from "./models/feedback";
 import type {
   AuthenticatedPayload,
   FileRequest,
@@ -137,6 +138,10 @@ function notificationAskPermission() {
   return invoke<void>("notification_ask_permissions");
 }
 
+function submitFeedback(data: NewFeedback) {
+  return invoke<void>("submit_feedback", { data });
+}
+
 function useOnAuthMessage(cb: Parameters<typeof onAuthMessage>[0]) {
   const handler = useEffectEvent(cb);
 
@@ -176,4 +181,5 @@ export default {
   restartApp,
   deleteToken,
   notificationAskPermission,
+  submitFeedback,
 };

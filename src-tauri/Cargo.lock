@@ -1847,6 +1847,7 @@ name = "git-pal"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "git-pal-feedback",
  "git-pal-github",
  "git-pal-job-runner",
  "git-pal-settings",
@@ -1876,6 +1877,16 @@ name = "git-pal-codegen"
 version = "0.1.0"
 dependencies = [
  "clap",
+]
+
+[[package]]
+name = "git-pal-feedback"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "reqwest 0.12.28",
+ "serde",
+ "ts-rs",
 ]
 
 [[package]]

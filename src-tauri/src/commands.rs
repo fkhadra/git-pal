@@ -12,6 +12,7 @@ use crate::{
     window,
 };
 
+use git_pal_feedback::NewFeedback;
 use git_pal_github::{
     github::{self, Token},
     graphql::{
@@ -45,6 +46,8 @@ pub enum CommandError {
     Updater(#[from] tauri_plugin_updater::Error),
     #[error(transparent)]
     Notification(#[from] user_notify::Error),
+    #[error(transparent)]
+    Anyhow(#[from] anyhow::Error),
 }
 
 impl serde::Serialize for CommandError {
@@ -276,6 +279,12 @@ pub async fn update_setting(
 #[tauri::command]
 pub async fn get_settings(state: State<'_, AppState>) -> Result<git_pal_settings::Settings> {
     Ok(state.get_settings())
+}
+
+#[tauri::command]
+pub async fn submit_feedback(data: NewFeedback) -> Result<()> {
+    git_pal_feedback::submit_feedback(data).await?;
+    Ok(())
 }
 
 // TODO: Refactor

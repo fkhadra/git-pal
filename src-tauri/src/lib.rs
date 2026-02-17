@@ -12,11 +12,11 @@ use tauri_plugin_log::{Target, TargetKind};
 
 use window::{on_app_start, show_app, show_settings};
 
-#[cfg(debug_assertions)]
-const LOG_LEVEL: log::LevelFilter = log::LevelFilter::Debug;
+// #[cfg(debug_assertions)]
+// const LOG_LEVEL: log::LevelFilter = log::LevelFilter::Debug;
 
-#[cfg(not(debug_assertions))]
-const LOG_LEVEL: log::LevelLevelFilter = log::LevelFilter::Info;
+// #[cfg(not(debug_assertions))]
+// const LOG_LEVEL: log::LevelLevelFilter = log::LevelFilter::Info;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -44,7 +44,7 @@ pub fn run() {
                     path: log_path,
                     file_name: Some(String::from("git-pal")),
                 }))
-                .level(LOG_LEVEL)
+                // .level(LOG_LEVEL)
                 .timezone_strategy(tauri_plugin_log::TimezoneStrategy::UseLocal)
                 .build(),
         )
@@ -123,7 +123,8 @@ pub fn run() {
             commands::check_for_update,
             commands::get_token,
             commands::restart_app,
-            commands::notification_ask_permissions
+            commands::notification_ask_permissions,
+            commands::submit_feedback
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

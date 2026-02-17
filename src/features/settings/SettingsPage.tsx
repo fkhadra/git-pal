@@ -1,9 +1,10 @@
-import { Info, LockKeyhole, Settings } from "lucide-react";
+import { Info, LockKeyhole, MessageSquare, Settings } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { useWindowReady } from "~/hooks";
 import { cn } from "~/libs/utils";
 import { AboutSection } from "./AboutSection";
+import { FeedbackSection } from "./FeedbackSection";
 import { GeneralSection } from "./GeneralSection";
 import { SecuritySection } from "./SecuritySection";
 
@@ -81,6 +82,14 @@ const sections = [
     bg: "bg-yellow-300",
     color: "text-yellow-700",
     component: SecuritySection,
+  },
+  {
+    label: "Feedback",
+    icon: MessageSquare,
+    href: "#feedback",
+    bg: "bg-purple-300",
+    color: "text-purple-700",
+    component: FeedbackSection,
   },
   {
     label: "About",

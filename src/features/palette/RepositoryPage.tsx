@@ -13,9 +13,10 @@ import {
 import commands from "~/commands";
 import { CommandGroup, CommandItem } from "~/components/Cmdk";
 import { RepositoryIcon } from "./Github/RepositoryIcon";
-import { Container, IconWrapper } from "./Layout";
+import { Container } from "./Layout";
 import { state, useCurrentPage } from "./state";
 import { openUrl } from "./utils";
+import { IconWrapper } from "~/components/IconWrapper";
 
 function useRepositoryQuery() {
 	const page = useCurrentPage("repository");

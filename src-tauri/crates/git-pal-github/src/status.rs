@@ -24,7 +24,9 @@ pub struct Page {
 #[derive(Default, Debug, Clone, Serialize, Deserialize, TS)]
 #[ts(export, export_to = "status.ts")]
 pub struct Status {
+    // none, minor, major, or critical
     pub indicator: String,
+    // "All Systems Operational", "Partial System Outage", and "Major Service Outage".
     pub description: String,
 }
 
@@ -40,6 +42,7 @@ pub struct ComponentStatus {
 pub struct Component {
     pub id: String,
     pub name: String,
+    // degraded_performance, partial_outage, or major_outage.
     pub status: String,
     pub created_at: String,
     pub updated_at: String,

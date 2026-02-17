@@ -45,7 +45,7 @@ export function Textarea({
       ref={setRef}
       rows={3}
       className={cn(
-        `caret-primary ring-primary/50 text-foreground placeholder:text-muted border-primary/10 disabled:text-opacity-90 bg-background focus-visible:shadow-primary hover:ring-primary flex h-10 w-full resize-none items-center rounded-lg border px-3 py-2 shadow transition-all hover:ring-1 focus-visible:shadow-[0_0_4px_1px] focus-visible:outline-hidden disabled:cursor-not-allowed disabled:border-none disabled:bg-zinc-500 disabled:opacity-50`,
+        `caret-primary ring-primary/50 text-foreground border-primary/10 disabled:text-opacity-90 bg-background dark:bg-input focus-visible:shadow-primary hover:ring-primary/70 disabled:bg-input/50 dark:disabled:bg-input/80 placeholder:text-muted-foreground flex h-10 w-full resize-none items-center rounded-lg border px-3 py-2 shadow transition-shadow hover:ring-1 focus-visible:shadow-[0_0_4px_1px] focus-visible:outline-hidden disabled:cursor-not-allowed disabled:border-none disabled:opacity-50`,
         className,
       )}
       onChange={(e) => {

@@ -1,0 +1,10 @@
+[package]
+name = "git-pal-feedback"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { workspace = true }
+reqwest = { workspace = true }
+anyhow = { workspace = true }
+ts-rs = { workspace = true }
