@@ -1,6 +1,6 @@
 [package]
 name = "git-pal"
-version = "0.1.0"
+version = "0.0.1"
 description = "Git Pal - Git in your flow not in your way"
 authors = ["Fadi Khadra"]
 edition = "2024"

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download Git Pal - Git in your flow, not in your way</title>
+    
+    <meta name="description" content="Download Git Pal, a beautiful command palette for GitHub. Quickly access your pull requests, repositories, and workflows.">
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient 3s ease infinite;
+        }
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            padding: 2px;
+            border-radius: 0.75rem;
+        }
+        .gradient-border > * {
+            background: #18181b;
+            border-radius: 0.625rem;
+        }
+        .hero-screenshot {
+            max-width: 1000px;
+            margin: 0 auto 3rem;
+        }
+        .hero-screenshot img {
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(168, 85, 247, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .hero-screenshot img:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 24px 80px rgba(168, 85, 247, 0.4), 0 0 0 1px rgba(168, 85, 247, 0.3);
+        }
+        .feature-row {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            align-items: center;
+        }
+        @media (min-width: 768px) {
+            .feature-row {
+                flex-direction: row;
+                gap: 3rem;
+            }
+            .feature-row.reverse {
+                flex-direction: row-reverse;
+            }
+        }
+        .feature-row img {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid rgba(63, 63, 70, 0.4);
+            transition: all 0.3s ease;
+        }
+        .feature-row img:hover {
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 16px 48px rgba(168, 85, 247, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-zinc-900 text-white min-h-screen">
+    <div class="container mx-auto px-4 py-8 md:py-16 max-w-5xl">
+
+        <!-- Hero Section -->
+        <div class="text-center mb-16">
+            <div class="mb-8 flex justify-center">
+                <img src="/assets/logo.png" alt="Git Pal Logo" class="w-32 h-32 md:w-40 md:h-40 rounded-3xl shadow-2xl">
+            </div>
+            <h1 class="text-5xl md:text-7xl font-bold mb-4 gradient-text">
+                Git Pal
+            </h1>
+            <p class="text-2xl md:text-3xl text-zinc-400 mb-6 font-light">
+                Git in your flow, not in your way
+            </p>
+            <p class="text-lg md:text-xl text-zinc-300 max-w-2xl mx-auto leading-relaxed">
+                A beautiful command palette for GitHub. Quickly access your pull requests, repositories, and workflows without leaving your keyboard.
+            </p>
+        </div>
+
+        <!-- Download Section -->
+        <div class="mb-16">
+            <div class="gradient-border max-w-2xl mx-auto">
+                <div class="p-8 md:p-12">
+                    <div class="text-center mb-8">
+                        <div class="mb-4">
+                            <span class="inline-block px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 rounded-full text-sm font-medium">
+                                ⚡ Active Development
+                            </span>
+                        </div>
+                        <a href="/downloads/git-pal.dmg"
+                            download="git-pal.dmg"
+                           class="inline-block w-full md:w-auto px-4 py-2 bg-linear-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg transition-all duration-200 transform active:scale-95 shadow-lg text-lg">
+                            Download for macOS
+                        </a>
+                    </div>
+
+                    <!-- Platform Badges -->
+                    <div class="flex flex-wrap justify-center gap-3 pt-6 border-t border-zinc-800">
+                        <div class="px-4 py-2 bg-green-500/10 border border-green-500/30 text-green-400 rounded-lg text-sm font-medium">
+                            ✓ macOS
+                        </div>
+                        <div class="px-4 py-2 bg-zinc-800 border border-zinc-700 text-zinc-500 rounded-lg text-sm font-medium">
+                            Windows – Coming Soon
+                        </div>
+                        <div class="px-4 py-2 bg-zinc-800 border border-zinc-700 text-zinc-500 rounded-lg text-sm font-medium">
+                            Linux – Coming Soon
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screenshots Section -->
+        <div class="mb-20 px-4">
+            <!-- Hero Screenshot -->
+            <div class="hero-screenshot">
+                <img src="/assets/home.png"
+                     alt="Git Pal command palette interface">
+            </div>
+
+        </div>
+
+        <!-- Installation Instructions -->
+        <div class="mb-16 max-w-4xl mx-auto">
+            <h2 class="text-3xl font-bold mb-6 text-center">
+                <span class="gradient-text">Installation</span>
+            </h2>
+            <div class="flex flex-col md:flex-row gap-8 items-center">
+                <!-- Installer Screenshot -->
+                <div class="shrink-0 w-full md:w-1/2">
+                    <img src="/assets/installer.png"
+                         alt="Git Pal macOS installer"
+                         class="w-full rounded-xl shadow-2xl border border-zinc-700/50">
+                </div>
+                <!-- Steps -->
+                <div class="w-full md:w-1/2 space-y-4">
+                    <div class="flex items-start gap-4 p-5 bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+                        <div class="shrink-0 w-8 h-8 bg-linear-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center font-bold text-sm">
+                            1
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1">Download the DMG file</h3>
+                            <p class="text-zinc-400 text-sm">Click the download button above to get the Git Pal installer.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4 p-5 bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+                        <div class="shrink-0 w-8 h-8 bg-linear-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center font-bold text-sm">
+                            2
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1">Drag to Applications</h3>
+                            <p class="text-zinc-400 text-sm">Open the DMG and drag Git Pal into your Applications folder.</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-start gap-4 p-5 bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+                        <div class="shrink-0 w-8 h-8 bg-linear-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center font-bold text-sm">
+                            3
+                        </div>
+                        <div>
+                            <h3 class="font-semibold mb-1">Launch and enjoy</h3>
+                            <p class="text-zinc-400 text-sm">Open Git Pal from Applications.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="mb-16 max-w-5xl mx-auto space-y-16">
+            <h2 class="text-3xl font-bold mb-8 text-center">
+                <span class="gradient-text">Features</span>
+            </h2>
+
+            <div class="feature-row">
+                <div class="w-full md:w-3/5">
+                    <img src="/assets/mentioned.png"
+                         alt="Pull requests and mentions">
+                </div>
+                <div class="w-full md:w-2/5">
+                    <h3 class="text-2xl font-bold mb-3">Pull Requests & Mentions</h3>
+                    <p class="text-zinc-400 leading-relaxed">See review requests and mentions in one centralized place. Never miss an important PR again.</p>
+                </div>
+            </div>
+
+            <div class="feature-row reverse">
+                <div class="w-full md:w-3/5">
+                    <img src="/assets/repository.png"
+                         alt="Repository browser">
+                </div>
+                <div class="w-full md:w-2/5">
+                    <h3 class="text-2xl font-bold mb-3">Repository Browser</h3>
+                    <p class="text-zinc-400 leading-relaxed">Browse your repositories and organizations. Access pull requests, issues, discussions, workflows, and more.</p>
+                </div>
+            </div>
+
+            <div class="feature-row">
+                <div class="w-full md:w-3/5">
+                    <img src="/assets/code-search.png"
+                         alt="Code search">
+                </div>
+                <div class="w-full md:w-2/5">
+                    <h3 class="text-2xl font-bold mb-3">Code Search</h3>
+                    <p class="text-zinc-400 leading-relaxed">Search code across your repositories powered by GitHub's search. Find what you need instantly.</p>
+                </div>
+            </div>
+
+            <div class="feature-row reverse">
+                <div class="w-full md:w-3/5">
+                    <img src="/assets/login-screen.png"
+                         alt="GitHub authentication">
+                </div>
+                <div class="w-full md:w-2/5">
+                    <h3 class="text-2xl font-bold mb-3">GitHub Integration</h3>
+                    <p class="text-zinc-400 leading-relaxed">Seamless OAuth authentication with support for GitHub Enterprise via personal access tokens.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="mb-16 max-w-3xl mx-auto">
+            <h2 class="text-3xl font-bold mb-8 text-center">
+                <span class="gradient-text">FAQ</span>
+            </h2>
+            <div class="space-y-4">
+                <details class="group bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+                    <summary class="flex items-center justify-between cursor-pointer p-5 font-semibold">
+                        Why does it ask me for my password on the first launch?
+                        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <p class="px-5 pb-5 text-zinc-400 text-sm leading-relaxed">
+                        The app stores the OAuth token inside the system keychain to keep your credentials secure. macOS requires your password to authorize access to the keychain on first use.
+                    </p>
+                </details>
+                <details class="group bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+                    <summary class="flex items-center justify-between cursor-pointer p-5 font-semibold">
+                        Can I change the shortcut?
+                        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <p class="px-5 pb-5 text-zinc-400 text-sm leading-relaxed">
+                        Yes, you can change the shortcut from the settings.
+                    </p>
+                </details>
+                <details class="group bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+                    <summary class="flex items-center justify-between cursor-pointer p-5 font-semibold">
+                        Why don't I see the organizations I belong to?
+                        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <p class="px-5 pb-5 text-zinc-400 text-sm leading-relaxed">
+                        You have to authorize the organization. This is done via your GitHub developer settings. For GitHub Enterprise, use the PAT if OAuth apps are not configured.
+                    </p>
+                </details>
+                <details class="group bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+                    <summary class="flex items-center justify-between cursor-pointer p-5 font-semibold">
+                        Is my data secure?
+                        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <p class="px-5 pb-5 text-zinc-400 text-sm leading-relaxed">
+                        Git Pal only stores the settings under ~/.config/git-pal. Everything stays on your machine, there are no telemetry.
+                    </p>
+                </details>
+                <details class="group bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+                    <summary class="flex items-center justify-between cursor-pointer p-5 font-semibold">
+                        Does it support GitHub Enterprise?
+                        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <p class="px-5 pb-5 text-zinc-400 text-sm leading-relaxed">
+                        Yup, the most straightforward way is to connect using a PAT.
+                    </p>
+                </details>
+                <details class="group bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+                    <summary class="flex items-center justify-between cursor-pointer p-5 font-semibold">
+                        How do I update the application?
+                        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <p class="px-5 pb-5 text-zinc-400 text-sm leading-relaxed">
+                        Once a new version is available, the app will display a button to install it.
+                    </p>
+                </details>
+                <details class="group bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+                    <summary class="flex items-center justify-between cursor-pointer p-5 font-semibold">
+                        How do I send feedback?
+                        <svg class="w-5 h-5 text-zinc-400 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </summary>
+                    <p class="px-5 pb-5 text-zinc-400 text-sm leading-relaxed">
+                        In the settings, there is a section dedicated to it.
+                    </p>
+                </details>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-zinc-500 text-sm border-t border-zinc-800 pt-8">
+            <a href="https://github.com/fkhadra" target="_blank" class="inline-flex items-center gap-2 text-zinc-400 hover:text-purple-400 transition-colors">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                Follow me on GitHub
+            </a>
+        </div>
+    </div>
+</body>
+</html>
