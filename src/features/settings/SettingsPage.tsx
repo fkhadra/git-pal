@@ -1,4 +1,4 @@
-import { Info, LockKeyhole, MessageSquare, Settings } from "lucide-react";
+import { Info, LockKeyhole, MessageCircle, Settings } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { useWindowReady } from "~/hooks";
@@ -85,10 +85,10 @@ const sections = [
   },
   {
     label: "Feedback",
-    icon: MessageSquare,
+    icon: MessageCircle,
     href: "#feedback",
-    bg: "bg-purple-300",
-    color: "text-purple-700",
+    bg: "bg-info",
+    color: "text-white",
     component: FeedbackSection,
   },
   {

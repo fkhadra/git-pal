@@ -1,79 +1,117 @@
-import {
-  Bug,
-  Check,
-  Lightbulb,
-  MessageCircle,
-  MessageSquare,
-  Send,
-} from "lucide-react";
+import { Bug, Lightbulb, MessageCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { Controller, useForm } from "react-hook-form";
 import commands from "~/commands";
-import { Button } from "~/components";
-import { FormControl, Input, Label, Textarea } from "~/components/Form";
-import { Section } from "./Section";
+import { Button, Spinner } from "~/components";
 import { CardSelect } from "~/components/CardSelect";
+import {
+  ErrorMessage,
+  FormControl,
+  Input,
+  Label,
+  Textarea,
+} from "~/components/Form";
 import { IconWrapper } from "~/components/IconWrapper";
+import { withDelay } from "~/libs/utils";
+import { FeedbackKind } from "~/models/feedback";
+import { Section } from "./Section";
+
+type ApiError =
+  | { errors: Record<string, string> }
+  | string
+  | { message: string };
+
+type FormValues = {
+  kind: FeedbackKind;
+  body: string;
+  email: string;
+};
 
 export function FeedbackSection() {
-  const [kind, setKind] = useState("feature_request");
-  const [email, setEmail] = useState("");
-  const [body, setBody] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
+  const { register, formState, handleSubmit, control, setError, reset } =
+    useForm<FormValues>({
+      defaultValues: {
+        body: "",
+        email: "",
+        kind: "feature_request",
+      },
+      mode: "onBlur",
+    });
 
-  const handleSubmit = async () => {
-    setSubmitting(true);
-    setError("");
+  const onSubmit = handleSubmit(async (data) => {
     try {
-      await commands.submitFeedback({ email, kind, body });
-      setSubmitted(true);
+      await withDelay(commands.submitFeedback(data));
+
+      setTimeout(reset, 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setSubmitting(false);
+      const apiErr = err as ApiError;
+      if (typeof apiErr === "string") {
+        setError("root", { message: apiErr });
+      } else if ("errors" in apiErr && apiErr?.errors) {
+        for (const field of Object.keys(apiErr.errors)) {
+          setError(field as keyof FormValues, {
+            message: apiErr.errors[field],
+          });
+        }
+      } else if ("message" in apiErr && apiErr?.message) {
+        setError("root", { message: apiErr.message });
+      }
     }
-  };
+  });
+
+  let buttonStatus = "idle";
+
+  if (formState.isSubmitting) {
+    buttonStatus = "inFlight";
+  } else if (formState.isSubmitSuccessful) {
+    buttonStatus = "success";
+  }
 
   return (
-    <Section icon={MessageSquare} title="Send us feedback">
-      <div className="flex flex-col gap-5">
+    <Section icon={MessageCircle} title="Share your feedback">
+      <form className="flex flex-col gap-5" onSubmit={onSubmit}>
         <FormControl>
           <Label>Feedback type</Label>
-          <CardSelect
-            onChange={setKind}
-            legend="Feedback type"
-            options={[
-              {
-                Icon: (
-                  <IconWrapper>
-                    <Lightbulb className="text-warning" />
-                  </IconWrapper>
-                ),
-                label: "Idea",
-                value: "feature_request",
-              },
-              {
-                Icon: (
-                  <IconWrapper>
-                    <Bug className="text-alert" />
-                  </IconWrapper>
-                ),
-                label: "Bug",
-                value: "bug",
-              },
-              {
-                Icon: (
-                  <IconWrapper>
-                    <MessageCircle className="text-info" />
-                  </IconWrapper>
-                ),
-                label: "Other",
-                value: "other",
-              },
-            ]}
-            value={kind}
+          <Controller
+            control={control}
+            name="kind"
+            rules={{ required: true }}
+            render={({ field }) => (
+              <CardSelect
+                onChange={field.onChange}
+                legend="Feedback type"
+                options={[
+                  {
+                    Icon: (
+                      <IconWrapper>
+                        <Lightbulb className="text-warning" />
+                      </IconWrapper>
+                    ),
+                    label: "Idea",
+                    value: "feature_request",
+                  },
+                  {
+                    Icon: (
+                      <IconWrapper>
+                        <Bug className="text-alert" />
+                      </IconWrapper>
+                    ),
+                    label: "Bug",
+                    value: "bug",
+                  },
+                  {
+                    Icon: (
+                      <IconWrapper>
+                        <MessageCircle className="text-info" />
+                      </IconWrapper>
+                    ),
+                    label: "Other",
+                    value: "other",
+                  },
+                ]}
+                value={field.value}
+              />
+            )}
           />
         </FormControl>
 
@@ -82,8 +120,8 @@ export function FeedbackSection() {
           <Input
             type="email"
             placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            {...register("email", { required: true })}
+            error={formState.errors.email?.message}
           />
         </FormControl>
 
@@ -91,42 +129,35 @@ export function FeedbackSection() {
           <Label>Your message</Label>
           <Textarea
             placeholder="Tell me what's on your mind..."
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
+            {...register("body", { required: true })}
+            error={formState.errors.body?.message}
           />
         </FormControl>
 
-        {error && <p className="text-alert text-sm">{error}</p>}
+        <ErrorMessage error={formState.errors.root?.message} />
 
         <Button
-          disabled={submitting || !body.trim() || submitted}
-          onClick={handleSubmit}
-          className="w-full"
+          disabled={formState.isSubmitting || formState.isSubmitSuccessful}
+          className="relative w-full overflow-hidden"
+          type="submit"
         >
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.span
-              key={`${submitted}`}
+              key={buttonStatus}
               className="flex items-center gap-1.5"
               transition={{ type: "spring", duration: 0.3, bounce: 0 }}
               initial={{ opacity: 0, y: -25 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 25 }}
             >
-              {submitted ? (
-                <>
-                  <Check className="size-4" />
-                  Sent!
-                </>
-              ) : (
-                <>
-                  <Send className="size-4" />
-                  Send Feedback
-                </>
-              )}
+              {buttonStatus === "inFlight" && <Spinner />}
+              {buttonStatus === "success" &&
+                "Your feedback has been shared! 🙌"}
+              {buttonStatus === "idle" && "Send Feedback"}
             </motion.span>
           </AnimatePresence>
         </Button>
-      </div>
+      </form>
     </Section>
   );
 }

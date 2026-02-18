@@ -1,5 +1,6 @@
 use std::{str::FromStr, time::Duration};
 
+use anyhow::anyhow;
 use git_pal_settings::SettingValue;
 use tauri::{Manager, State};
 use tauri_plugin_autostart::ManagerExt;
@@ -48,6 +49,8 @@ pub enum CommandError {
     Notification(#[from] user_notify::Error),
     #[error(transparent)]
     Anyhow(#[from] anyhow::Error),
+    #[error("json error")]
+    JsonError(serde_json::Value),
 }
 
 impl serde::Serialize for CommandError {
@@ -55,6 +58,10 @@ impl serde::Serialize for CommandError {
     where
         S: serde::Serializer,
     {
+        if let CommandError::JsonError(err) = self {
+            return err.serialize(serializer);
+        }
+
         serializer.serialize_str(&self.to_string())
     }
 }
@@ -283,7 +290,14 @@ pub async fn get_settings(state: State<'_, AppState>) -> Result<git_pal_settings
 
 #[tauri::command]
 pub async fn submit_feedback(data: NewFeedback) -> Result<()> {
-    git_pal_feedback::submit_feedback(data).await?;
+    if let Err(err) = git_pal_feedback::submit_feedback(data).await {
+        let error = match err {
+            git_pal_feedback::Error::InvalidRequest(e) => CommandError::JsonError(e),
+            git_pal_feedback::Error::Request(e) => anyhow!(e).into(),
+        };
+
+        return Err(error);
+    }
     Ok(())
 }
 

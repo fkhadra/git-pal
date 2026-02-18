@@ -1883,9 +1883,10 @@ dependencies = [
 name = "git-pal-feedback"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "reqwest 0.12.28",
  "serde",
+ "serde_json",
+ "thiserror 2.0.18",
  "ts-rs",
 ]
 

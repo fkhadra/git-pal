@@ -5,22 +5,38 @@ use ts_rs::TS;
 #[ts(export, export_to = "feedback.ts")]
 pub struct NewFeedback {
     pub email: String,
-    pub kind: String,
+    pub kind: FeedbackKind,
     pub body: String,
 }
 
-pub async fn submit_feedback(data: NewFeedback) -> anyhow::Result<()> {
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[serde(rename_all = "snake_case")]
+#[ts(export, export_to = "feedback.ts")]
+pub enum FeedbackKind {
+    Bug,
+    FeatureRequest,
+    Other,
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Invalid request: {0}")]
+    InvalidRequest(serde_json::Value),
+    #[error("HTTP request failed: {0}")]
+    Request(#[from] reqwest::Error),
+}
+
+pub async fn submit_feedback(data: NewFeedback) -> Result<(), Error> {
     let client = reqwest::Client::new();
     let response = client
-        .post("http://127.0.0.1:8080/api/feedback")
+        .post("https://gitpal.pushpull.sh/api/feedback")
         .json(&data)
         .send()
         .await?;
 
     if !response.status().is_success() {
-        let status = response.status();
-        let body = response.text().await.unwrap_or_default();
-        anyhow::bail!("feedback submission failed ({status}): {body}");
+        let body: serde_json::Value = response.json().await.unwrap_or_default();
+        return Err(Error::InvalidRequest(body));
     }
 
     Ok(())

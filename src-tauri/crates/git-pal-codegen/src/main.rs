@@ -132,7 +132,7 @@ impl Codegen {
             .status()
             .expect("failed to generate bindings");
 
-        for pkg in ["git-pal-settings", "git-pal-github"] {
+        for pkg in ["git-pal-settings", "git-pal-github", "git-pal-feedback"] {
             process::Command::new("cargo")
                 .args(["test", "export_bindings", "-p", pkg])
                 .current_dir(&self.tauri_dir)

@@ -7,6 +7,8 @@ import { SetupPage } from "./features/setup";
 import { AppProvider } from "./features/shared";
 import { useColorScheme } from "./libs/useColorScheme";
 
+import { ToastContainer } from "react-toastify";
+
 function useAppQuery() {
   return useSuspenseQuery({
     queryKey: ["app"],
@@ -51,6 +53,7 @@ export function App() {
       value={{ userProfile: data.userProfile, settings: globalThis.settings }}
     >
       <View />
+      <ToastContainer />
     </AppProvider>
   );
 }
