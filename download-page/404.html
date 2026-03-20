@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | Git Pal</title>
+    <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-8px) rotate(1deg); }
+            66% { transform: translateY(4px) rotate(-1deg); }
+        }
+        @keyframes drift {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.2; }
+            100% { transform: scale(0.8); opacity: 0.5; }
+        }
+        @keyframes glitch-1 {
+            0%, 100% { clip-path: inset(0 0 90% 0); transform: translate(0); }
+            20% { clip-path: inset(30% 0 40% 0); transform: translate(-4px, 2px); }
+            40% { clip-path: inset(60% 0 10% 0); transform: translate(4px, -2px); }
+            60% { clip-path: inset(10% 0 70% 0); transform: translate(-2px, 4px); }
+            80% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -4px); }
+        }
+        @keyframes glitch-2 {
+            0%, 100% { clip-path: inset(90% 0 0 0); transform: translate(0); }
+            20% { clip-path: inset(10% 0 60% 0); transform: translate(4px, -2px); }
+            40% { clip-path: inset(50% 0 20% 0); transform: translate(-4px, 2px); }
+            60% { clip-path: inset(70% 0 5% 0); transform: translate(2px, -4px); }
+            80% { clip-path: inset(5% 0 80% 0); transform: translate(-2px, 4px); }
+        }
+        @keyframes scan {
+            0% { top: -10%; }
+            100% { top: 110%; }
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient 3s ease infinite;
+        }
+        .float { animation: float 6s ease-in-out infinite; }
+        .four-glow {
+            position: relative;
+            font-size: clamp(8rem, 20vw, 14rem);
+            font-weight: 900;
+            line-height: 1;
+            letter-spacing: -0.04em;
+        }
+        .four-glow .text-main {
+            position: relative;
+            z-index: 2;
+            background: linear-gradient(135deg, #a855f7 0%, #ec4899 50%, #a855f7 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradient 4s ease infinite;
+        }
+        .four-glow .glitch-layer {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
+        .four-glow .glitch-1 {
+            color: #a855f7;
+            animation: glitch-1 3s infinite linear;
+            opacity: 0.6;
+        }
+        .four-glow .glitch-2 {
+            color: #ec4899;
+            animation: glitch-2 3s infinite linear;
+            animation-delay: 0.1s;
+            opacity: 0.6;
+        }
+        .four-glow::after {
+            content: '';
+            position: absolute;
+            inset: -20%;
+            background: radial-gradient(ellipse at center, rgba(168, 85, 247, 0.15) 0%, transparent 70%);
+            animation: pulse-ring 4s ease-in-out infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .ghost-container {
+            position: relative;
+            width: 120px;
+            height: 140px;
+        }
+        .ghost-body {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 110px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border-radius: 50px 50px 0 0;
+            overflow: hidden;
+        }
+        .ghost-body::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background:
+                radial-gradient(circle at 16.66% 100%, transparent 12px, #ec4899 12px, #ec4899 13px, transparent 13px),
+                radial-gradient(circle at 50% 100%, transparent 12px, #ec4899 12px, #ec4899 13px, transparent 13px),
+                radial-gradient(circle at 83.33% 100%, transparent 12px, #ec4899 12px, #ec4899 13px, transparent 13px);
+        }
+        .ghost-face {
+            position: relative;
+            top: 35px;
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+        }
+        .ghost-eye {
+            width: 14px;
+            height: 18px;
+            background: #18181b;
+            border-radius: 50%;
+            animation: float 3s ease-in-out infinite;
+        }
+        .ghost-eye:last-child { animation-delay: 0.3s; }
+        .ghost-mouth {
+            position: absolute;
+            top: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 10px;
+            border-bottom: 3px solid #18181b;
+            border-radius: 0 0 50% 50%;
+        }
+        .ghost-shadow {
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 10px;
+            background: radial-gradient(ellipse, rgba(168, 85, 247, 0.3), transparent);
+            border-radius: 50%;
+            animation: pulse-ring 3s ease-in-out infinite;
+        }
+        .particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: drift var(--duration) ease-in-out infinite;
+            animation-delay: var(--delay);
+        }
+        .scanline {
+            position: absolute;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.4), transparent);
+            animation: scan 4s linear infinite;
+            pointer-events: none;
+        }
+        .cmd-box {
+            font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+            background: rgba(24, 24, 27, 0.8);
+            border: 1px solid rgba(63, 63, 70, 0.5);
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .cmd-box::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.03), rgba(236, 72, 153, 0.03));
+        }
+        .cmd-cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.2em;
+            background: #a855f7;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: pulse-ring 1s step-end infinite;
+        }
+        .back-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 2rem;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            font-weight: 600;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        .back-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #9333ea, #db2777);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .back-btn:hover::before { opacity: 1; }
+        .back-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(168, 85, 247, 0.4); }
+        .back-btn:active { transform: translateY(0) scale(0.98); }
+        .back-btn span { position: relative; z-index: 1; }
+        .back-btn svg { position: relative; z-index: 1; }
+    </style>
+</head>
+<body class="bg-zinc-900 text-white min-h-screen flex items-center justify-center overflow-hidden">
+    <!-- Ambient background -->
+    <div class="fixed inset-0 pointer-events-none">
+        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl"></div>
+        <div class="scanline"></div>
+    </div>
+
+    <div class="relative z-10 text-center px-6 max-w-2xl mx-auto">
+        <!-- Ghost -->
+        <div class="flex justify-center mb-8 float">
+            <div class="ghost-container">
+                <div class="ghost-body">
+                    <div class="ghost-face">
+                        <div class="ghost-eye"></div>
+                        <div class="ghost-eye"></div>
+                    </div>
+                    <div class="ghost-mouth"></div>
+                </div>
+                <div class="ghost-shadow"></div>
+                <!-- Particles -->
+                <div class="particle bg-purple-400/60" style="top:20%;left:-10%;--dx:-30px;--dy:-50px;--rot:90deg;--duration:3s;--delay:0s;"></div>
+                <div class="particle bg-pink-400/60" style="top:40%;right:-10%;--dx:40px;--dy:-30px;--rot:-120deg;--duration:3.5s;--delay:0.5s;"></div>
+                <div class="particle bg-purple-300/40" style="top:60%;left:10%;--dx:-20px;--dy:40px;--rot:180deg;--duration:4s;--delay:1s;"></div>
+                <div class="particle bg-pink-300/40" style="top:10%;right:20%;--dx:20px;--dy:-40px;--rot:-60deg;--duration:2.5s;--delay:1.5s;"></div>
+                <div class="particle bg-purple-400/30" style="top:80%;left:30%;--dx:-40px;--dy:20px;--rot:45deg;--duration:3.2s;--delay:0.8s;"></div>
+            </div>
+        </div>
+
+        <!-- 404 number -->
+        <div class="four-glow flex justify-center mb-6 select-none" aria-hidden="true">
+            <span class="text-main">404</span>
+            <span class="glitch-layer glitch-1" aria-hidden="true">404</span>
+            <span class="glitch-layer glitch-2" aria-hidden="true">404</span>
+        </div>
+
+        <!-- Message -->
+        <h1 class="text-2xl md:text-3xl font-bold mb-3">
+            <span class="gradient-text">Page not found</span>
+        </h1>
+        <p class="text-zinc-400 text-lg mb-8 max-w-md mx-auto leading-relaxed">
+            Looks like this page took a detour. It's not in your flow or in your way — it's just... gone.
+        </p>
+
+        <!-- Terminal hint -->
+        <div class="cmd-box max-w-sm mx-auto mb-10 text-left text-sm">
+            <span class="text-zinc-500">$</span>
+            <span class="text-purple-400 ml-2">git checkout</span>
+            <span class="text-pink-400 ml-1">main</span>
+            <span class="cmd-cursor"></span>
+        </div>
+
+        <!-- CTA -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a href="/" class="back-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/>
+                </svg>
+                <span>Back to Home</span>
+            </a>
+            <a href="https://github.com/fkhadra/git-pal/issues"
+               target="_blank"
+               class="inline-flex items-center gap-2 px-6 py-3 text-zinc-400 hover:text-purple-400 border border-zinc-700 hover:border-purple-500/50 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-purple-500/10">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                <span>Report Issue</span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
