@@ -8,7 +8,7 @@ use url::Url;
 
 const CLIENT_ID: &str = "Ov23liM8AmuuLbQqhdUf";
 // https://docs.github.com/en/enterprise-cloud@latest/apps/creating-github-apps/about-creating-github-apps/best-practices-for-creating-a-github-app#client-secrets
-const NOT_SO_SECRET_CLIENT_SECRET: &str = "2c283461887cb1fd83664d5291b84834e638e8e4";
+const NOT_SO_SECRET_CLIENT_SECRET: &str = env!("GIT_PAL_CLIENT_SECRET");
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
