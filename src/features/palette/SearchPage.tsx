@@ -1,5 +1,5 @@
 import { useCommandState } from "cmdk";
-import { CommandItem } from "~/components/Cmdk";
+import { CommandItem } from "~/components/ui/command";
 import { useCurrentPage } from "./state";
 import { openUrl } from "./utils";
 

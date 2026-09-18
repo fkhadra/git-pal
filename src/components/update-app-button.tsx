@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import commands from "~/commands";
 import { ModifierSymbol } from "~/libs/keymap";
 import { AppUpdate } from "~/models/updater";
-import { Button } from "./Button";
-import { Kbd, KbdGroup } from "./Keybind";
+import { Button } from "~/components/ui/button";
+import { Kbd, KbdGroup } from "~/components/ui/kbd";
 
 export function UpdateAppButton() {
   const [appUpdate, setAppUpdate] = useState<AppUpdate>();

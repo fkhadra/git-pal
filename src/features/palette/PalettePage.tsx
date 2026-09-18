@@ -1,8 +1,14 @@
-import { Command, useCommandState } from "cmdk";
+import { useCommandState } from "cmdk";
 import { Suspense, useEffect, useRef } from "react";
 import commands from "~/commands";
-import { Dialog, SkeletonRows } from "~/components";
-import { CommandEmpty } from "~/components/Cmdk";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { SkeletonRows } from "./SkeletonRows";
+import { Command, CommandEmpty, CommandList } from "~/components/ui/command";
 import { useFullHeightRef } from "~/libs/useFullHeight";
 import { CommandInput } from "./CommandInput";
 import { Help } from "./Help";
@@ -59,28 +65,28 @@ export function PalettePage() {
     >
       <Command
         loop
-        className="relative h-full overflow-hidden"
+        className="relative h-full overflow-hidden rounded-none! bg-transparent p-0 text-inherit"
         shouldFilter={!isGhSearchActive}
         value={snapshot.selectedValue}
         onValueChange={state.setSelectedValue}
       >
         <CommandInput />
-        <Command.List ref={listBox.setRef} className="px-2">
+        <CommandList ref={listBox.setRef} className="px-2">
           <Suspense fallback={<SkeletonRows />}>
             <EmptySearchResults />
             <Page />
           </Suspense>
-        </Command.List>
+        </CommandList>
         <PaletteFooter />
       </Command>
-      <Dialog
-        size="lg"
-        open={snapshot.displayHelp}
-        onOpenChange={state.toggleHelp}
-        title="Status Legend"
-        content={<Help />}
-        withCloseButton
-      />
+      <Dialog open={snapshot.displayHelp} onOpenChange={state.toggleHelp}>
+        <DialogContent className="w-lg">
+          <DialogHeader>
+            <DialogTitle>Status Legend</DialogTitle>
+          </DialogHeader>
+          <Help />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

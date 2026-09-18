@@ -1,4 +1,4 @@
-import { IconWrapper } from "~/components/IconWrapper";
+import { IconWrapper } from "~/components/icon-wrapper";
 import { Container } from "../Layout";
 
 export function Page({

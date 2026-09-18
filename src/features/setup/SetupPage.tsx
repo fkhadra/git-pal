@@ -1,8 +1,16 @@
 import { useCallback, useState } from "react";
 import commands from "~/commands";
-import { Button, Keybind, Typography, Vortex } from "~/components";
+import { Typography } from "~/components/typography";
+import { Vortex } from "~/components/vortex";
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { Keybind } from "~/components/keybind";
 
-import { Dialog } from "~/components";
 import { useWindowReady } from "~/hooks";
 import { Beams } from "./Beams";
 import { PATForm } from "./PATForm";
@@ -75,15 +83,14 @@ export function SetupPage() {
             </p>
           </div>
         )}
-        <Dialog
-          modal
-          open={openPATDialog}
-          onOpenChange={togglePATDialog}
-          title="Configure via PAT"
-          content={
+        <Dialog modal open={openPATDialog} onOpenChange={togglePATDialog}>
+          <DialogContent showCloseButton={false}>
+            <DialogHeader>
+              <DialogTitle>Configure via PAT</DialogTitle>
+            </DialogHeader>
             <PATForm onCancel={closeDialog} onAuthSuccess={onAuthSuccess} />
-          }
-        />
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );

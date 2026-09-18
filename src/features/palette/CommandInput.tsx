@@ -1,7 +1,7 @@
 import { Command } from "cmdk";
 import { Search } from "lucide-react";
 import { useRef } from "react";
-import { UpdateAppButton } from "~/components/UpdateAppButton";
+import { UpdateAppButton } from "~/components/update-app-button";
 import { state, useGHSearchActive, useStateSnaphot } from "./state";
 import { useKeybinds } from "./useKeybinds";
 

@@ -1,6 +1,6 @@
 import { StrictMode, Suspense } from "react";
 import ReactDOM from "react-dom/client";
-import { Tooltip } from "@base-ui/react/tooltip";
+import { TooltipProvider } from "~/components/ui/tooltip";
 
 import "./style.css";
 
@@ -15,9 +15,9 @@ root.render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <Suspense>
-        <Tooltip.Provider>
+        <TooltipProvider>
           <App />
-        </Tooltip.Provider>
+        </TooltipProvider>
       </Suspense>
     </QueryClientProvider>
   </StrictMode>,

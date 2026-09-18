@@ -1,6 +1,6 @@
 import type { PullRequest } from "~/models";
 import { PullRequestStatusIcon } from "./PullRequestStatusIcon";
-import { IconWrapper } from "~/components/IconWrapper";
+import { IconWrapper } from "~/components/icon-wrapper";
 
 export function PullRequestStatus({
   pullRequest,

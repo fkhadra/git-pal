@@ -1,4 +1,4 @@
-import { Typography } from "~/components";
+import { Typography } from "~/components/typography";
 import appIcon from "~/icon.png";
 
 export function AboutSection() {

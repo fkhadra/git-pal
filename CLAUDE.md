@@ -8,10 +8,10 @@ Git Pal is a Tauri v2 desktop application for GitHub productivity. It provides a
 
 ## Tech Stack
 
-- **Frontend**: React 19, TypeScript, Vite 7, Tailwind CSS 4
+- **Frontend**: React 19, TypeScript, Vite 8, Tailwind CSS 4
 - **Backend**: Rust (Tauri 2), with workspace crates for GitHub API and settings
 - **State Management**: Valtio, TanStack Query
-- **UI**: Base UI (Radix), cmdk (command palette), Lucide icons
+- **UI**: shadcn/ui on the **Base UI** base, cmdk (command palette), Lucide icons
 
 ## Development Commands
 
@@ -29,6 +29,7 @@ pnpm tauri build
 pnpm dev
 
 # Type check
+pnpm typecheck
 pnpm build  # runs tsc && vite build
 ```
 
@@ -41,7 +42,9 @@ src/                    # React frontend
 │   ├── settings/       # Settings page components
 │   ├── setup/          # Initial auth/setup flow
 │   └── shared/         # Shared context (AppContext)
-├── components/         # Reusable UI components
+├── components/
+│   ├── ui/             # shadcn registry components (managed by the CLI)
+│   └── form/           # app-owned form components
 ├── models/             # TypeScript types (generated from ts-rs)
 ├── commands.ts         # Tauri invoke wrappers
 └── App.tsx             # Main app with view routing
@@ -60,11 +63,47 @@ src-tauri/              # Rust backend
 
 ## Key Patterns
 
-- **Path alias**: Use `~/` for imports from `src/` (e.g., `import { Button } from "~/components"`)
+- **Path alias**: Use `~/` for imports from `src/` (e.g., `import { Button } from "~/components/ui/button"`)
 - **Tauri commands**: Frontend calls `invoke()` via `src/commands.ts`, backend handlers in `src-tauri/src/commands.rs`
 - **Type generation**: Types in `src/models/` are generated from Rust using ts-rs
 - **Views**: App has three views (`palette`, `settings`, `setup`) controlled by `globalThis.currentView`
 - **GitHub API**: Uses both GraphQL (`query.graphql`) and REST APIs via `git-pal-github` crate
+
+## UI Components (shadcn/ui)
+
+`src/components/ui/` is owned by the shadcn CLI. Everything else under
+`src/components/` is app-owned and the CLI never touches it.
+
+```bash
+pnpm ui add <component>            # add or re-sync a component
+pnpm ui add <component> --dry-run  # preflight: files and deps that would change
+pnpm ui add <component> --diff     # show local deltas vs the registry
+pnpm typecheck                     # always run right after an add
+```
+
+The CLI is pinned as a devDependency so it always matches the `shadcn/tailwind.css`
+that `src/style.css` imports. Use `pnpm ui`, not `pnpm dlx shadcn@latest`.
+
+**Never run `shadcn init`** — `components.json` is hand-maintained. `init` would
+rewrite `src/style.css` (losing the Satoshi import, `--body-bg`, and the
+transparent-window rules).
+
+- The base is **Base UI, not Radix** (`"style": "base-nova"`). Use Base UI's
+  `render={<Button />}` prop, never Radix's `asChild`.
+- `cn` comes from the `cn` package: `import { cn } from "cn"`. `clsx`,
+  `tailwind-merge` and `tailwind-variants` are not dependencies.
+- `aliases.utils` points at `~/libs/cn`, **not** `~/libs/utils` — the latter holds
+  app helpers (`themeSwitcher`, `nil`, `withDelay`) and must never be a registry
+  write target.
+- Generated files carry deliberate local deltas so the app looks unchanged. Biggest
+  ones: `ui/command.tsx` (gradient selected state, plus a `pointer-events-none`
+  item with a click overlay so mouse hover does not fight keyboard nav),
+  `ui/button.tsx` (size scale sits one notch above upstream), `ui/tooltip.tsx`
+  (bespoke SVG arrow), `ui/dialog.tsx` (app dialog skin). Re-apply after any
+  `--overwrite`.
+- `--radius` is `0.5rem` so the derived `--radius-*` scale matches Tailwind's
+  defaults exactly.
+- Import components directly (`~/components/ui/button`). There is no barrel.
 
 ## Rust Workspace
 

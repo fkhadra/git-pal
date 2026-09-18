@@ -7,7 +7,7 @@ import {
 import commands from "~/commands";
 import GithubLogo from "./github.svg";
 
-import { CommandGroup, CommandItem } from "~/components/Cmdk";
+import { CommandGroup, CommandItem } from "~/components/ui/command";
 import {
   OrganizationItem,
   Page,

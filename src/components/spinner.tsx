@@ -1,4 +1,4 @@
-import { cn } from "~/libs/utils";
+import { cn } from "cn";
 
 export interface SpinnerProps extends React.ComponentPropsWithRef<"svg"> {
   showCenter?: boolean;

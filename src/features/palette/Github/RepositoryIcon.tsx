@@ -1,5 +1,5 @@
 import { BookMarked, Lock } from "lucide-react";
-import { IconWrapper } from "~/components/IconWrapper";
+import { IconWrapper } from "~/components/icon-wrapper";
 
 interface Props {
   isInOrganization?: boolean;

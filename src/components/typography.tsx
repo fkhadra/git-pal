@@ -1,4 +1,4 @@
-import { cn } from "~/libs/utils";
+import { cn } from "cn";
 
 type HeadProps = React.HTMLAttributes<HTMLHeadElement>;
 

@@ -1,8 +1,8 @@
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { cn } from "~/libs/utils";
-import { Button } from "../Button";
+import { cn } from "cn";
+import { Button } from "~/components/ui/button";
 
 export interface InputProps extends React.ComponentPropsWithRef<"input"> {
   leftSlot?: React.ReactElement | false;

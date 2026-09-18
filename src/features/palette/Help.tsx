@@ -1,5 +1,6 @@
 import { useId } from "react";
-import { Hr, Typography } from "~/components";
+import { Typography } from "~/components/typography";
+import { Separator } from "~/components/ui/separator";
 import { PullRequestStatusIcon } from "./Github";
 
 function Section({
@@ -54,7 +55,7 @@ export function Help() {
           description="Work in progress"
         />
       </Section>
-      <Hr className="my-3" />
+      <Separator className="my-3" />
 
       <Section title="Action Required">
         <Item
@@ -73,7 +74,7 @@ export function Help() {
           description="Need to resolve merge conflicts"
         />
       </Section>
-      <Hr className="my-3" />
+      <Separator className="my-3" />
 
       <Section title="Ready for Review">
         <Item

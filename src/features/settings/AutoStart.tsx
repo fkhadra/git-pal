@@ -1,6 +1,7 @@
 import { useState } from "react";
 import commands from "~/commands";
-import { FormControl, Label, Switch } from "~/components/Form";
+import { FormControl, Label } from "~/components/form";
+import { Switch } from "~/components/ui/switch";
 
 export function AutoStart({ autoStartEnabled }: { autoStartEnabled: boolean }) {
 	const [isEnabled, setIsEnabled] = useState(autoStartEnabled);

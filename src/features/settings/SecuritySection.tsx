@@ -3,9 +3,31 @@ import { Check, Clock, Copy, Eye, EyeOff, KeyRound, Trash } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useState } from "react";
 import commands from "~/commands";
-import { Button, Dialog, Hr, Tooltip } from "~/components";
-import { AlertDialog } from "~/components/AlertDialog";
-import { FormControl, Input, Label } from "~/components/Form";
+import { FormControl, Input, Label } from "~/components/form";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog";
+import { Button } from "~/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog";
+import { Separator } from "~/components/ui/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { PATForm } from "../setup";
 import { Section } from "./Section";
 
@@ -59,7 +81,7 @@ export function SecuritySection() {
           )}
         </div>
       </FormControl>
-      <Hr className="my-4" />
+      <Separator className="my-4" />
       <FormControl>
         <span className="text-foreground leading-none font-medium">
           Update Authentication
@@ -74,34 +96,48 @@ export function SecuritySection() {
           </div>
         </div>
       </FormControl>
-      <Dialog
-        modal
-        open={openPATDialog}
-        onOpenChange={togglePATDialog}
-        title="Configure via PAT"
-        content={
+      <Dialog modal open={openPATDialog} onOpenChange={togglePATDialog}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Configure via PAT</DialogTitle>
+          </DialogHeader>
           <PATForm onCancel={closeDialog} onAuthSuccess={handleAuthSuccess} />
-        }
-      />
+        </DialogContent>
+      </Dialog>
 
       <div className="mt-auto flex flex-col gap-2">
-        <Hr />
-        <AlertDialog
-          title="Delete GitHub Token?"
-          trigger={
-            <Button variant="destructive" className="ml-auto">
-              <Trash />
-              Delete Token
-            </Button>
-          }
-          description="This action cannot be undone and you will need to re-authenticate."
-          action={
-            <Button variant="destructive" onClick={commands.deleteToken}>
-              <Trash />
-              Delete
-            </Button>
-          }
-        />
+        <Separator />
+        <AlertDialog>
+          <AlertDialogTrigger
+            render={
+              <Button variant="destructive" className="ml-auto">
+                <Trash />
+                Delete Token
+              </Button>
+            }
+          />
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete GitHub Token?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone and you will need to
+                re-authenticate.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel render={<Button variant="secondary" />}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                render={<Button variant="destructive" />}
+                onClick={commands.deleteToken}
+              >
+                <Trash />
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Section>
   );
@@ -127,34 +163,44 @@ function Token({ value }: { value: string }) {
   return (
     <div className="flex items-center gap-2">
       <Input disabled type={displayToken ? "text" : "password"} value={value} />
-      <Tooltip content="Show password">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setDisplayToken(!displayToken)}
-        >
-          {!displayToken ? <EyeOff /> : <Eye />}
-        </Button>
-      </Tooltip>
-      <Tooltip content="Copy password">
-        <Button
-          size="icon"
-          variant="outline"
-          onClick={copyToken}
-          className="relative overflow-hidden"
-        >
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.span
-              transition={{ type: "spring", duration: 0.3, bounce: 0 }}
-              initial={{ opacity: 0, y: -25 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 25 }}
-              key={`${isCopying}`}
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setDisplayToken(!displayToken)}
             >
-              {isCopying ? <Check className="text-success" /> : <Copy />}
-            </motion.span>
-          </AnimatePresence>
-        </Button>
+              {!displayToken ? <EyeOff /> : <Eye />}
+            </Button>
+          }
+        />
+        <TooltipContent>Show password</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              size="icon"
+              variant="outline"
+              onClick={copyToken}
+              className="relative overflow-hidden"
+            >
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  transition={{ type: "spring", duration: 0.3, bounce: 0 }}
+                  initial={{ opacity: 0, y: -25 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 25 }}
+                  key={`${isCopying}`}
+                >
+                  {isCopying ? <Check className="text-success" /> : <Copy />}
+                </motion.span>
+              </AnimatePresence>
+            </Button>
+          }
+        />
+        <TooltipContent>Copy password</TooltipContent>
       </Tooltip>
     </div>
   );

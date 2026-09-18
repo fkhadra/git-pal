@@ -2,16 +2,17 @@ import { Bug, Lightbulb, MessageCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Controller, useForm } from "react-hook-form";
 import commands from "~/commands";
-import { Button, Spinner } from "~/components";
-import { CardSelect } from "~/components/CardSelect";
+import { Spinner } from "~/components/spinner";
+import { Button } from "~/components/ui/button";
+import { CardSelect } from "~/components/card-select";
 import {
   ErrorMessage,
   FormControl,
   Input,
   Label,
   Textarea,
-} from "~/components/Form";
-import { IconWrapper } from "~/components/IconWrapper";
+} from "~/components/form";
+import { IconWrapper } from "~/components/icon-wrapper";
 import { withDelay } from "~/libs/utils";
 import { FeedbackKind } from "~/models/feedback";
 import { Section } from "./Section";

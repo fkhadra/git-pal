@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 import commands from "~/commands";
-import { CommandGroup, CommandItem } from "~/components/Cmdk";
+import { CommandGroup, CommandItem } from "~/components/ui/command";
 import { nil } from "~/libs/utils";
 import type { Repository } from "~/models";
 import { RepositoryItem } from "./Github";

@@ -1,8 +1,8 @@
 import { usePrefetchQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import commands from "~/commands";
-import { Keybind } from "~/components";
-import { CommandGroup, CommandItem } from "~/components/Cmdk";
+import { Keybind } from "~/components/keybind";
+import { CommandGroup, CommandItem } from "~/components/ui/command";
 import type { FindPullRequestsFilter, PullRequest } from "~/models";
 import { PullRequestItem } from "./Github";
 import { state, useCurrentPage } from "./state";

@@ -10,8 +10,8 @@ import {
   MessagesSquare,
   Search,
 } from "lucide-react";
-import { AnimatedBeam } from "~/components";
-import { cn } from "~/libs/utils";
+import { AnimatedBeam } from "~/components/animated-beam";
+import { cn } from "cn";
 
 type CircleProps = ComponentPropsWithRef<"div"> & {
   className?: string;

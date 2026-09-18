@@ -11,12 +11,12 @@ import {
 	Workflow,
 } from "lucide-react";
 import commands from "~/commands";
-import { CommandGroup, CommandItem } from "~/components/Cmdk";
+import { CommandGroup, CommandItem } from "~/components/ui/command";
 import { RepositoryIcon } from "./Github/RepositoryIcon";
 import { Container } from "./Layout";
 import { state, useCurrentPage } from "./state";
 import { openUrl } from "./utils";
-import { IconWrapper } from "~/components/IconWrapper";
+import { IconWrapper } from "~/components/icon-wrapper";
 
 function useRepositoryQuery() {
 	const page = useCurrentPage("repository");

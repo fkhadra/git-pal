@@ -1,6 +1,6 @@
 import React from "react";
-import { cn } from "~/libs/utils";
-import { ErrorMessage } from "./Input";
+import { cn } from "cn";
+import { ErrorMessage } from "./input";
 
 type TextAreaProps = {
   error?: string;

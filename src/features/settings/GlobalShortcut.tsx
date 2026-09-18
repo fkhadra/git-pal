@@ -2,8 +2,8 @@ import { CircleCheck } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type KeyboardEvent, useRef, useState } from "react";
 import commands from "~/commands";
-import { Kbd } from "~/components";
-import { FormControl, Input, Label } from "~/components/Form";
+import { Kbd } from "~/components/ui/kbd";
+import { FormControl, Input, Label } from "~/components/form";
 import { useAppContext } from "~/features/shared";
 import {
 	captureShortcut,

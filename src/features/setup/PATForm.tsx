@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from "motion/react";
 import { FormEvent, useState } from "react";
 import commands from "~/commands";
-import { Button, Spinner } from "~/components";
-import { Input } from "~/components/Form";
+import { Spinner } from "~/components/spinner";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/form";
 import { createPAT } from "~/libs/createPAT";
 import { withDelay } from "~/libs/utils";
 
