@@ -51,6 +51,8 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             on_app_start(app.handle())?;
+
+            #[cfg(not(debug_assertions))]
             start_updater(app.handle().clone());
 
             app.state::<AppState>()
