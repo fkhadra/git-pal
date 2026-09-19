@@ -10,7 +10,7 @@ use thiserror::Error;
 
 use crate::{
     core::{AppState, AppUpdate},
-    window,
+    window::{self, show_app},
 };
 
 use git_pal_feedback::NewFeedback;
@@ -307,8 +307,8 @@ pub async fn replace_global_shortcut(app_handle: tauri::AppHandle, params: Strin
     let new_shortcut =
         Shortcut::from_str(&params).map_err(|err| CommandError::Shortcut(err.to_string()))?;
 
-    let state: State<'_, AppState> = app_handle.state();
-    let old_shortcut = {
+    let state = app_handle.state::<AppState>();
+    let old_shortcut_str = {
         state
             .setting_manager
             .lock()
@@ -316,17 +316,22 @@ pub async fn replace_global_shortcut(app_handle: tauri::AppHandle, params: Strin
             .replace_global_shortcut(params.clone())
     };
 
-    let old_str =
-        Shortcut::from_str(&old_shortcut).map_err(|err| CommandError::Shortcut(err.to_string()))?;
+    let shortcut_manager = app_handle.global_shortcut();
 
-    app_handle
-        .global_shortcut()
-        .unregister(old_str)
-        .map_err(|err| CommandError::Shortcut(err.to_string()))?;
+    if let Ok(old_shortcut) = Shortcut::from_str(&old_shortcut_str) {
+        let _ = shortcut_manager.unregister(old_shortcut);
+    }
 
-    app_handle
-        .global_shortcut()
-        .register(new_shortcut)
+    shortcut_manager
+        .on_shortcut(new_shortcut, move |app, _shortcut, event| {
+            use tauri_plugin_global_shortcut::ShortcutState;
+
+            if event.state() == ShortcutState::Pressed {
+                if let Err(err) = show_app(app) {
+                    log::error!("Hotkey -> failed to show app. {}", err);
+                }
+            }
+        })
         .map_err(|err| CommandError::Shortcut(err.to_string()))?;
 
     Ok(())

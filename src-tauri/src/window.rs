@@ -1,7 +1,7 @@
 use std::{fmt::Debug, str::FromStr};
 
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WindowEvent};
-use tauri_plugin_global_shortcut::{Code, Modifiers, Shortcut, ShortcutState};
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 use crate::core::AppState;
 
@@ -263,20 +263,18 @@ fn register_global_shortcut(app_handle: &AppHandle) -> Result {
         }
     };
 
-    app_handle
-        .plugin(
-            tauri_plugin_global_shortcut::Builder::new()
-                .with_shortcut(hotkey)
-                .map_err(|err| Error::UnableToRegisterGlobalShortcut(err.to_string()))?
-                .with_handler(|app, _shortcut, event| {
-                    if event.state() == ShortcutState::Pressed {
-                        show_app(app).unwrap_or_else(|err| {
-                            log::error!("Hotkey -> failed to show app. {}", err)
-                        });
-                    }
-                })
-                .build(),
-        )
+    let shortcut_manager = app_handle.global_shortcut();
+    let _ = shortcut_manager.unregister_all();
+
+
+    shortcut_manager
+        .on_shortcut(hotkey, move |app, _shortcut, event| {
+            if event.state() == ShortcutState::Pressed {
+                if let Err(err) = show_app(app) {
+                    log::error!("Hotkey -> failed to show app. {}", err);
+                }
+            }
+        })
         .map_err(|err| Error::UnableToRegisterGlobalShortcut(err.to_string()))?;
 
     Ok(())
