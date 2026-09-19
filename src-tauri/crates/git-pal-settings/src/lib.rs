@@ -28,11 +28,20 @@ pub struct Settings {
     pub monitor_interval: u32,
 }
 
+#[cfg(target_os = "macos")]
+const DEFAULT_SHORTCUT: &str = "cmd+G";
+
+#[cfg(target_os = "linux")]
+const DEFAULT_SHORTCUT: &str = "ctrl+G";
+
+#[cfg(target_os = "windows")]
+const DEFAULT_SHORTCUT: &str = "ctrl+G";
+
 impl Default for Settings {
     fn default() -> Self {
         Self {
             theme: Theme::System,
-            global_shortcut: "cmd+G".to_string(),
+            global_shortcut: DEFAULT_SHORTCUT.to_string(),
             auto_update: true,
             display_rate_limit: false,
             monitor_pull_requests: true,
