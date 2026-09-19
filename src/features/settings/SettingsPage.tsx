@@ -1,8 +1,10 @@
+import { cn } from "cn";
 import { Info, LockKeyhole, MessageCircle, Settings } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
+
 import { useWindowReady } from "~/hooks";
-import { cn } from "cn";
+
 import { AboutSection } from "./AboutSection";
 import { FeedbackSection } from "./FeedbackSection";
 import { GeneralSection } from "./GeneralSection";

@@ -1,4 +1,5 @@
 import { Keybind } from "~/components/keybind";
+
 import { useGHSearchActive, usePaletteItem } from "./state";
 
 export function PaletteFooter() {

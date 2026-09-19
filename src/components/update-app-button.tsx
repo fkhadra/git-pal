@@ -1,10 +1,11 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
+
 import commands from "~/commands";
-import { ModifierSymbol } from "~/libs/keymap";
-import { AppUpdate } from "~/models/updater";
 import { Button } from "~/components/ui/button";
 import { Kbd, KbdGroup } from "~/components/ui/kbd";
+import { ModifierSymbol } from "~/libs/keymap";
+import { AppUpdate } from "~/models/updater";
 
 export function UpdateAppButton() {
   const [appUpdate, setAppUpdate] = useState<AppUpdate>();

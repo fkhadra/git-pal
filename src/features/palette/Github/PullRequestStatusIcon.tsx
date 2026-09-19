@@ -1,10 +1,11 @@
+import { cn } from "cn";
 import {
   GitPullRequest,
   GitPullRequestDraft,
   OctagonAlert,
 } from "lucide-react";
+
 import { Spinner } from "~/components/spinner";
-import { cn } from "cn";
 
 function Building({ className, ...rest }: React.ComponentPropsWithRef<"svg">) {
   return (

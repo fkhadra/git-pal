@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
+
 import commands from "~/commands";
+import { Keybind } from "~/components/keybind";
 import { Typography } from "~/components/typography";
-import { Vortex } from "~/components/vortex";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -9,9 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { Keybind } from "~/components/keybind";
-
+import { Vortex } from "~/components/vortex";
 import { useWindowReady } from "~/hooks";
+
 import { Beams } from "./Beams";
 import { PATForm } from "./PATForm";
 

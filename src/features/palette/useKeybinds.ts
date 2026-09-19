@@ -1,4 +1,5 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
+
 import { state, usePaletteItem, useSyncStateSnapshot } from "./state";
 
 const Key = {

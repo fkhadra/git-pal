@@ -1,18 +1,20 @@
 import { Activity, Clock } from "lucide-react";
 import { useState } from "react";
+
 import commands from "~/commands";
 import { FormControl, Input, Label } from "~/components/form";
 import { Switch } from "~/components/ui/switch";
 import { useAppContext } from "~/features/shared";
+
 import { Section } from "./Section";
 
 export function MonitoringSection() {
   const appContext = useAppContext();
   const [displayRateLimit, setDisplayRateLimit] = useState(
-    appContext.settings.displayRateLimit
+    appContext.settings.displayRateLimit,
   );
   const [monitorInterval, setMonitorInterval] = useState(
-    appContext.settings.monitorInterval
+    appContext.settings.monitorInterval,
   );
 
   return (

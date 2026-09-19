@@ -1,5 +1,6 @@
 import { useCommandState } from "cmdk";
 import { proxy, useSnapshot } from "valtio";
+
 import type {
   FindPullRequestsFilter,
   Organization,

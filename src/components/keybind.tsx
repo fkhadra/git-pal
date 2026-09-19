@@ -1,4 +1,5 @@
 import { cn } from "cn";
+
 import { Kbd, KbdGroup } from "~/components/ui/kbd";
 
 export function Keybind({
@@ -11,7 +12,7 @@ export function Keybind({
   keys: React.ReactNode[];
 }) {
   return (
-    <div className={cn("text-foreground flex items-center gap-1", className)}>
+    <div className={cn("flex items-center gap-1 text-foreground", className)}>
       {label && <span>{label}</span>}
       <KbdGroup>
         {keys.map((v, i) => (

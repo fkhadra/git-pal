@@ -23,7 +23,7 @@ export function CardSelect(props: Props) {
           <label
             key={option.value}
             htmlFor={option.value}
-            className="has-checked:border-primary hover:has-checked:border-primary dark:bg-input bg-background has-checked:bg-primary/15 cursor-pointer rounded-md border-2 border-gray-300 p-4 hover:border-slate-400 dark:border-gray-500 dark:hover:border-slate-50"
+            className="cursor-pointer rounded-md border-2 border-gray-300 bg-background p-4 hover:border-slate-400 has-checked:border-primary has-checked:bg-primary/15 hover:has-checked:border-primary dark:border-gray-500 dark:bg-input dark:hover:border-slate-50"
           >
             <input
               type="radio"
@@ -37,7 +37,7 @@ export function CardSelect(props: Props) {
               }}
               checked={props.value === option.value}
             />
-            <div className="peer-checked:text-primary flex flex-col items-center gap-2 text-center capitalize">
+            <div className="flex flex-col items-center gap-2 text-center capitalize peer-checked:text-primary">
               {option.Icon}
               <span>{option.label}</span>
             </div>

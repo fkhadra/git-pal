@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "eslint",
+    "typescript",
+    "unicorn",
+    "oxc",
+    "react",
+    "import",
+    "promise"
+  ],
+  "categories": { "correctness": "warn" },
+  "env": { "browser": true, "es2024": true },
+  "ignorePatterns": ["src/models", "dist", "src-tauri", "download-page"],
+  "rules": {
+    "eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+  }
+}

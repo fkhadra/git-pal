@@ -1,98 +1,100 @@
 import { usePrefetchQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+
 import commands from "~/commands";
 import { Keybind } from "~/components/keybind";
 import { CommandGroup, CommandItem } from "~/components/ui/command";
 import type { FindPullRequestsFilter, PullRequest } from "~/models";
+
 import { PullRequestItem } from "./Github";
 import { state, useCurrentPage } from "./state";
 import { openUrl } from "./utils";
 
 async function queryFn({ queryKey }: { queryKey: string[] }) {
-	const filter = queryKey[1] as FindPullRequestsFilter;
-	const { data } = await commands.findPullRequests(filter);
+  const filter = queryKey[1] as FindPullRequestsFilter;
+  const { data } = await commands.findPullRequests(filter);
 
-	const groups: Record<string, PullRequest[]> = {};
-	const pullRequests =
-		data?.search.nodes?.filter((v) => v?.__typename === "PullRequest") || [];
+  const groups: Record<string, PullRequest[]> = {};
+  const pullRequests =
+    data?.search.nodes?.filter((v) => v?.__typename === "PullRequest") || [];
 
-	pullRequests.forEach((pr) => {
-		groups[pr.repository.name] = groups[pr.repository.name] || [];
-		groups[pr.repository.name].push(pr);
-	});
+  pullRequests.forEach((pr) => {
+    groups[pr.repository.name] = groups[pr.repository.name] || [];
+    groups[pr.repository.name].push(pr);
+  });
 
-	queueMicrotask(() => {
-		pullRequests.forEach((pr) => {
-			state.setItem(pr.id, { kind: "pr", data: pr });
-		});
-	});
+  queueMicrotask(() => {
+    pullRequests.forEach((pr) => {
+      state.setItem(pr.id, { kind: "pr", data: pr });
+    });
+  });
 
-	return groups;
+  return groups;
 }
 
 export function usePreloadPullRequestsQueries() {
-	usePrefetchQuery({
-		queryKey: ["pull-requests", "reviewRequested"],
-		queryFn,
-	});
+  usePrefetchQuery({
+    queryKey: ["pull-requests", "reviewRequested"],
+    queryFn,
+  });
 
-	usePrefetchQuery({
-		queryKey: ["pull-requests", "mentionned"],
-		queryFn,
-	});
+  usePrefetchQuery({
+    queryKey: ["pull-requests", "mentionned"],
+    queryFn,
+  });
 }
 
 function usePullRequestsQuery() {
-	const page = useCurrentPage("pull-requests");
+  const page = useCurrentPage("pull-requests");
 
-	return useSuspenseQuery({
-		queryKey: ["pull-requests", page.params.filter],
-		queryFn,
-	});
+  return useSuspenseQuery({
+    queryKey: ["pull-requests", page.params.filter],
+    queryFn,
+  });
 }
 
 export function PullRequestsPage() {
-	const { data } = usePullRequestsQuery();
-	const noPRToReview = !data || Object.keys(data).length === 0
+  const { data } = usePullRequestsQuery();
+  const noPRToReview = !data || Object.keys(data).length === 0;
 
-	useEffect(() => {
-			if(noPRToReview) {
-				state.disableEmptySearchResults = true;
-			}
-	}, [noPRToReview]);
+  useEffect(() => {
+    if (noPRToReview) {
+      state.disableEmptySearchResults = true;
+    }
+  }, [noPRToReview]);
 
-	if (!data || Object.keys(data).length === 0)
-		return (
-			<div className="grid place-items-center">
-				<span className="text-6xl">🙌</span>
-				<span className="font-bold text-xl mt-2">
-					No pull requests to review
-				</span>
-				<span className="text-sm flex mt-2">
-					Press <Keybind className="mx-1" keys={["esc"]} /> to go to the
-					previous page
-				</span>
-			</div>
-		);
+  if (!data || Object.keys(data).length === 0)
+    return (
+      <div className="grid place-items-center">
+        <span className="text-6xl">🙌</span>
+        <span className="mt-2 text-xl font-bold">
+          No pull requests to review
+        </span>
+        <span className="mt-2 flex text-sm">
+          Press <Keybind className="mx-1" keys={["esc"]} /> to go to the
+          previous page
+        </span>
+      </div>
+    );
 
-	return (
-		<>
-			{Object.keys(data).map((key) => (
-				<CommandGroup key={key} heading={key}>
-					{data[key].map((v) => (
-						<CommandItem
-							value={v.id}
-							key={v.id}
-							keywords={[v.title, v.repository.name]}
-							onSelect={() => {
-								openUrl(v.url);
-							}}
-						>
-							<PullRequestItem pullRequest={v} />
-						</CommandItem>
-					))}
-				</CommandGroup>
-			))}
-		</>
-	);
+  return (
+    <>
+      {Object.keys(data).map((key) => (
+        <CommandGroup key={key} heading={key}>
+          {data[key].map((v) => (
+            <CommandItem
+              value={v.id}
+              key={v.id}
+              keywords={[v.title, v.repository.name]}
+              onSelect={() => {
+                openUrl(v.url);
+              }}
+            >
+              <PullRequestItem pullRequest={v} />
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      ))}
+    </>
+  );
 }

@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 80,
+  "sortImports": true,
+  "sortTailwindcss": {
+    "stylesheet": "src/style.css",
+    "functions": ["cn", "cva"]
+  },
+  "sortPackageJson": false,
+  "ignorePatterns": [
+    "src/models",
+    "src/components/ui",
+    "src-tauri",
+    "download-page",
+    ".github",
+    "**/*.md"
+  ]
+}

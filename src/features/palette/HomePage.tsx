@@ -4,9 +4,8 @@ import {
   GitPullRequestArrow,
   MessageCircleMore,
 } from "lucide-react";
-import commands from "~/commands";
-import GithubLogo from "./github.svg";
 
+import commands from "~/commands";
 import { CommandGroup, CommandItem } from "~/components/ui/command";
 import {
   OrganizationItem,
@@ -15,7 +14,9 @@ import {
   RepositoryItem,
 } from "~/features/palette/Github";
 import { nil } from "~/libs/utils";
+
 import { useAppContext } from "../shared";
+import GithubLogo from "./github.svg";
 import { state } from "./state";
 import { openUrl } from "./utils";
 

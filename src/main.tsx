@@ -1,10 +1,11 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { StrictMode, Suspense } from "react";
 import ReactDOM from "react-dom/client";
-import { TooltipProvider } from "~/components/ui/tooltip";
 
 import "./style.css";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "~/components/ui/tooltip";
+
 import { App } from "./App";
 
 const rootElement = document.getElementById("root") as HTMLElement;

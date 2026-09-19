@@ -1,13 +1,13 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { PalettePage, state } from "~/features/palette";
-import commands from "./commands";
+import { ToastContainer } from "react-toastify";
 
+import { PalettePage, state } from "~/features/palette";
+
+import commands from "./commands";
 import { SettingsPage } from "./features/settings";
 import { SetupPage } from "./features/setup";
 import { AppProvider } from "./features/shared";
 import { useColorScheme } from "./libs/useColorScheme";
-
-import { ToastContainer } from "react-toastify";
 
 function useAppQuery() {
   return useSuspenseQuery({

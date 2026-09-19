@@ -1,6 +1,8 @@
 import { useId } from "react";
+
 import { Typography } from "~/components/typography";
 import { Separator } from "~/components/ui/separator";
+
 import { PullRequestStatusIcon } from "./Github";
 
 function Section({
@@ -12,7 +14,7 @@ function Section({
 }) {
   return (
     <section className="flex flex-col">
-      <h3 className="text-muted-foreground mb-3 text-base">{title}</h3>
+      <h3 className="mb-3 text-base text-muted-foreground">{title}</h3>
       {children}
     </section>
   );

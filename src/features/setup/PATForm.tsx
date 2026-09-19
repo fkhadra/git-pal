@@ -1,9 +1,10 @@
 import { AnimatePresence, motion } from "motion/react";
 import { FormEvent, useState } from "react";
+
 import commands from "~/commands";
+import { Input } from "~/components/form";
 import { Spinner } from "~/components/spinner";
 import { Button } from "~/components/ui/button";
-import { Input } from "~/components/form";
 import { createPAT } from "~/libs/createPAT";
 import { withDelay } from "~/libs/utils";
 
@@ -34,7 +35,7 @@ export function PATForm({ onCancel, onAuthSuccess }: Props) {
 
   return (
     <form className="flex flex-col" onSubmit={handleSubmit}>
-      <p className="text-secondary-foreground mb-2 text-base">
+      <p className="mb-2 text-base text-secondary-foreground">
         <button
           type="button"
           className="cursor-pointer text-sm font-semibold text-indigo-400 underline"

@@ -1,7 +1,4 @@
-import React, { ComponentPropsWithRef, useRef } from "react";
-
-import appIcon from "~/icon.png";
-
+import { cn } from "cn";
 import {
   BookMarked,
   CircleDot,
@@ -10,8 +7,10 @@ import {
   MessagesSquare,
   Search,
 } from "lucide-react";
+import React, { ComponentPropsWithRef, useRef } from "react";
+
 import { AnimatedBeam } from "~/components/animated-beam";
-import { cn } from "cn";
+import appIcon from "~/icon.png";
 
 type CircleProps = ComponentPropsWithRef<"div"> & {
   className?: string;

@@ -1,15 +1,16 @@
 import { useCommandState } from "cmdk";
 import { Suspense, useEffect, useRef } from "react";
+
 import commands from "~/commands";
+import { Command, CommandEmpty, CommandList } from "~/components/ui/command";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { SkeletonRows } from "./SkeletonRows";
-import { Command, CommandEmpty, CommandList } from "~/components/ui/command";
 import { useFullHeightRef } from "~/libs/useFullHeight";
+
 import { CommandInput } from "./CommandInput";
 import { Help } from "./Help";
 import { HomePage } from "./HomePage";
@@ -21,6 +22,7 @@ import {
 } from "./PullRequestsPage";
 import { RepositoryPage } from "./RepositoryPage";
 import { SearchPage } from "./SearchPage";
+import { SkeletonRows } from "./SkeletonRows";
 import {
   createPageMapper,
   state,

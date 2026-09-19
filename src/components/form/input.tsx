@@ -1,7 +1,8 @@
+import { cn } from "cn";
 import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { cn } from "cn";
+
 import { Button } from "~/components/ui/button";
 
 export interface InputProps extends React.ComponentPropsWithRef<"input"> {
@@ -22,18 +23,9 @@ export function Input({
   const hasSlot = !!leftSlot || !!rightSlot;
 
   const baseStyle = cn(
-    `caret-primary ring-primary/50 text-foreground placeholder:text-muted-foreground border
-    border-primary/10 disabled:text-opacity-90 bg-background dark:bg-input flex items-center h-10 w-full
-    rounded-lg border-1 px-3 py-2 transition-colors file:border-0
-    file:bg-transparent shadow file:text-sm file:font-medium
-    focus-visible:outline-hidden disabled:cursor-not-allowed disabled:border-none
-     disabled:opacity-50 focus-visible:shadow-primary
-    focus-visible:shadow-[0_0_4px_1px] transition-shadow hover:ring-primary/70
-    disabled:bg-input/50 dark:disabled:bg-input/80
-    hover:ring-1`,
+    `disabled:text-opacity-90 flex h-10 w-full items-center rounded-lg border border-1 border-primary/10 bg-background px-3 py-2 text-foreground caret-primary shadow ring-primary/50 transition-colors transition-shadow file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground hover:ring-1 hover:ring-primary/70 focus-visible:shadow-[0_0_4px_1px] focus-visible:shadow-primary focus-visible:outline-hidden disabled:cursor-not-allowed disabled:border-none disabled:bg-input/50 disabled:opacity-50 dark:bg-input dark:disabled:bg-input/80`,
     !!error &&
-      `focus-visible:shadow-alert caret-alert ring-1 ring-alert hover:ring-alert
-      disabled:border-2 disabled:border-solid`,
+      `caret-alert ring-1 ring-alert hover:ring-alert focus-visible:shadow-alert disabled:border-2 disabled:border-solid`,
   );
 
   return (
@@ -42,7 +34,7 @@ export function Input({
         <div
           className={cn(
             baseStyle,
-            `has-[input:focus-visible]:shadow-primary has-[input:focus-visible]:shadow-[0_0_4px_1px]`,
+            `has-[input:focus-visible]:shadow-[0_0_4px_1px] has-[input:focus-visible]:shadow-primary`,
             !!error && "has-[input:focus-visible]:shadow-alert",
             className,
           )}
@@ -91,8 +83,8 @@ export function ErrorMessage({
           }}
           exit={{ opacity: 0.1, height: 0, marginTop: 0 }}
         >
-          <AlertCircle className="text-alert size-4 shrink-0 text-sm" />
-          <span className="text-alert text-sm first-letter:uppercase">
+          <AlertCircle className="size-4 shrink-0 text-sm text-alert" />
+          <span className="text-sm text-alert first-letter:uppercase">
             {error}
           </span>
         </motion.div>
@@ -125,7 +117,7 @@ export function Label({
   return (
     <label
       className={cn(
-        "text-foreground flex items-center gap-1 leading-none font-medium",
+        "flex items-center gap-1 leading-none font-medium text-foreground",
         {
           "w-fit": !rightSlot,
         },

@@ -1,4 +1,5 @@
 import { BookMarked, Lock } from "lucide-react";
+
 import { IconWrapper } from "~/components/icon-wrapper";
 
 interface Props {
@@ -17,9 +18,9 @@ export function RepositoryIcon({
   if (isInOrganization) {
     component = <img alt="Avatar" src={avatarUrl} className="size-6" />;
   } else if (isPrivate) {
-    component = <Lock className="text-warning size-5" />;
+    component = <Lock className="size-5 text-warning" />;
   } else {
-    component = <BookMarked className="text-info size-5" />;
+    component = <BookMarked className="size-5 text-info" />;
   }
 
   return <IconWrapper>{component}</IconWrapper>;

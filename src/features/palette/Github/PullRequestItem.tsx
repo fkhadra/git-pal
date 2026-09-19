@@ -1,5 +1,7 @@
 import { GitBranch } from "lucide-react";
+
 import type { PullRequest } from "~/models";
+
 import { Container } from "../Layout";
 import { PullRequestStatus } from "./PullRequestStatus";
 import { ReviewDecision } from "./ReviewDecision";
@@ -16,7 +18,7 @@ export function PullRequestItem({ pullRequest, hideAvatar }: Props) {
 
       <div className="flex flex-col">
         <span>{pullRequest.title}</span>
-        <div className="text-muted-foreground flex items-center gap-1 text-xs group-data-[selected=true]:text-white">
+        <div className="flex items-center gap-1 text-xs text-muted-foreground group-data-[selected=true]:text-white">
           <span>
             {pullRequest.repository.owner.login}/{pullRequest.repository.name}
           </span>

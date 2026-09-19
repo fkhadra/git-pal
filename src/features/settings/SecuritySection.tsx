@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, Clock, Copy, Eye, EyeOff, KeyRound, Trash } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useState } from "react";
+
 import commands from "~/commands";
 import { FormControl, Input, Label } from "~/components/form";
 import {
@@ -28,6 +29,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+
 import { PATForm } from "../setup";
 import { Section } from "./Section";
 
@@ -74,7 +76,7 @@ export function SecuritySection() {
         <div className="flex flex-col gap-3">
           <Token value={data?.value || ""} />
           {data?.expire_at && (
-            <div className="text-muted-foreground flex items-center text-sm">
+            <div className="flex items-center text-sm text-muted-foreground">
               <Clock className="mr-1 size-4" />
               <span>Expires on {formatDate(data.expire_at)}</span>
             </div>
@@ -83,7 +85,7 @@ export function SecuritySection() {
       </FormControl>
       <Separator className="my-4" />
       <FormControl>
-        <span className="text-foreground leading-none font-medium">
+        <span className="leading-none font-medium text-foreground">
           Update Authentication
         </span>
         <div className="flex items-center">

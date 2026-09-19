@@ -1,9 +1,8 @@
 import { Bug, Lightbulb, MessageCircle } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { Controller, useForm } from "react-hook-form";
+
 import commands from "~/commands";
-import { Spinner } from "~/components/spinner";
-import { Button } from "~/components/ui/button";
 import { CardSelect } from "~/components/card-select";
 import {
   ErrorMessage,
@@ -13,8 +12,11 @@ import {
   Textarea,
 } from "~/components/form";
 import { IconWrapper } from "~/components/icon-wrapper";
+import { Spinner } from "~/components/spinner";
+import { Button } from "~/components/ui/button";
 import { withDelay } from "~/libs/utils";
 import { FeedbackKind } from "~/models/feedback";
+
 import { Section } from "./Section";
 
 type ApiError =

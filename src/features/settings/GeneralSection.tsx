@@ -1,6 +1,8 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { Keyboard } from "lucide-react";
+
 import commands from "~/commands";
+
 import { AutoStart } from "./AutoStart";
 import { GlobalShortcut } from "./GlobalShortcut";
 import { Section } from "./Section";
