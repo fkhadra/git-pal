@@ -66,8 +66,8 @@ Download the latest [installer](https://gitpal.pushpull.sh/), open it, and drag 
 
 | Platform | Status |
 |----------|--------|
-| macOS (Apple Silicon & Intel) | Available |
-| Windows | Coming soon |
+| macOS | ✅ |
+| Windows | ✅ |
 | Linux | Coming soon |
 
 ## Development
