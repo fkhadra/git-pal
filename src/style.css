@@ -137,3 +137,7 @@ body:has([data-with-decoration]) {
 html {
   overscroll-behavior: none;
 }
+
+::-webkit-scrollbar {
+  display: none;
+}
