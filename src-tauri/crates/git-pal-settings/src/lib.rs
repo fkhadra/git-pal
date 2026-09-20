@@ -35,7 +35,7 @@ const DEFAULT_SHORTCUT: &str = "cmd+G";
 const DEFAULT_SHORTCUT: &str = "ctrl+G";
 
 #[cfg(target_os = "windows")]
-const DEFAULT_SHORTCUT: &str = "ctrl+G";
+const DEFAULT_SHORTCUT: &str = "ctrl+super+G";
 
 impl Default for Settings {
     fn default() -> Self {
