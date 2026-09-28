@@ -1,7 +1,11 @@
 [package]
 name = "git-pal-job-runner"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
 
 [dependencies]
 tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+ts-rs = { workspace = true }
