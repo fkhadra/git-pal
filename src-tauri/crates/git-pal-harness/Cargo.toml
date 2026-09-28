@@ -1,0 +1,11 @@
+[package]
+name = "git-pal-harness"
+version = "0.0.1"
+edition = "2024"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+anyhow = { workspace = true }
+ts-rs = { workspace = true }
+log = { workspace = true }
