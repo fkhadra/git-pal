@@ -31,11 +31,20 @@ fn validate(input: &ReviewTemplateInput) -> Result<ReviewTemplateInput> {
         Regex::new(matcher).map_err(|e| anyhow!("Invalid matcher: {e}"))?;
     }
 
+    let mut skills: Vec<String> = Vec::new();
+    
+    for skill in input.skills.iter().map(|s| s.trim()) {
+        if !skill.is_empty() && !skills.iter().any(|s| s == skill) {
+            skills.push(skill.to_string());
+        }
+    }
+
     Ok(ReviewTemplateInput {
         name: name.to_string(),
         content: input.content.clone(),
         matcher: matcher.map(str::to_string),
         is_default: input.is_default,
+        skills,
     })
 }
 
@@ -62,7 +71,7 @@ async fn clear_default(tx: &mut Transaction<'_, Sqlite>) -> Result<()> {
 impl CodeReviewStore {
     pub async fn list_templates(&self) -> Result<Vec<ReviewTemplate>> {
         let rows = sqlx::query_as::<_, ReviewTemplate>(
-            "SELECT id, name, content, matcher, is_default, position, created_at, updated_at \
+            "SELECT id, name, content, matcher, is_default, skills, position, created_at, updated_at \
              FROM review_templates ORDER BY position, id",
         )
         .fetch_all(&self.pool)
@@ -73,7 +82,7 @@ impl CodeReviewStore {
 
     pub async fn get_template(&self, id: i64) -> Result<Option<ReviewTemplate>> {
         let row = sqlx::query_as::<_, ReviewTemplate>(
-            "SELECT id, name, content, matcher, is_default, position, created_at, updated_at \
+            "SELECT id, name, content, matcher, is_default, skills, position, created_at, updated_at \
              FROM review_templates WHERE id = ?",
         )
         .bind(id)
@@ -93,14 +102,15 @@ impl CodeReviewStore {
         }
 
         let row = sqlx::query(
-            "INSERT INTO review_templates (name, content, matcher, is_default, position, created_at, updated_at) \
-             VALUES (?, ?, ?, ?, (SELECT COALESCE(MAX(position) + 1, 0) FROM review_templates), ?, ?) \
+            "INSERT INTO review_templates (name, content, matcher, is_default, skills, position, created_at, updated_at) \
+             VALUES (?, ?, ?, ?, ?, (SELECT COALESCE(MAX(position) + 1, 0) FROM review_templates), ?, ?) \
              RETURNING id",
         )
         .bind(&input.name)
         .bind(&input.content)
         .bind(&input.matcher)
         .bind(input.is_default)
+        .bind(serde_json::to_string(&input.skills)?)
         .bind(&now)
         .bind(&now)
         .fetch_one(&mut *tx)
@@ -127,12 +137,13 @@ impl CodeReviewStore {
 
         sqlx::query(
             "UPDATE review_templates \
-             SET name = ?, content = ?, matcher = ?, is_default = ?, updated_at = ? WHERE id = ?",
+             SET name = ?, content = ?, matcher = ?, is_default = ?, skills = ?, updated_at = ? WHERE id = ?",
         )
         .bind(&input.name)
         .bind(&input.content)
         .bind(&input.matcher)
         .bind(input.is_default)
+        .bind(serde_json::to_string(&input.skills)?)
         .bind(now())
         .bind(id)
         .execute(&mut *tx)
@@ -221,6 +232,7 @@ mod tests {
             content: String::new(),
             matcher: matcher.map(str::to_string),
             is_default,
+            skills: vec![],
             position: id,
             created_at: String::new(),
             updated_at: String::new(),
@@ -253,10 +265,12 @@ mod tests {
             content: "Focus on tests".into(),
             matcher: matcher.map(str::to_string),
             is_default: false,
+            skills: vec![" lint ".into(), "lint".into(), " ".into()],
         };
 
         assert_eq!(validate(&input(" A ", Some("  "))).unwrap().matcher, None);
         assert_eq!(validate(&input(" A ", None)).unwrap().name, "A");
+        assert_eq!(validate(&input("A", None)).unwrap().skills, ["lint"]);
         assert!(validate(&input("", None)).is_err());
         assert!(validate(&input("A", Some("("))).is_err());
     }

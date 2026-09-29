@@ -1,14 +1,14 @@
-//! Claude Code, driven through `claude -p`.
+mod skills;
 
 use std::{
-    fs,
+    env, fs,
     path::{Path, PathBuf},
 };
 
 use anyhow::Result;
 use serde_json::Value;
 
-use crate::{Adapter, Block, ChatOptions, Model, StreamItem};
+use crate::{Adapter, Block, ChatOptions, Model, Skill, StreamItem};
 
 /// Tool outputs can be huge (file dumps), keep what is useful to display.
 const MAX_TOOL_RESULT_CHARS: usize = 4000;
@@ -62,14 +62,28 @@ impl Adapter for Claude {
         ENV_DENYLIST
     }
 
+    fn skills(&self) -> Vec<Skill> {
+        env::var_os("HOME")
+            .map(|home| skills::list(&PathBuf::from(home).join(".claude")))
+            .unwrap_or_default()
+    }
+
     fn prepare(&self, cwd: &Path) {
         configure_project(cwd);
     }
 
-    fn run_args(&self, prompt: &str) -> Vec<String> {
-        ["-p", "--output-format", "json", prompt]
+    fn run_args(&self, prompt: &str, skills: &[String]) -> Vec<String> {
+        let mut args = ["-p", "--output-format", "json", prompt]
             .map(String::from)
-            .to_vec()
+            .to_vec();
+
+        // `-p` denies tools lacking permission
+        if !skills.is_empty() {
+            let allowed: Vec<_> = skills.iter().map(|s| format!("Skill({s})")).collect();
+            args.extend(["--allowedTools".to_string(), allowed.join(",")]);
+        }
+
+        args
     }
 
     fn run_output(&self, stdout: &str) -> Result<String> {
@@ -140,13 +154,13 @@ fn configure_project(dir: &Path) {
         Err(_) => dir.to_path_buf(),
     };
 
-    let home = match std::env::var("HOME") {
+    let home = match env::var("HOME") {
         Ok(h) => PathBuf::from(h),
         Err(_) => return,
     };
     let config_path = home.join(".claude.json");
 
-    let mut config: serde_json::Value = match std::fs::read_to_string(&config_path) {
+    let mut config: serde_json::Value = match fs::read_to_string(&config_path) {
         Ok(s) => serde_json::from_str(&s).unwrap_or_default(),
         Err(_) => serde_json::json!({}),
     };

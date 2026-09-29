@@ -13,6 +13,8 @@ CREATE TABLE IF NOT EXISTS code_reviews (
     -- { "type": "template", "id": 1 } or { "type": "built-in" } or NULL when not reviewing by ai
     template      TEXT,
     error         TEXT,
+    -- e.g. skills the template asked for but no longer installed
+    warning       TEXT,
     cancelled     INTEGER NOT NULL DEFAULT 0,
     reviewed      INTEGER NOT NULL DEFAULT 0,
     UNIQUE(owner, repository, pr_number)
@@ -35,6 +37,8 @@ CREATE TABLE IF NOT EXISTS review_templates (
     -- regex tested against "owner/repo"
     matcher       TEXT,
     is_default    INTEGER NOT NULL DEFAULT 0,
+    -- JSON array of skill names the review must use
+    skills        TEXT    NOT NULL DEFAULT '[]',
     -- first matching template in this order wins
     position      INTEGER NOT NULL,
     created_at    TEXT    NOT NULL,

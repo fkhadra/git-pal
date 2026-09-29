@@ -9,3 +9,5 @@ serde_json = { workspace = true }
 anyhow = { workspace = true }
 ts-rs = { workspace = true }
 log = { workspace = true }
+serde_yaml = "0.9.34"
+ignore = "0.4.31"

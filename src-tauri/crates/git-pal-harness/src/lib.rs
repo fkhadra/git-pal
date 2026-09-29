@@ -83,6 +83,13 @@ pub struct Model {
     pub label: String,
 }
 
+#[derive(Debug, Clone, Serialize, TS)]
+#[ts(export, export_to = "harness.ts")]
+pub struct Skill {
+    pub name: String,
+    pub description: String,
+}
+
 pub struct ChatOptions<'a> {
     pub prompt: &'a str,
     pub system_prompt: &'a str,
@@ -103,11 +110,16 @@ pub trait Adapter: Sync {
         &[]
     }
 
+    /// Skills available in every project
+    fn skills(&self) -> Vec<Skill> {
+        vec![]
+    }
+
     /// Setup needed before running in `cwd`, e.g. tool permissions
     fn prepare(&self, _cwd: &Path) {}
 
-    /// Arguments of a single read-only run of `prompt`
-    fn run_args(&self, prompt: &str) -> Vec<String>;
+    /// Arguments of a single read-only run of `prompt`, allowed to use `skills`
+    fn run_args(&self, prompt: &str, skills: &[String]) -> Vec<String>;
 
     /// Final answer out of a single run's stdout
     fn run_output(&self, stdout: &str) -> Result<String>;
@@ -137,12 +149,13 @@ pub fn run_once(
     cwd: &Path,
     env: &HashMap<String, String>,
     prompt: &str,
+    skills: &[String],
 ) -> Result<String> {
     let adapter = harness.adapter();
     adapter.prepare(cwd);
 
     let output = command(harness, cwd, env)
-        .args(adapter.run_args(prompt))
+        .args(adapter.run_args(prompt, skills))
         .stdin(Stdio::null())
         .output()?;
 

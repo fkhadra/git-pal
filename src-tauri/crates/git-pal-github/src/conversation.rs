@@ -251,7 +251,7 @@ impl Client {
 
 pub(crate) fn truncate(text: &str, max_chars: usize) -> String {
     let text = text.trim();
-    
+
     if text.chars().count() <= max_chars {
         return text.to_string();
     }
