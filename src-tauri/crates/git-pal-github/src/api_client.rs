@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use reqwest::{Client as HttpClient, RequestBuilder, header::HeaderMap};
+use reqwest::{Client as HttpClient, RequestBuilder, StatusCode, header::HeaderMap};
 
 use serde::{self, Deserialize, Serialize};
 use ts_rs::TS;
@@ -11,6 +11,8 @@ use ts_rs::TS;
 use crate::graphql::UserProfile;
 
 pub type Result<T> = std::result::Result<T, Error>;
+
+const USER_AGENT: &str = "hey-github-wanna-hire-me?";
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -31,6 +33,28 @@ pub enum Error {
 #[derive(Debug, Deserialize)]
 struct ErrorResponse {
     message: String,
+    /// Validation details, e.g. why a review comment was rejected
+    #[serde(default)]
+    errors: Vec<serde_json::Value>,
+}
+
+impl ErrorResponse {
+    fn describe(self) -> String {
+        if self.errors.is_empty() {
+            return self.message;
+        }
+
+        let details: Vec<String> = self
+            .errors
+            .iter()
+            .map(|e| match e.as_str().or(e["message"].as_str()) {
+                Some(text) => text.to_string(),
+                None => e.to_string(),
+            })
+            .collect();
+
+        format!("{}: {}", self.message, details.join("; "))
+    }
 }
 
 #[derive(Debug, Serialize, TS)]
@@ -106,13 +130,13 @@ impl Client {
 
         let res = req
             .bearer_auth(token)
-            .header("user-agent", "hey-github-wanna-hire-me?")
+            .header("user-agent", USER_AGENT)
             .send()
             .await?;
 
         if !res.status().is_success() {
             return Err(Error::BadRequest(
-                res.json::<ErrorResponse>().await?.message,
+                res.json::<ErrorResponse>().await?.describe(),
             ));
         }
 
@@ -124,6 +148,34 @@ impl Client {
             metadata,
             response: res,
         })
+    }
+
+    /// Whether the resource exists, a 404 is an answer rather than an error.
+    pub(super) async fn exists(&self, req: RequestBuilder) -> Result<bool> {
+        let snapshot = {
+            let guard = self.token.lock().unwrap();
+            guard.as_ref().clone()
+        };
+
+        let token = snapshot.ok_or(Error::MissingToken)?;
+
+        let res = req
+            .bearer_auth(token)
+            .header("user-agent", USER_AGENT)
+            .send()
+            .await?;
+
+        if res.status() == StatusCode::NOT_FOUND {
+            return Ok(false);
+        }
+
+        if !res.status().is_success() {
+            return Err(Error::BadRequest(
+                res.json::<ErrorResponse>().await?.describe(),
+            ));
+        }
+
+        Ok(true)
     }
 }
 
