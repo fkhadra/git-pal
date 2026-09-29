@@ -1,0 +1,15 @@
+[package]
+name = "git-pal-agent"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+sqlx = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+ts-rs = { workspace = true }
+tokio = { workspace = true }
+log = { workspace = true }
+git-pal-harness = { path = "../git-pal-harness" }
