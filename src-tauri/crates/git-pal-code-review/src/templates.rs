@@ -32,7 +32,7 @@ fn validate(input: &ReviewTemplateInput) -> Result<ReviewTemplateInput> {
     }
 
     let mut skills: Vec<String> = Vec::new();
-    
+
     for skill in input.skills.iter().map(|s| s.trim()) {
         if !skill.is_empty() && !skills.iter().any(|s| s == skill) {
             skills.push(skill.to_string());
