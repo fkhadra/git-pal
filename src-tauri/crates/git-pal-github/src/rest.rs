@@ -5,6 +5,7 @@ use reqwest::RequestBuilder;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
+use url::Url;
 
 use crate::api_client::{Client, Error, Response, Result};
 use crate::conversation::truncate;
@@ -78,6 +79,16 @@ pub struct FileRequest<'a> {
     pub owner: &'a str,
     pub repository: &'a str,
     pub file_path: &'a str,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "rest.ts")]
+pub struct FileSourceRequest {
+    pub owner: String,
+    pub repository: String,
+    pub path: String,
+    pub git_ref: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -284,6 +295,26 @@ impl Client {
             metadata,
             data: file_content,
         })
+    }
+
+    pub async fn file_source(&self, request: &FileSourceRequest) -> Result<String> {
+        let invalid_url = || Error::BadRequest(format!("invalid url {API_URL}"));
+        let mut url = Url::parse(API_URL).map_err(|_| invalid_url())?;
+        // segments are encoded, paths may hold spaces or emojis
+        url.path_segments_mut()
+            .map_err(|_| invalid_url())?
+            .extend(["repos", &request.owner, &request.repository, "contents"])
+            .extend(request.path.split('/'));
+
+        let req = self
+            .http
+            .get(url)
+            .query(&[("ref", &request.git_ref)])
+            .header("Accept", "application/vnd.github.raw+json");
+        
+        let Response { response, .. } = self.do_request(req).await?;
+
+        Ok(response.text().await?)
     }
 
     pub async fn extract_workflow_variables(
