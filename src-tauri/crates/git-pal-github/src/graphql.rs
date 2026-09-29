@@ -7,10 +7,17 @@ use ts_rs::TS;
 
 use crate::api_client::{Client, Response, Result};
 use crate::github::{Error, Metadata};
+use crate::query::find_repositories::FindRepositoriesSearchNodes;
+use crate::query::search_pull_request::SearchPullRequestSearchNodes;
 use crate::query::user_profile::UserProfileViewerOrganizations;
 use crate::query::{self};
+use crate::rest::GetPullRequestRequest;
+use crate::scope::SearchScope;
 
 const GRAPHQL_API_URL: &str = "https://api.github.com/graphql";
+
+/// GitHub's largest search page.
+const MAX_SEARCH_PAGE_SIZE: u32 = 100;
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq, Eq)]
 #[ts(export, export_to = "graphql.ts")]
@@ -44,18 +51,13 @@ pub type Homepage = GraphQLResponse<query::homepage::ResponseData>;
 pub type FindPullRequestResult = GraphQLResponse<query::search_pull_request::ResponseData>;
 pub type FindRepositoriesResult = GraphQLResponse<query::find_repositories::ResponseData>;
 pub type UserProfileViewer = query::user_profile::UserProfileViewer;
+pub type PullRequest = query::get_pull_request::PullRequest;
 
 #[derive(Debug, Serialize, Deserialize, Clone, TS)]
 #[ts(export, export_to = "graphql.ts")]
 pub struct FindRepositoriesRequest {
     pub owner: String,
     pub query: String,
-}
-
-impl std::fmt::Display for FindRepositoriesRequest {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "org:{} in:name {}", self.owner, self.query)
-    }
 }
 
 impl Client {
@@ -81,30 +83,56 @@ impl Client {
         Err(Error::MissingUser)
     }
 
-    pub async fn homepage(&self) -> Result<Homepage> {
+    /// The viewer's own pull requests stay whatever the scope, top repositories follow it.
+    pub async fn homepage(&self, scope: &SearchScope) -> Result<Homepage> {
         let q = query::Homepage::build_query(query::homepage::Variables {
             pull_request_count: 10,
             top_repository_count: 10,
         });
 
-        self.send_graphql(&q).await
+        let mut res: Homepage = self.send_graphql(&q).await?;
+        if let Some(nodes) = res
+            .data
+            .as_mut()
+            .and_then(|d| d.viewer.top_repositories.nodes.as_mut())
+        {
+            nodes.retain(|node| {
+                node.as_ref()
+                    .is_none_or(|n| scope.allows(&n.repository.owner.login, &n.repository.name))
+            });
+        }
+
+        Ok(res)
     }
 
     pub async fn find_repositories(
         &self,
         params: FindRepositoriesRequest,
+        scope: &SearchScope,
     ) -> Result<FindRepositoriesResult> {
         let q = query::FindRepositories::build_query(query::find_repositories::Variables {
             count: 20,
-            query: params.to_string(),
+            query: scope.owner_repository_query(&params.owner, &params.query),
         });
 
-        self.send_graphql(&q).await
+        let mut res: FindRepositoriesResult = self.send_graphql(&q).await?;
+        if let Some(nodes) = res.data.as_mut().and_then(|d| d.search.nodes.as_mut()) {
+            nodes.retain(|node| match node {
+                Some(FindRepositoriesSearchNodes::Repository(repo)) => {
+                    scope.allows(&repo.owner.login, &repo.name)
+                }
+                _ => true,
+            });
+        }
+
+        Ok(res)
     }
 
     pub async fn find_pull_requests(
         &self,
         filter: FindPullRequestsFilter,
+        scope: &SearchScope,
+        limit: u32,
     ) -> Result<FindPullRequestResult> {
         let f = match filter {
             FindPullRequestsFilter::Mentionned => "mentions",
@@ -113,12 +141,47 @@ impl Client {
 
         let q = self.with_user(|user| {
             query::SearchPullRequest::build_query(query::search_pull_request::Variables {
-                count: 20,
-                query: format!("is:open is:pr archived:false {}:{}", f, user.login),
+                count: limit.min(MAX_SEARCH_PAGE_SIZE).into(),
+                query: scope.narrow(&format!(
+                    "is:open is:pr archived:false {}:{}",
+                    f, user.login
+                )),
             })
         })?;
 
-        self.send_graphql(&q).await
+        // the query can't always carry the whole scope, see `SearchScope::narrow`
+        let mut res: FindPullRequestResult = self.send_graphql(&q).await?;
+        if let Some(nodes) = res.data.as_mut().and_then(|d| d.search.nodes.as_mut()) {
+            nodes.retain(|node| match node {
+                Some(SearchPullRequestSearchNodes::PullRequest(pr)) => {
+                    scope.allows(&pr.repository.owner.login, &pr.repository.name)
+                }
+                _ => true,
+            });
+        }
+
+        Ok(res)
+    }
+
+    /// Pull request with its checks, review decision and mergeability.
+    pub async fn find_pull_request(&self, request: &GetPullRequestRequest) -> Result<PullRequest> {
+        let q = query::GetPullRequest::build_query(query::get_pull_request::Variables {
+            owner: request.owner.clone(),
+            name: request.repository.clone(),
+            number: request.number,
+        });
+        let response: GraphQLResponse<query::get_pull_request::ResponseData> =
+            self.send_graphql(&q).await?;
+
+        if let Some(errors) = response.errors {
+            return Err(Error::BadRequest(errors.join(", ")));
+        }
+
+        response
+            .data
+            .and_then(|data| data.repository)
+            .and_then(|repository| repository.pull_request)
+            .ok_or(Error::MissingData)
     }
 
     async fn send_graphql<T, R>(&self, body: &QueryBody<T>) -> Result<GraphQLResponse<R>>

@@ -3,7 +3,9 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use reqwest::{Client as HttpClient, RequestBuilder, StatusCode, header::HeaderMap};
+use reqwest::{
+    Client as HttpClient, RequestBuilder, StatusCode, header::HeaderMap, header::HeaderValue,
+};
 
 use serde::{self, Deserialize, Serialize};
 use ts_rs::TS;
@@ -18,6 +20,8 @@ const USER_AGENT: &str = "hey-github-wanna-hire-me?";
 pub enum Error {
     #[error("token is missing")]
     MissingToken,
+    #[error("resource not found")]
+    ResourceNotFound,
     #[error("invalid request:  {0}")]
     BadRequest(String),
     #[error("no data")]
@@ -128,11 +132,25 @@ impl Client {
 
         let token = snapshot.ok_or(Error::MissingToken)?;
 
-        let res = req
+        let mut request = req
             .bearer_auth(token)
             .header("user-agent", USER_AGENT)
-            .send()
-            .await?;
+            .build()?;
+        let should_set_default_header = !request.url().as_str().ends_with("graphql")
+            && !request.headers().contains_key("Accept");
+
+        if should_set_default_header {
+            request.headers_mut().insert(
+                "Accept",
+                HeaderValue::from_static("application/vnd.github+json"),
+            );
+        }
+
+        let res = self.http.execute(request).await?;
+
+        if res.status() == StatusCode::NOT_FOUND {
+            return Err(Error::ResourceNotFound);
+        }
 
         if !res.status().is_success() {
             return Err(Error::BadRequest(
@@ -148,34 +166,6 @@ impl Client {
             metadata,
             response: res,
         })
-    }
-
-    /// Whether the resource exists, a 404 is an answer rather than an error.
-    pub(super) async fn exists(&self, req: RequestBuilder) -> Result<bool> {
-        let snapshot = {
-            let guard = self.token.lock().unwrap();
-            guard.as_ref().clone()
-        };
-
-        let token = snapshot.ok_or(Error::MissingToken)?;
-
-        let res = req
-            .bearer_auth(token)
-            .header("user-agent", USER_AGENT)
-            .send()
-            .await?;
-
-        if res.status() == StatusCode::NOT_FOUND {
-            return Ok(false);
-        }
-
-        if !res.status().is_success() {
-            return Err(Error::BadRequest(
-                res.json::<ErrorResponse>().await?.describe(),
-            ));
-        }
-
-        Ok(true)
     }
 }
 
