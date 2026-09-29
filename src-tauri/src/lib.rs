@@ -1,8 +1,9 @@
 mod commands;
 mod core;
+mod editor;
 mod window;
 
-use core::{AppState, handle_deeplink, start_updater};
+use core::{AppState, Event, emit_event, handle_deeplink, start_updater};
 use std::env;
 
 use tauri::{Manager, image::Image, menu::MenuBuilder, tray::TrayIconBuilder};
@@ -10,7 +11,7 @@ use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_log::{Target, TargetKind};
 
-use window::{on_app_start, show_app, show_settings};
+use window::{on_app_start, show_app, show_review, show_settings};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -51,6 +52,11 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
+            let emitter_handle = app.handle().clone();
+            app.state::<AppState>()
+                .job_runner
+                .set_emitter(move |job| emit_event(&emitter_handle, Event::JobMessage(job)));
+
             on_app_start(app.handle())?;
 
             #[cfg(not(debug_assertions))]
@@ -58,7 +64,7 @@ pub fn run() {
 
             app.state::<AppState>()
                 .notification_manager
-                .register_handler();
+                .register_handler(app.handle().clone());
 
             let app_handle = app.handle().clone();
             app.deep_link().on_open_url(move |event| {
@@ -68,6 +74,7 @@ pub fn run() {
             let menu = MenuBuilder::new(app)
                 .text("show", "Show Git Pal")
                 .separator()
+                .text("reviews", "Reviews")
                 .text("settings", "Settings")
                 .text("quit", "Quit Git Pal")
                 .build()?;
@@ -84,6 +91,11 @@ pub fn run() {
                     "show" => {
                         show_app(app).unwrap_or_else(|err| {
                             log::error!("Tray -> failed to show app. {}", err)
+                        });
+                    }
+                    "reviews" => {
+                        show_review(app, None).unwrap_or_else(|err| {
+                            log::error!("Tray -> failed to show reviews. {}", err)
                         });
                     }
                     "settings" => {
@@ -103,30 +115,70 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::authenticate,
-            commands::is_authenticated,
-            commands::homepage,
-            commands::find_pull_requests,
-            commands::find_repositories,
-            commands::delete_token,
-            commands::is_autostart_enabled,
-            commands::enable_autostart,
-            commands::disable_autostart,
-            commands::show_window,
-            commands::start_oauth_flow,
-            commands::extract_workflow_variables,
-            commands::find_workflows,
-            commands::run_workflow,
-            commands::update_setting,
-            commands::get_settings,
-            commands::monitor_review_requested,
-            commands::stop_monitoring,
-            commands::replace_global_shortcut,
-            commands::check_for_update,
-            commands::get_token,
-            commands::restart_app,
-            commands::notification_ask_permissions,
-            commands::submit_feedback
+            commands::auth::authenticate,
+            commands::auth::is_authenticated,
+            commands::github::homepage,
+            commands::github::find_pull_requests,
+            commands::github::find_repositories,
+            commands::github::check_scope_entry,
+            commands::auth::delete_token,
+            commands::app::is_autostart_enabled,
+            commands::app::enable_autostart,
+            commands::app::disable_autostart,
+            commands::app::show_window,
+            commands::auth::start_oauth_flow,
+            commands::workflows::extract_workflow_variables,
+            commands::workflows::find_workflows,
+            commands::workflows::run_workflow,
+            commands::app::update_setting,
+            commands::app::get_settings,
+            commands::app::default_settings,
+            commands::monitoring::monitor_review_requested,
+            commands::monitoring::stop_monitoring,
+            commands::app::replace_global_shortcut,
+            commands::app::check_for_update,
+            commands::auth::get_token,
+            commands::app::restart_app,
+            commands::monitoring::notification_ask_permissions,
+            commands::app::submit_feedback,
+            commands::review::review_pull_request,
+            commands::github::get_pull_request,
+            commands::github::get_pull_request_diff,
+            commands::github::get_file_source,
+            commands::github::get_pull_request_status,
+            commands::github::compare_commits,
+            commands::github::get_pull_request_conversation,
+            commands::github::edit_comment,
+            commands::github::delete_comment,
+            commands::review::list_reviews,
+            commands::review::get_review,
+            commands::review::update_review_comments,
+            commands::review::update_review_status,
+            commands::review::delete_review,
+            commands::worktree::worktree_path,
+            commands::worktree::list_editors,
+            commands::worktree::open_in_editor,
+            commands::review::list_viewed_files,
+            commands::review::set_file_viewed,
+            commands::review::submit_review,
+            commands::templates::list_review_templates,
+            commands::templates::create_review_template,
+            commands::templates::update_review_template,
+            commands::templates::delete_review_template,
+            commands::templates::reorder_review_templates,
+            commands::templates::built_in_review_instructions,
+            commands::templates::resolve_review_template,
+            commands::review::list_jobs,
+            commands::review::cancel_review,
+            commands::review::show_review,
+            commands::review::view_pull_request,
+            commands::agent::agent_send,
+            commands::agent::agent_cancel,
+            commands::agent::list_models,
+            commands::templates::list_skills,
+            commands::agent::agent_list_conversations,
+            commands::agent::agent_messages,
+            commands::agent::agent_delete_conversation
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -10,6 +10,7 @@
     "opener:default",
     "log:default",
     "core:window:allow-hide",
+    "core:window:allow-set-theme",
     "autostart:default",
     "updater:default",
     "process:default"
