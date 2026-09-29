@@ -7,3 +7,4 @@ edition = "2024"
 serde = { workspace = true }
 serde_json = { workspace = true }
 ts-rs = { workspace = true }
+git-pal-harness = { path = "../git-pal-harness" }
