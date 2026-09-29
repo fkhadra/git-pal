@@ -38,7 +38,7 @@ pub async fn run(
     adapter.prepare(&opts.cwd);
 
     let mut cmd = Command::from(git_pal_harness::command(opts.harness, &opts.cwd, &opts.env));
-    
+
     cmd.args(adapter.chat_args(&ChatOptions {
         prompt: &opts.prompt,
         system_prompt: &opts.system_prompt,
