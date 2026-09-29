@@ -1,13 +1,17 @@
 use std::{fmt::Debug, str::FromStr};
 
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WindowEvent};
+use git_pal_settings::Theme;
+use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WindowEvent, window::Color};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
-use crate::core::AppState;
+use git_pal_code_review::models::GetSavedReviewRequest;
+
+use crate::core::{AppState, Event, emit_event};
 
 const MAIN_WINDOW_LABEL: &str = "Main";
 const SETTINGS_WINDOW_LABEL: &str = "Settings";
 const SETUP_WINDOW_LABEL: &str = "Setup";
+const REVIEW_WINDOW_LABEL: &str = "Review";
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -66,9 +70,33 @@ pub fn show_settings(app: &AppHandle) -> Result {
                 label: SETTINGS_WINDOW_LABEL,
                 width: 715.0,
                 height: 600.0,
+                resizable: false,
             },
         ),
     }
+}
+
+pub fn show_review(app: &AppHandle, target: Option<GetSavedReviewRequest>) -> Result {
+    let Some(window) = app.get_webview_window(REVIEW_WINDOW_LABEL) else {
+        return create_window(
+            app,
+            WindowConfig {
+                title: "Reviews Pal",
+                current_view: "review",
+                url: "review",
+                label: REVIEW_WINDOW_LABEL,
+                width: 1400.0,
+                height: 900.0,
+                resizable: true,
+            },
+        );
+    };
+
+    if let Some(target) = target {
+        emit_event(app, Event::ReviewSelected(target));
+    }
+
+    show_window(&window)
 }
 
 pub fn on_app_start(handle: &AppHandle) -> Result {
@@ -91,6 +119,7 @@ pub fn on_app_start(handle: &AppHandle) -> Result {
                     label: SETUP_WINDOW_LABEL,
                     width: 800.0,
                     height: 600.0,
+                    resizable: false,
                 },
             )?
         }
@@ -226,22 +255,58 @@ struct WindowConfig<'a> {
     label: &'a str,
     width: f64,
     height: f64,
+    resizable: bool,
+}
+
+/// Mirrors `--body-bg` in style.css
+const LIGHT_BG: Color = Color(0xfb, 0xfc, 0xfd, 0xff);
+const DARK_BG: Color = Color(0x19, 0x19, 0x1c, 0xff);
+const DRACULA_BG: Color = Color(0x28, 0x2a, 0x36, 0xff);
+const CATPPUCCIN_MOCHA_BG: Color = Color(0x1e, 0x1e, 0x2e, 0xff);
+const CATPPUCCIN_LATTE_BG: Color = Color(0xef, 0xf1, 0xf5, 0xff);
+const ANDROMEDA_BG: Color = Color(0x23, 0x26, 0x2e, 0xff);
+
+fn background_color(theme: &Theme, appearance: tauri::Theme) -> Color {
+    match theme {
+        Theme::System if appearance == tauri::Theme::Dark => DARK_BG,
+        Theme::System | Theme::Light => LIGHT_BG,
+        Theme::Dark => DARK_BG,
+        Theme::Dracula => DRACULA_BG,
+        Theme::CatppuccinMocha => CATPPUCCIN_MOCHA_BG,
+        Theme::CatppuccinLatte => CATPPUCCIN_LATTE_BG,
+        Theme::Andromeda => ANDROMEDA_BG,
+    }
 }
 
 fn create_window(handle: &AppHandle, config: WindowConfig) -> Result {
-    tauri::WebviewWindowBuilder::new(handle, config.label, WebviewUrl::App(config.url.into()))
-        .title(config.title)
-        .initialization_script(hydrate_global(handle, config.current_view)?)
-        .inner_size(config.width, config.height)
-        .resizable(false)
-        .minimizable(false)
-        .visible(false)
-        .center()
-        .build()
-        .map_err(|e| Error::UnableToCreateWindow {
-            label: config.label.to_string(),
-            err: e.to_string(),
-        })?;
+    let theme = handle.state::<AppState>().get_settings().theme;
+
+    // themed before showing to prevent white flash
+    // The title bar follows the OS whatever the theme
+    let window =
+        tauri::WebviewWindowBuilder::new(handle, config.label, WebviewUrl::App(config.url.into()))
+            .title(config.title)
+            .initialization_script(hydrate_global(handle, config.current_view)?)
+            .inner_size(config.width, config.height)
+            .resizable(config.resizable)
+            .minimizable(false)
+            .visible(false)
+            .center()
+            .build()
+            .map_err(|e| Error::UnableToCreateWindow {
+                label: config.label.to_string(),
+                err: e.to_string(),
+            })?;
+
+    let appearance = window.theme().unwrap_or(tauri::Theme::Dark);
+
+    if let Err(err) = window.set_background_color(Some(background_color(&theme, appearance))) {
+        log::warn!(
+            "Unable to set the {} window background: {}",
+            config.label,
+            err
+        );
+    }
 
     Ok(())
 }
@@ -254,7 +319,8 @@ fn register_global_shortcut(app_handle: &AppHandle) -> Result {
             .lock()
             .unwrap()
             .settings
-            .global_shortcut,
+            .keybind
+            .show_palette,
     ) {
         Ok(shortcut) => shortcut,
         Err(err) => {
@@ -265,7 +331,6 @@ fn register_global_shortcut(app_handle: &AppHandle) -> Result {
 
     let shortcut_manager = app_handle.global_shortcut();
     let _ = shortcut_manager.unregister_all();
-
 
     shortcut_manager
         .on_shortcut(hotkey, move |app, _shortcut, event| {
