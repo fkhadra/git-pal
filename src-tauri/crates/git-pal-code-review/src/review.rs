@@ -35,6 +35,9 @@ Rules for the JSON output:
 - Keep comments concise and actionable
 - Output ONLY the JSON object, no other text"#;
 
+// TODO: Not sure how I should handle interactive skill, will have to see the usage
+const SKILLS_INSTRUCTIONS: &str = "Use these skills for the review:";
+
 /// Narrows an incremental review to the commits pushed since `since`, overriding the instructions' scope.
 fn incremental_scope(since: &str) -> String {
     format!(
@@ -46,11 +49,20 @@ Only review the changes made since then (`git diff {since}..HEAD`), use the rest
 /// The output format is always appended so the review can be parsed whatever the instructions.
 fn review_prompt(
     instructions: &str,
+    skills: &[String],
     description: &str,
     discussion: &str,
     since: Option<&str>,
 ) -> String {
     let mut prompt = instructions.to_string();
+
+    if !skills.is_empty() {
+        let list: Vec<_> = skills.iter().map(|s| format!("- {s}")).collect();
+        prompt.push_str(&format!(
+            "\n\n## Skills\n{SKILLS_INSTRUCTIONS}\n{}",
+            list.join("\n")
+        ));
+    }
 
     if let Some(since) = since {
         prompt.push_str(&format!("\n\n{}", incremental_scope(since)));
@@ -75,6 +87,7 @@ pub fn review(
     worktree_dir: &Path,
     env_vars: &HashMap<String, String>,
     instructions: &str,
+    skills: &[String],
     description: &str,
     discussion: &str,
     since: Option<&str>,
@@ -83,7 +96,8 @@ pub fn review(
         harness,
         worktree_dir,
         env_vars,
-        &review_prompt(instructions, description, discussion, since),
+        &review_prompt(instructions, skills, description, discussion, since),
+        skills,
     )?;
 
     let review = match serde_json::from_str::<PullRequestReview>(extract_json(&text)) {

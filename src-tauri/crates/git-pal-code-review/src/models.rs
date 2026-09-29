@@ -67,6 +67,8 @@ pub struct CodeReview {
     #[serde(default)]
     pub error: Option<String>,
     #[serde(default)]
+    pub warning: Option<String>,
+    #[serde(default)]
     pub cancelled: bool,
     #[serde(default)]
     pub reviewed: bool,
@@ -188,6 +190,9 @@ pub struct ReviewTemplate {
     /// Regex tested against "owner/repo"
     pub matcher: Option<String>,
     pub is_default: bool,
+    /// Skills the review must use
+    #[sqlx(json)]
+    pub skills: Vec<String>,
     pub position: i64,
     pub created_at: String,
     pub updated_at: String,
@@ -201,4 +206,5 @@ pub struct ReviewTemplateInput {
     pub content: String,
     pub matcher: Option<String>,
     pub is_default: bool,
+    pub skills: Vec<String>,
 }

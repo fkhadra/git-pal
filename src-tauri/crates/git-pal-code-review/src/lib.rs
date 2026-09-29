@@ -62,7 +62,7 @@ impl CodeReviewStore {
 
     pub async fn list_reviews(&self) -> Result<Vec<ReviewListEntry>> {
         let rows = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, error, cancelled, reviewed \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, error, warning, cancelled, reviewed \
              FROM code_reviews ORDER BY reviewed_at DESC",
         )
         .fetch_all(&self.pool)
@@ -78,7 +78,7 @@ impl CodeReviewStore {
         pr_number: i64,
     ) -> Result<Option<CodeReview>> {
         let row = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, error, cancelled, reviewed \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, error, warning, cancelled, reviewed \
              FROM code_reviews WHERE owner = ? AND repository = ? AND pr_number = ?",
         )
         .bind(owner)
@@ -94,8 +94,8 @@ impl CodeReviewStore {
         let comments_json = serde_json::to_string(&review.comments)?;
 
         let row = sqlx::query(
-            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, error, cancelled, reviewed) \
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
+            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, error, warning, cancelled, reviewed) \
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
              ON CONFLICT(owner, repository, pr_number) DO UPDATE SET \
                 pr_title = excluded.pr_title, \
                 branch = excluded.branch, \
@@ -106,6 +106,7 @@ impl CodeReviewStore {
                 reviewed_at = excluded.reviewed_at, \
                 template = excluded.template, \
                 error = excluded.error, \
+                warning = excluded.warning, \
                 cancelled = excluded.cancelled, \
                 reviewed = excluded.reviewed \
              RETURNING id",
@@ -128,6 +129,7 @@ impl CodeReviewStore {
                 .transpose()?,
         )
         .bind(&review.error)
+        .bind(&review.warning)
         .bind(review.cancelled)
         .bind(review.reviewed)
         .fetch_one(&self.pool)
