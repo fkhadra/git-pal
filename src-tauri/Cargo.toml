@@ -18,7 +18,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2.5.5", features = [] }
 
 [dependencies]
-tauri = { version = "2.10.2", features = [
+tauri = { version = "2.12.0", features = [
     "macos-private-api",
     "tray-icon",
     "image-png",
@@ -45,6 +45,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 thiserror = { workspace = true }
 ts-rs = { workspace = true }
+chrono = { workspace = true }
 tauri-plugin-process = "2.3.1"
 user-notify = "0.4.2"
 
@@ -52,12 +53,16 @@ git-pal-github = { path = "./crates/git-pal-github"}
 git-pal-settings = { path = "./crates/git-pal-settings"}
 git-pal-job-runner = { path = "./crates/git-pal-job-runner"}
 git-pal-feedback = { path = "./crates/git-pal-feedback"}
+git-pal-database = { path = "./crates/git-pal-database"}
+git-pal-code-review = { path = "./crates/git-pal-code-review"}
+git-pal-agent = { path = "./crates/git-pal-agent"}
+git-pal-harness = { path = "./crates/git-pal-harness"}
 
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1.0.149"
 thiserror = "2.0.18"
-ts-rs = "11.0.1"
+ts-rs = { version = "12.0.1", features = ["serde-json-impl"] }
 log = "0.4"
 tokio = { version = "1.49.0", features = ["full"] }
 oauth2 = "5.0.0"
@@ -65,6 +70,9 @@ url = "2.5.8"
 reqwest = { version = "0.12.23", features = ["json"] }
 tauri-plugin-opener = "2.5.3"
 anyhow = "1.0.101"
+sqlx = { version = "0.9.0", features = ["runtime-tokio", "sqlite"] }
+chrono = "0.4.45"
+regex = "1.11"
 
 [workspace]
 resolver = "3"

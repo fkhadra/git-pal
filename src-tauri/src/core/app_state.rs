@@ -5,11 +5,14 @@ use std::{
     sync::{self, Mutex},
 };
 
-use git_pal_job_runner::JobRunner;
+use git_pal_agent::AgentStore;
+use git_pal_code_review::{CodeReviewStore, models::GetSavedReviewRequest};
+use git_pal_job_runner::{Job, JobRunner};
 use git_pal_settings::{SettingManager, SettingValue, Settings, Theme};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_updater::UpdaterExt;
+use tokio::sync::oneshot;
 use ts_rs::TS;
 use url::Url;
 
@@ -22,6 +25,7 @@ use git_pal_github::{
     graphql::FindPullRequestsFilter,
     oauth::{self, PendingAuth},
     query::{self, search_pull_request::SearchPullRequestSearchNodes::PullRequest},
+    scope::SearchScope,
 };
 
 #[derive(Debug, Clone, Serialize, TS)]
@@ -45,16 +49,25 @@ pub struct AppState {
     pub pending_auth: Mutex<Option<PendingAuth>>,
     pub setting_manager: Mutex<SettingManager>,
     pub job_runner: JobRunner,
+    pub code_review_store: CodeReviewStore,
+    pub agent_store: AgentStore,
+    pub agent_runs: Mutex<HashMap<i64, oneshot::Sender<()>>>,
     app_dir: PathBuf,
 }
+
+const DATABASE: &str = "git-pal.db";
 
 impl AppState {
     pub fn new() -> Self {
         let vault = Vault::new("git-pal", "token").expect("vault should build");
         let token = vault.get_token().ok();
         let app_dir = app_dir();
+        // TODO: properly handle errors here, for example we could show
+        // a dedicated window to tell the tuser how to fix the issue and what's going on
         let setting_manager =
             Mutex::new(SettingManager::new(app_dir.join("settings.json")).unwrap());
+        let db = tauri::async_runtime::block_on(git_pal_database::connect(app_dir.join(DATABASE)))
+            .expect("database should connect");
 
         AppState {
             vault,
@@ -66,6 +79,9 @@ impl AppState {
             setting_manager,
             pending_auth: sync::Mutex::new(None),
             job_runner: JobRunner::new(),
+            code_review_store: CodeReviewStore::new(db.clone()),
+            agent_store: AgentStore::new(db),
+            agent_runs: Mutex::new(HashMap::new()),
         }
     }
 
@@ -96,14 +112,31 @@ impl AppState {
         self.setting_manager.lock().unwrap().settings.clone()
     }
 
+    pub fn search_scope(&self) -> SearchScope {
+        let filter = self.get_settings().repository_filter;
+
+        SearchScope {
+            include: filter.include,
+            exclude: filter.exclude,
+        }
+    }
+
     pub fn app_dir(&self) -> PathBuf {
         self.app_dir.clone()
+    }
+
+    pub fn repositories_dir(&self) -> PathBuf {
+        self.app_dir.join("repositories")
     }
 
     pub async fn handle_pr_monitor(&self) {
         let response = self
             .github_client
-            .find_pull_requests(FindPullRequestsFilter::ReviewRequested)
+            .find_pull_requests(
+                FindPullRequestsFilter::ReviewRequested,
+                &self.search_scope(),
+                self.get_settings().pull_request_limit,
+            )
             .await;
 
         match response {
@@ -141,7 +174,12 @@ impl AppState {
                             &format!("Review Requested: {}", pr.repository.name),
                             &pr.title,
                             Some(notification::Category::ReviewRequested),
-                            Some(HashMap::from([("url".to_string(), pr.url)])),
+                            Some(notification::review_metadata(
+                                pr.url,
+                                pr.repository.owner.login,
+                                pr.repository.name,
+                                pr.number,
+                            )),
                         )
                         .await;
                 }
@@ -280,6 +318,8 @@ pub enum Event {
     ThemeChanged(Theme),
     SettingChanged(SettingValue),
     UpdateInstalled(AppUpdate),
+    JobMessage(Job),
+    ReviewSelected(GetSavedReviewRequest),
 }
 
 pub fn emit_event(handle: &AppHandle, event: Event) {
@@ -288,6 +328,8 @@ pub fn emit_event(handle: &AppHandle, event: Event) {
         Event::ThemeChanged(_) => "ThemeChanged",
         Event::SettingChanged(_) => "SettingChanged",
         Event::UpdateInstalled(_) => "UpdateInstalled",
+        Event::JobMessage(_) => "JobMessage",
+        Event::ReviewSelected(_) => "ReviewSelected",
     };
 
     handle
