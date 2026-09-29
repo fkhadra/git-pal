@@ -7,9 +7,10 @@ use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
 use crate::api_client::{Client, Error, Response, Result};
+use crate::conversation::truncate;
 use crate::github::Metadata;
 
-const API_URL: &str = "https://api.github.com/";
+pub(crate) const API_URL: &str = "https://api.github.com/";
 
 #[derive(Debug, Serialize, TS)]
 #[ts(export, export_to = "api.ts")]
@@ -95,6 +96,162 @@ pub struct RunWorkflowRequest<'a> {
 pub struct FindWorkflowsRequest<'a> {
     pub owner: &'a str,
     pub repository: &'a str,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "rest.ts")]
+pub struct GetPullRequestRequest {
+    pub owner: String,
+    pub repository: String,
+    pub number: i64,
+}
+
+#[derive(Debug, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "rest.ts")]
+pub struct PullRequestDetails {
+    pub title: String,
+    pub html_url: String,
+    pub head_ref: String,
+    pub head_sha: String,
+    pub base_ref: String,
+    /// Markdown description, `None` when left empty
+    pub body: Option<String>,
+}
+
+/// Bot descriptions (e.g. dependency updates) can be huge, prompts only need the gist.
+const MAX_PROMPT_DESCRIPTION_CHARS: usize = 4000;
+
+impl PullRequestDetails {
+    /// The description sized for a prompt, empty when there is none.
+    pub fn prompt_description(&self) -> String {
+        self.body
+            .as_deref()
+            .map(|body| truncate(body, MAX_PROMPT_DESCRIPTION_CHARS))
+            .unwrap_or_default()
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct PullRequestResponse {
+    title: String,
+    html_url: String,
+    body: Option<String>,
+    head: PullRequestHead,
+    base: PullRequestBase,
+}
+
+#[derive(Debug, Deserialize)]
+struct PullRequestBase {
+    #[serde(rename = "ref")]
+    ref_field: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct PullRequestHead {
+    #[serde(rename = "ref")]
+    ref_field: String,
+    sha: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "rest.ts")]
+pub struct CompareCommitsRequest {
+    pub owner: String,
+    pub repository: String,
+    pub base: String,
+    pub head: String,
+}
+
+/// How head relates to base, `Diverged` once the history was rewritten.
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[serde(rename_all = "lowercase")]
+#[ts(export, export_to = "rest.ts")]
+pub enum CompareStatus {
+    Ahead,
+    Behind,
+    Diverged,
+    Identical,
+}
+
+#[derive(Debug, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "rest.ts")]
+pub struct CommitComparison {
+    pub status: CompareStatus,
+    pub ahead_by: i64,
+}
+
+#[derive(Debug, Deserialize)]
+struct CompareResponse {
+    status: CompareStatus,
+    ahead_by: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "rest.ts")]
+pub struct PullRequestFile {
+    pub sha: String,
+    pub filename: String,
+    pub status: String,
+    pub additions: i64,
+    pub deletions: i64,
+    pub changes: i64,
+    pub patch: Option<String>,
+    pub previous_filename: Option<String>,
+}
+
+#[derive(Debug, Serialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "rest.ts")]
+pub struct PullRequestDiff {
+    pub files: Vec<PullRequestFile>,
+    pub raw_diff: String,
+    pub total_additions: i64,
+    pub total_deletions: i64,
+    pub total_files: i64,
+}
+
+const PER_PAGE: usize = 100;
+
+/// Side of the diff a comment applies to, only the new version is supported.
+const COMMENT_SIDE: &str = "RIGHT";
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[ts(export, export_to = "rest.ts")]
+pub enum ReviewEvent {
+    Comment,
+    Approve,
+    RequestChanges,
+}
+
+#[derive(Debug, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "rest.ts")]
+pub struct DraftReviewComment {
+    pub path: String,
+    pub body: String,
+    /// `None` for a file level comment
+    pub line: Option<u32>,
+    pub start_line: Option<u32>,
+}
+
+#[derive(Debug, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "rest.ts")]
+pub struct SubmitReviewRequest {
+    pub owner: String,
+    pub repository: String,
+    pub number: i64,
+    /// Head commit the comment lines refer to
+    pub commit_id: String,
+    pub body: String,
+    pub event: ReviewEvent,
+    pub comments: Vec<DraftReviewComment>,
 }
 
 impl Client {
@@ -189,10 +346,176 @@ impl Client {
             .json(&Body {
                 ref_field: params.branch.to_string(),
                 inputs: params.variables,
-            })
-            .header("Accept", "application/vnd.github+json");
+            });
 
         let _ = self.do_request(req).await?;
+
+        Ok(())
+    }
+
+    pub async fn get_pull_request(
+        &self,
+        request: &GetPullRequestRequest,
+    ) -> Result<PullRequestDetails> {
+        let req = self.http.get(pull_request_url(request));
+
+        let Response { response, .. } = self.do_request(req).await?;
+        let pr: PullRequestResponse = response.json().await?;
+
+        Ok(PullRequestDetails {
+            title: pr.title,
+            html_url: pr.html_url,
+            head_ref: pr.head.ref_field,
+            head_sha: pr.head.sha,
+            base_ref: pr.base.ref_field,
+            body: pr.body,
+        })
+    }
+
+    pub async fn compare_commits(
+        &self,
+        request: &CompareCommitsRequest,
+    ) -> Result<CommitComparison> {
+        // the commit list isn't needed, only the counters
+        let url = format!(
+            "{API_URL}repos/{}/{}/compare/{}...{}?per_page=1",
+            request.owner, request.repository, request.base, request.head
+        );
+        let req = self.http.get(url);
+        let Response { response, .. } = self.do_request(req).await?;
+        let comparison: CompareResponse = response.json().await?;
+
+        Ok(CommitComparison {
+            status: comparison.status,
+            ahead_by: comparison.ahead_by,
+        })
+    }
+
+    pub async fn get_pull_request_diff(
+        &self,
+        request: &GetPullRequestRequest,
+    ) -> Result<PullRequestDiff> {
+        let files = self.get_pull_request_files(request).await?;
+        let raw_diff = self.get_pull_request_raw_diff(request).await?;
+
+        let total_additions = files.iter().map(|f| f.additions).sum();
+        let total_deletions = files.iter().map(|f| f.deletions).sum();
+        let total_files = files.len() as i64;
+
+        Ok(PullRequestDiff {
+            files,
+            raw_diff,
+            total_additions,
+            total_deletions,
+            total_files,
+        })
+    }
+
+    async fn get_pull_request_files(
+        &self,
+        request: &GetPullRequestRequest,
+    ) -> Result<Vec<PullRequestFile>> {
+        self.get_all_pages(&format!("{}/files", pull_request_url(request)))
+            .await
+    }
+
+    /// Follows GitHub's page based pagination until a partial page is returned.
+    pub(crate) async fn get_all_pages<T: DeserializeOwned>(&self, url: &str) -> Result<Vec<T>> {
+        let mut items = Vec::new();
+        let mut page = 1u32;
+
+        loop {
+            let req = self
+                .http
+                .get(format!("{url}?per_page={PER_PAGE}&page={page}"));
+
+            let Response { response, .. } = self.do_request(req).await?;
+            let batch: Vec<T> = response.json().await?;
+            let is_last_page = batch.len() < PER_PAGE;
+            items.extend(batch);
+
+            if is_last_page {
+                break;
+            }
+            page += 1;
+        }
+
+        Ok(items)
+    }
+
+    async fn get_pull_request_raw_diff(&self, request: &GetPullRequestRequest) -> Result<String> {
+        let req = self
+            .http
+            .get(pull_request_url(request))
+            .header("Accept", "application/vnd.github.diff");
+
+        let Response { response, .. } = self.do_request(req).await?;
+
+        Ok(response.text().await?)
+    }
+
+    /// Posts line comments as one review, file comments are posted alongside since reviews can't hold them.
+    pub async fn submit_review(&self, request: &SubmitReviewRequest) -> Result<()> {
+        let (line_comments, file_comments): (Vec<_>, Vec<_>) =
+            request.comments.iter().partition(|c| c.line.is_some());
+
+        let url = pull_request_url(&GetPullRequestRequest {
+            owner: request.owner.clone(),
+            repository: request.repository.clone(),
+            number: request.number,
+        });
+
+        // GitHub rejects an empty comment review, file comments alone don't need one
+        let is_empty = matches!(request.event, ReviewEvent::Comment)
+            && request.body.trim().is_empty()
+            && line_comments.is_empty();
+
+        if !is_empty {
+            let comments: Vec<serde_json::Value> = line_comments
+                .iter()
+                .map(|c| {
+                    let mut comment = serde_json::json!({
+                        "path": c.path,
+                        "body": c.body,
+                        "line": c.line,
+                        "side": COMMENT_SIDE,
+                    });
+                    if let Some(start_line) = c.start_line {
+                        comment["start_line"] = start_line.into();
+                        comment["start_side"] = COMMENT_SIDE.into();
+                    }
+                    comment
+                })
+                .collect();
+
+            let req = self
+                .http
+                .post(format!("{url}/reviews"))
+                .json(&serde_json::json!({
+                    "commit_id": request.commit_id,
+                    "body": request.body,
+                    "event": request.event,
+                    "comments": comments,
+                }));
+
+            self.do_request(req).await?;
+        }
+
+        for comment in file_comments {
+            let req = self
+                .http
+                .post(format!("{url}/comments"))
+                .json(&serde_json::json!({
+                    "commit_id": request.commit_id,
+                    "path": comment.path,
+                    "body": comment.body,
+                    "subject_type": "file",
+                }));
+
+            self.do_request(req).await.map_err(|e| {
+                Error::BadRequest(format!("file comment on {} failed: {e}", comment.path))
+            })?;
+        }
 
         Ok(())
     }
@@ -207,4 +530,11 @@ impl Client {
 
         Ok(RestResponse { metadata, data })
     }
+}
+
+pub(crate) fn pull_request_url(request: &GetPullRequestRequest) -> String {
+    format!(
+        "{API_URL}repos/{}/{}/pulls/{}",
+        request.owner, request.repository, request.number
+    )
 }
