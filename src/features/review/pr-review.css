@@ -1,0 +1,168 @@
+/* Diff colors derive from the theme tokens so every theme gets a matching diff */
+.diff-viewer {
+  --diff-background-color: transparent;
+  --diff-text-color: var(--foreground);
+  --diff-font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono",
+    monospace;
+  --diff-selection-background-color: color-mix(
+    in oklch,
+    var(--primary) 20%,
+    transparent
+  );
+  --diff-gutter-insert-background-color: color-mix(
+    in oklch,
+    var(--success) 14%,
+    transparent
+  );
+  --diff-gutter-insert-text-color: var(--success);
+  --diff-gutter-delete-background-color: color-mix(
+    in oklch,
+    var(--destructive) 14%,
+    transparent
+  );
+  --diff-gutter-delete-text-color: var(--destructive);
+  --diff-gutter-selected-background-color: color-mix(
+    in oklch,
+    var(--primary) 28%,
+    transparent
+  );
+  --diff-code-insert-background-color: color-mix(
+    in oklch,
+    var(--success) 8%,
+    transparent
+  );
+  --diff-code-insert-text-color: var(--foreground);
+  --diff-code-delete-background-color: color-mix(
+    in oklch,
+    var(--destructive) 8%,
+    transparent
+  );
+  --diff-code-delete-text-color: var(--foreground);
+  --diff-code-insert-edit-background-color: color-mix(
+    in oklch,
+    var(--success) 22%,
+    transparent
+  );
+  --diff-code-delete-edit-background-color: color-mix(
+    in oklch,
+    var(--destructive) 22%,
+    transparent
+  );
+  --diff-code-selected-background-color: color-mix(
+    in oklch,
+    var(--primary) 16%,
+    transparent
+  );
+  --diff-omit-gutter-line-color: color-mix(
+    in oklch,
+    var(--destructive) 50%,
+    transparent
+  );
+}
+
+.diff-viewer .diff {
+  font-size: 12px;
+}
+
+.diff-viewer .diff-gutter {
+  font-size: 11px;
+  min-width: 5ch;
+  color: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  cursor: pointer;
+}
+
+.diff-viewer .diff-gutter:hover {
+  background-color: color-mix(in oklch, var(--primary) 18%, transparent);
+  color: var(--foreground);
+}
+
+.diff-viewer .diff-gutter-col {
+  width: 5ch;
+}
+
+.diff-viewer .diff-line {
+  line-height: 1.6;
+}
+
+.diff-viewer .diff-widget-content {
+  background-color: transparent;
+}
+
+.diff-viewer .diff-decoration-content {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+/* Syntax highlighting, colors come from the theme's --syntax-* tokens */
+.diff-viewer .token.comment,
+.diff-viewer .token.prolog,
+.diff-viewer .token.doctype,
+.diff-viewer .token.cdata {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+
+.diff-viewer .token.keyword,
+.diff-viewer .token.atrule,
+.diff-viewer .token.important,
+.diff-viewer .token.selector {
+  color: var(--syntax-keyword);
+}
+
+.diff-viewer .token.string,
+.diff-viewer .token.char,
+.diff-viewer .token.attr-value,
+.diff-viewer .token.regex,
+.diff-viewer .token.url,
+.diff-viewer .token.template-string {
+  color: var(--syntax-string);
+}
+
+.diff-viewer .token.function {
+  color: var(--syntax-function);
+}
+
+.diff-viewer .token.number,
+.diff-viewer .token.boolean,
+.diff-viewer .token.constant,
+.diff-viewer .token.symbol {
+  color: var(--syntax-number);
+}
+
+.diff-viewer .token.property,
+.diff-viewer .token.attr-name {
+  color: var(--syntax-property);
+}
+
+.diff-viewer .token.tag {
+  color: var(--syntax-tag);
+}
+
+.diff-viewer .token.class-name,
+.diff-viewer .token.builtin {
+  color: var(--syntax-type);
+}
+
+.diff-viewer .token.punctuation,
+.diff-viewer .token.operator {
+  color: var(--syntax-punctuation);
+}
+
+/* wrap at word boundaries, long tokens still break rather than overflow */
+.diff-viewer .diff-code {
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+/* find in diff, drawn with the CSS Custom Highlight API */
+::highlight(diff-find) {
+  background-color: color-mix(in oklch, var(--warning) 35%, transparent);
+}
+
+::highlight(diff-find-current) {
+  background-color: var(--warning);
+  color: var(--background);
+}
