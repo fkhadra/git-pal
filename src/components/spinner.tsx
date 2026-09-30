@@ -14,7 +14,10 @@ export const Spinner: React.FC<SpinnerProps> = ({
       aria-hidden="true"
       fill="none"
       viewBox="0 0 16 16"
-      className={cn("size-6 animate-spin fill-white stroke-white", className)}
+      className={cn(
+        "size-6 animate-spin fill-current stroke-current",
+        className,
+      )}
       xmlns="http://www.w3.org/2000/svg"
       {...rest}
     >

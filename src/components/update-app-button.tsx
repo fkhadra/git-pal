@@ -50,7 +50,7 @@ function ButtonWrapper() {
       <Button
         size="sm"
         variant="outline"
-        className={`relative after:absolute after:-inset-0.5 after:-z-10 after:animate-pulse after:rounded-lg after:bg-linear-to-r after:from-pink-600 after:to-violet-600 after:blur-sm`}
+        className={`relative after:absolute after:-inset-0.5 after:-z-10 after:animate-pulse after:rounded-lg after:bg-linear-to-r after:from-brand after:to-brand-alt after:blur-sm`}
         onClick={commands.restartApp}
       >
         Restart to Update

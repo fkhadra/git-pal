@@ -23,7 +23,7 @@ export function CardSelect(props: Props) {
           <label
             key={option.value}
             htmlFor={option.value}
-            className="cursor-pointer rounded-md border-2 border-gray-300 bg-background p-4 hover:border-slate-400 has-checked:border-primary has-checked:bg-primary/15 hover:has-checked:border-primary dark:border-gray-500 dark:bg-input dark:hover:border-slate-50"
+            className="cursor-pointer rounded-md border-2 border-border bg-card p-4 hover:border-muted-foreground has-checked:border-primary has-checked:bg-primary/15 hover:has-checked:border-primary"
           >
             <input
               type="radio"

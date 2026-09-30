@@ -24,7 +24,7 @@ export function Keybind({
 }
 
 function Separator() {
-  return <hr className="h-3 w-px border-0 bg-pink-300/40" />;
+  return <hr className="h-3 w-px border-0 bg-muted-foreground/30" />;
 }
 
 Keybind.Separator = Separator;
