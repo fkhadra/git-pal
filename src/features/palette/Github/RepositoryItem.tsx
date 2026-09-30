@@ -27,7 +27,7 @@ export function RepositoryItem({
         </span>
         <div className="flex items-center gap-2 text-xs">
           <span className="flex items-center">
-            <Star className="mr-1 size-3 fill-amber-300 stroke-amber-300" />
+            <Star className="mr-1 size-3 fill-warning stroke-warning" />
             <span>{repository.stargazerCount || 0}</span>
           </span>
           <span className="flex items-center">
@@ -35,7 +35,7 @@ export function RepositoryItem({
             <span>{repository.pullRequests?.totalCount || 0}</span>
           </span>
           <span className="flex items-center">
-            <CircleDot className="mr-1 size-3 stroke-amber-300" />
+            <CircleDot className="mr-1 size-3 stroke-warning" />
             <span>{repository.issues?.totalCount || 0}</span>
           </span>
         </div>

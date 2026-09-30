@@ -21,8 +21,11 @@ import {
   usePreloadPullRequestsQueries,
 } from "./PullRequestsPage";
 import { RepositoryPage } from "./RepositoryPage";
+import { ReviewTemplatePage } from "./ReviewTemplatePage";
 import { SearchPage } from "./SearchPage";
+import { usePaletteKeybindSync } from "./shortcuts";
 import { SkeletonRows } from "./SkeletonRows";
+import { useRepositoryFilterSync } from "./useRepositoryFilterSync";
 import {
   createPageMapper,
   state,
@@ -37,6 +40,7 @@ const pages = createPageMapper({
   org: OrgPage,
   "pull-requests": PullRequestsPage,
   repository: RepositoryPage,
+  "review-template": ReviewTemplatePage,
   search: SearchPage,
 });
 
@@ -49,6 +53,8 @@ export function PalettePage() {
   const timeoutId = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   usePreloadPullRequestsQueries();
+  usePaletteKeybindSync();
+  useRepositoryFilterSync();
 
   useEffect(() => {
     clearTimeout(timeoutId.current);
@@ -62,9 +68,7 @@ export function PalettePage() {
   }, []);
 
   return (
-    <div
-      className={"h-screen bg-linear-to-tl from-pink-300/10 to-purple-500/10"}
-    >
+    <div className="h-screen rounded-(--body-radius) border border-foreground/15 bg-linear-to-tl from-brand-alt/10 to-brand/10">
       <Command
         loop
         className="relative h-full overflow-hidden rounded-none! bg-transparent p-0 text-inherit"
@@ -73,7 +77,7 @@ export function PalettePage() {
         onValueChange={state.setSelectedValue}
       >
         <CommandInput />
-        <CommandList ref={listBox.setRef} className="px-2">
+        <CommandList ref={listBox.setRef} data-palette-list className="px-2">
           <Suspense fallback={<SkeletonRows />}>
             <EmptySearchResults />
             <Page />
@@ -82,9 +86,9 @@ export function PalettePage() {
         <PaletteFooter />
       </Command>
       <Dialog open={snapshot.displayHelp} onOpenChange={state.toggleHelp}>
-        <DialogContent className="w-lg">
+        <DialogContent className="max-h-[85vh] w-lg overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Status Legend</DialogTitle>
+            <DialogTitle>Help</DialogTitle>
           </DialogHeader>
           <Help />
         </DialogContent>

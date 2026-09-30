@@ -12,7 +12,7 @@ export function ReviewDecision({
   return (
     <span
       className={cn(
-        "ml-auto min-w-fit rounded-md border bg-zinc-800 px-2 py-1 text-sm capitalize",
+        "ml-auto min-w-fit rounded-md border bg-muted px-2 py-1 text-sm capitalize",
         value === "APPROVED" && "border-success text-success",
         value === "REVIEW_REQUIRED" && "border-info text-info",
         value === "CHANGES_REQUESTED" && "border-warning text-warning",

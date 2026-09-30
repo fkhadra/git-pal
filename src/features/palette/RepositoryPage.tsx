@@ -82,7 +82,7 @@ export function RepositoryPage() {
       >
         <Container>
           <IconWrapper>
-            <GitPullRequestArrow className="text-blue-500" />
+            <GitPullRequestArrow className="text-info" />
           </IconWrapper>
           <div>
             Pull Requests
@@ -117,7 +117,7 @@ export function RepositoryPage() {
         >
           <Container>
             <IconWrapper>
-              <MessageCircleMore className="text-pink-400" />
+              <MessageCircleMore className="text-brand-alt" />
             </IconWrapper>
             <div>
               Discussions
@@ -173,7 +173,7 @@ export function RepositoryPage() {
         <CommandItem value={`${repository.id}-workflows`}>
           <Container>
             <IconWrapper>
-              <Workflow className="text-orange-400" />
+              <Workflow className="text-warning" />
             </IconWrapper>
             <div>Workflows</div>
           </Container>
@@ -187,7 +187,7 @@ export function RepositoryPage() {
       >
         <Container>
           <IconWrapper>
-            <Tag className="text-violet-500" />
+            <Tag className="text-agent" />
           </IconWrapper>
           <div>Releases</div>
         </Container>

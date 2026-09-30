@@ -4,11 +4,13 @@ import { useEffect } from "react";
 import commands from "~/commands";
 import { Keybind } from "~/components/keybind";
 import { CommandGroup, CommandItem } from "~/components/ui/command";
+import { shortcutSymbols } from "~/libs/keymap";
 import type { FindPullRequestsFilter, PullRequest } from "~/models";
 
 import { PullRequestItem } from "./Github";
+import { usePaletteKeybind } from "./shortcuts";
 import { state, useCurrentPage } from "./state";
-import { openUrl } from "./utils";
+import { viewPullRequest } from "./utils";
 
 async function queryFn({ queryKey }: { queryKey: string[] }) {
   const filter = queryKey[1] as FindPullRequestsFilter;
@@ -56,6 +58,7 @@ function usePullRequestsQuery() {
 export function PullRequestsPage() {
   const { data } = usePullRequestsQuery();
   const noPRToReview = !data || Object.keys(data).length === 0;
+  const keybind = usePaletteKeybind();
 
   useEffect(() => {
     if (noPRToReview) {
@@ -71,8 +74,9 @@ export function PullRequestsPage() {
           No pull requests to review
         </span>
         <span className="mt-2 flex text-sm">
-          Press <Keybind className="mx-1" keys={["esc"]} /> to go to the
-          previous page
+          Press{" "}
+          <Keybind className="mx-1" keys={shortcutSymbols(keybind.cancel)} /> to
+          go to the previous page
         </span>
       </div>
     );
@@ -87,7 +91,11 @@ export function PullRequestsPage() {
               key={v.id}
               keywords={[v.title, v.repository.name]}
               onSelect={() => {
-                openUrl(v.url);
+                viewPullRequest({
+                  owner: v.repository.owner.login,
+                  repository: v.repository.name,
+                  prNumber: v.number,
+                });
               }}
             >
               <PullRequestItem pullRequest={v} />

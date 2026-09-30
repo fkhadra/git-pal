@@ -11,7 +11,7 @@ function Building({ className, ...rest }: React.ComponentPropsWithRef<"svg">) {
   return (
     <Spinner
       aria-label="Pull request building"
-      className={cn("fill-yellow-300 stroke-yellow-300", className)}
+      className={cn("fill-warning stroke-warning", className)}
       showCenter
       {...rest}
     />
@@ -69,7 +69,7 @@ function Merged({ className, ...rest }: React.ComponentPropsWithRef<"svg">) {
   return (
     <GitPullRequest
       aria-label="Pull request has been merged"
-      className={cn("text-purple-500", className)}
+      className={cn("text-agent", className)}
       {...rest}
     />
   );
