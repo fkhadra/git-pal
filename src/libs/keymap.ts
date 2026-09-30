@@ -130,6 +130,8 @@ export const ModifierSymbol: Record<string, string> = {
 export const MainKeySymbol: Record<string, string> = {
   Backspace: "⌫",
   Enter: "↵",
+  Escape: "esc",
+  Tab: "tab",
   ArrowUp: "↑",
   ArrowDown: "↓",
   ArrowLeft: "←",
@@ -140,19 +142,32 @@ export type Shortcut = {
   modifiers: Key[];
   mainKey: Key;
 };
+
 export type Key = { symbol: string; value: string };
 
-export function captureShortcut(event: KeyboardEvent<HTMLElement>): Shortcut {
+export function captureShortcut(
+  event: Pick<
+    KeyboardEvent<HTMLElement>,
+    "shiftKey" | "ctrlKey" | "metaKey" | "altKey" | "code"
+  >,
+): Shortcut {
   const modifiers: Key[] = [];
 
-  if (event.shiftKey)
+  if (event.shiftKey) {
     modifiers.push({ value: "shift", symbol: ModifierSymbol.shift });
-  if (event.ctrlKey)
+  }
+
+  if (event.ctrlKey) {
     modifiers.push({ value: "ctrl", symbol: ModifierSymbol.ctrl });
-  if (event.metaKey)
+  }
+
+  if (event.metaKey) {
     modifiers.push({ value: "cmd", symbol: ModifierSymbol.cmd });
-  if (event.altKey)
+  }
+
+  if (event.altKey) {
     modifiers.push({ value: "alt", symbol: ModifierSymbol.alt });
+  }
 
   return {
     modifiers,
@@ -198,4 +213,17 @@ export function parseShortcut(s: string) {
   }
 
   return { modifiers, mainKey };
+}
+
+export function matchesShortcut(
+  event: Parameters<typeof captureShortcut>[0],
+  shortcut: string,
+) {
+  return shortcutToString(captureShortcut(event)) === shortcut;
+}
+
+export function shortcutSymbols(shortcut: string) {
+  const { modifiers, mainKey } = parseShortcut(shortcut);
+
+  return [...modifiers.map((m) => m.symbol), mainKey.symbol];
 }
