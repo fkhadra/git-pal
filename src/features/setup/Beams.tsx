@@ -22,7 +22,7 @@ const Circle: React.FC<CircleProps> = ({ className, children, ref }) => {
     <div
       ref={ref}
       className={cn(
-        "z-10 flex size-12 items-center justify-center rounded-full border border-fuchsia-300/10 bg-zinc-900 p-3 shadow-[0_0_20px_-12px_rgba(0,0,0,0.8)]",
+        "z-10 flex size-12 items-center justify-center rounded-full border bg-card p-3 shadow-[0_0_20px_-12px_rgba(0,0,0,0.8)]",
         className,
       )}
     >
@@ -49,10 +49,10 @@ export function Beams() {
       <div className="flex size-full max-h-[200px] max-w-lg flex-col items-stretch justify-between gap-10">
         <div className="flex flex-row items-center justify-between">
           <Circle ref={div1Ref}>
-            <GitPullRequest className="stroke-green-600" />
+            <GitPullRequest className="stroke-success" />
           </Circle>
           <Circle ref={div5Ref}>
-            <MessagesSquare className="stroke-fuchsia-400" />
+            <MessagesSquare className="stroke-agent" />
           </Circle>
         </div>
         <div className="flex flex-row items-center justify-between">
@@ -63,7 +63,7 @@ export function Beams() {
             <img src={appIcon} className="w-full" />
           </Circle>
           <Circle ref={div6Ref}>
-            <ListTodo className="stroke-white" />
+            <ListTodo className="stroke-foreground" />
           </Circle>
         </div>
         <div className="flex flex-row items-center justify-between">
