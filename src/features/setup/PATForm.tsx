@@ -38,7 +38,7 @@ export function PATForm({ onCancel, onAuthSuccess }: Props) {
       <p className="mb-2 text-base text-secondary-foreground">
         <button
           type="button"
-          className="cursor-pointer text-sm font-semibold text-indigo-400 underline"
+          className="cursor-pointer text-sm font-semibold text-primary underline"
           onClick={createPAT}
         >
           Create Token

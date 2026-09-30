@@ -43,10 +43,10 @@ export function SetupPage() {
         particleCount={500}
         className="flex h-full w-full flex-col items-center justify-center px-2 py-4 md:px-10"
       />
-      <div className="absolute z-10 flex min-w-[75%] flex-col items-center justify-center rounded-md border border-fuchsia-300/10 bg-zinc-900/45 p-8 backdrop-blur-md">
+      <div className="absolute z-10 flex min-w-[75%] flex-col items-center justify-center rounded-md border bg-background/60 p-8 backdrop-blur-md">
         <Typography.h1>
           Welcome to{" "}
-          <span className="bg-linear-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-brand to-brand-alt bg-clip-text text-transparent">
             Git Pal
           </span>
         </Typography.h1>
@@ -65,7 +65,7 @@ export function SetupPage() {
         ) : (
           <div className="flex flex-col content-center justify-center">
             <Button
-              className="mt-2 bg-linear-to-r from-pink-500 to-purple-600 font-bold"
+              className="mt-2 bg-linear-to-r from-brand-alt to-brand font-bold"
               onClick={() => {
                 commands.startAuthFlow();
               }}
@@ -77,7 +77,7 @@ export function SetupPage() {
               <button
                 type="button"
                 onClick={() => togglePATDialog(true)}
-                className="cursor-pointer font-semibold underline hover:text-indigo-400"
+                className="cursor-pointer font-semibold underline hover:text-primary"
               >
                 Configure via PAT
               </button>
