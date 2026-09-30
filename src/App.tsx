@@ -4,6 +4,7 @@ import { ToastContainer } from "react-toastify";
 import { PalettePage, state } from "~/features/palette";
 
 import commands from "./commands";
+import { ReviewPage } from "./features/review";
 import { SettingsPage } from "./features/settings";
 import { SetupPage } from "./features/setup";
 import { AppProvider } from "./features/shared";
@@ -35,12 +36,12 @@ const Views: Record<(typeof globalThis)["currentView"], React.FC> = {
   settings: SettingsPage,
   setup: SetupPage,
   palette: PalettePage,
+  review: ReviewPage,
 };
 
 export function App() {
   const { data } = useAppQuery();
-  // TODO: replace once theming reenabled
-  useColorScheme("dark");
+  useColorScheme(globalThis.settings.theme);
 
   if (!data?.userProfile) {
     return <SetupPage />;
