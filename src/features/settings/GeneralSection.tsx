@@ -1,10 +1,12 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Keyboard } from "lucide-react";
+import { Bot, Palette } from "lucide-react";
 
 import commands from "~/commands";
+import { ThemePicker } from "~/components/theme-picker";
 
 import { AutoStart } from "./AutoStart";
-import { GlobalShortcut } from "./GlobalShortcut";
+import { AvatarPicker } from "./AvatarPicker";
+import { HarnessSelect } from "./HarnessSelect";
 import { Section } from "./Section";
 
 export function GeneralSection() {
@@ -15,13 +17,15 @@ export function GeneralSection() {
   return (
     <>
       <AutoStart autoStartEnabled={autoStartEnabled} />
-      {/* <Hr /> */}
-      {/* <Section icon={Palette} title="Theme">
+      <Section icon={Palette} title="Theme">
         <ThemePicker />
-      </Section> */}
-      {/* <Hr /> */}
-      <Section icon={Keyboard} title="Shortcut">
-        <GlobalShortcut />
+        <p className="mt-2 text-xs text-muted-foreground">
+          Applies to the review window.
+        </p>
+      </Section>
+      <Section icon={Bot} title="Agent">
+        <HarnessSelect />
+        <AvatarPicker />
       </Section>
     </>
   );

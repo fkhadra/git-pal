@@ -1,5 +1,13 @@
 import { cn } from "cn";
-import { Info, LockKeyhole, MessageCircle, Settings } from "lucide-react";
+import {
+  Activity,
+  FolderGit2,
+  Info,
+  Keyboard,
+  LockKeyhole,
+  MessageCircle,
+  Settings,
+} from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 
@@ -8,7 +16,10 @@ import { useWindowReady } from "~/hooks";
 import { AboutSection } from "./AboutSection";
 import { FeedbackSection } from "./FeedbackSection";
 import { GeneralSection } from "./GeneralSection";
+import { MonitoringSection } from "./MonitoringSection";
+import { RepositoriesSection } from "./RepositoriesSection";
 import { SecuritySection } from "./SecuritySection";
+import { ShortcutsSection } from "./ShortcutsSection";
 
 export function SettingsPage() {
   const [activeSection, setActiveSection] = useState("#general");
@@ -21,7 +32,7 @@ export function SettingsPage() {
       data-with-decoration
       className="relative grid grid-cols-[168px_1fr] overflow-hidden"
     >
-      <nav className="z-10 mx-auto flex h-full w-full flex-col gap-2 border-r border-r-pink-200/10 bg-zinc-800 p-2">
+      <nav className="z-10 mx-auto flex h-full w-full flex-col gap-2 border-r bg-sidebar p-2">
         {sections.map((section) => (
           <a
             href={section.href}
@@ -31,7 +42,7 @@ export function SettingsPage() {
             }}
             className={cn(
               "flex items-center gap-2 px-2 py-2",
-              activeSection === section.href && "rounded-md bg-zinc-200/20",
+              activeSection === section.href && "rounded-md bg-accent",
             )}
           >
             <span className={cn("rounded-md p-2", section.bg)}>
@@ -51,7 +62,7 @@ export function SettingsPage() {
             bounce: 0,
             duration: 0.2,
           }}
-          className="flex h-dvh flex-col gap-7 px-4 py-2"
+          className="flex h-dvh flex-col gap-7 overflow-y-auto px-4 py-2"
         >
           {currentSection && <currentSection.component />}
         </motion.div>
@@ -69,14 +80,30 @@ const sections = [
     color: "text-blue-700",
     component: GeneralSection,
   },
-  // {
-  //   label: "Monitoring",
-  //   icon: Activity,
-  //   href: "#monitoring",
-  //   bg: "bg-green-300",
-  //   color: "text-green-700",
-  //   component: MonitoringSection,
-  // },
+  {
+    label: "Shortcuts",
+    icon: Keyboard,
+    href: "#shortcuts",
+    bg: "bg-purple-300",
+    color: "text-purple-700",
+    component: ShortcutsSection,
+  },
+  {
+    label: "Monitoring",
+    icon: Activity,
+    href: "#monitoring",
+    bg: "bg-green-300",
+    color: "text-green-700",
+    component: MonitoringSection,
+  },
+  {
+    label: "Repositories",
+    icon: FolderGit2,
+    href: "#repositories",
+    bg: "bg-orange-300",
+    color: "text-orange-700",
+    component: RepositoriesSection,
+  },
   {
     label: "Security",
     icon: LockKeyhole,
