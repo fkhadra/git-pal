@@ -447,10 +447,13 @@ export function ReviewPage() {
               </ShortcutTooltip>
               <HeaderDivider />
               <RefreshPullRequestButton />
-              <ConversationSheet
-                conversation={conversation}
-                description={pr.body}
-              />
+              {selectedReview && (
+                <ConversationSheet
+                  review={selectedReview}
+                  conversation={conversation}
+                  description={pr.body}
+                />
+              )}
               {savedReview?.summary && (
                 <ReviewSummarySheet key={savedReview.id} review={savedReview} />
               )}
@@ -492,7 +495,7 @@ export function ReviewPage() {
         className={cn(
           "min-h-0 flex-1",
           isAnimating &&
-          "*:data-panel:transition-[flex-basis,flex-grow,flex-shrink] *:data-panel:duration-200 *:data-panel:ease-in-out",
+            "*:data-panel:transition-[flex-basis,flex-grow,flex-shrink] *:data-panel:duration-200 *:data-panel:ease-in-out",
         )}
         orientation="horizontal"
       >

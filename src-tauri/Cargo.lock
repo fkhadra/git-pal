@@ -2200,6 +2200,7 @@ dependencies = [
  "graphql_client",
  "log",
  "oauth2",
+ "regex",
  "reqwest 0.12.28",
  "serde",
  "serde_json",

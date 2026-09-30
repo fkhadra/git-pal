@@ -5,7 +5,8 @@ use ts_rs::TS;
 
 use crate::{
     api_client::{Client, Error, Result},
-    rest::{API_URL, GetPullRequestRequest, pull_request_url},
+    attachments::sign_attachments,
+    rest::{API_URL, FULL_MEDIA_TYPE, GetPullRequestRequest, pull_request_url},
 };
 
 /// Keeps prompts small, long comments rarely add much past this point.
@@ -30,6 +31,7 @@ pub struct InlineComment {
     pub is_file_comment: bool,
     pub in_reply_to_id: Option<i64>,
     pub body: String,
+    pub signed_body: String,
     pub created_at: String,
     pub html_url: String,
 }
@@ -41,6 +43,7 @@ pub struct IssueComment {
     pub id: i64,
     pub author: String,
     pub body: String,
+    pub signed_body: String,
     pub created_at: String,
     pub html_url: String,
 }
@@ -54,6 +57,7 @@ pub struct Review {
     /// APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED or PENDING
     pub state: String,
     pub body: String,
+    pub signed_body: String,
     pub submitted_at: Option<String>,
     pub html_url: String,
 }
@@ -121,6 +125,8 @@ struct RawInlineComment {
     subject_type: Option<String>,
     in_reply_to_id: Option<i64>,
     body: String,
+    #[serde(default)]
+    body_html: String,
     created_at: String,
     html_url: String,
 }
@@ -131,6 +137,8 @@ struct RawIssueComment {
     user: Option<User>,
     #[serde(default)]
     body: String,
+    #[serde(default)]
+    body_html: String,
     created_at: String,
     html_url: String,
 }
@@ -142,6 +150,8 @@ struct RawReview {
     state: String,
     #[serde(default)]
     body: String,
+    #[serde(default)]
+    body_html: String,
     submitted_at: Option<String>,
     html_url: String,
 }
@@ -161,9 +171,9 @@ impl Client {
         let inline_url = format!("{pr_url}/comments");
 
         let (reviews, comments, inline_comments) = tokio::try_join!(
-            self.get_all_pages::<RawReview>(&reviews_url),
-            self.get_all_pages::<RawIssueComment>(&issue_url),
-            self.get_all_pages::<RawInlineComment>(&inline_url),
+            self.get_all_pages_as::<RawReview>(&reviews_url, Some(FULL_MEDIA_TYPE)),
+            self.get_all_pages_as::<RawIssueComment>(&issue_url, Some(FULL_MEDIA_TYPE)),
+            self.get_all_pages_as::<RawInlineComment>(&inline_url, Some(FULL_MEDIA_TYPE)),
         )?;
 
         Ok(PullRequestConversation {
@@ -173,6 +183,7 @@ impl Client {
                     id: r.id,
                     author: author(r.user),
                     state: r.state,
+                    signed_body: sign_attachments(&r.body, &r.body_html),
                     body: r.body,
                     submitted_at: r.submitted_at,
                     html_url: r.html_url,
@@ -183,6 +194,7 @@ impl Client {
                 .map(|c| IssueComment {
                     id: c.id,
                     author: author(c.user),
+                    signed_body: sign_attachments(&c.body, &c.body_html),
                     body: c.body,
                     created_at: c.created_at,
                     html_url: c.html_url,
@@ -199,6 +211,7 @@ impl Client {
                     on_new_side: c.side.as_deref() == Some(NEW_SIDE),
                     is_file_comment: c.subject_type.as_deref() == Some("file"),
                     in_reply_to_id: c.in_reply_to_id,
+                    signed_body: sign_attachments(&c.body, &c.body_html),
                     body: c.body,
                     created_at: c.created_at,
                     html_url: c.html_url,
@@ -353,6 +366,7 @@ mod tests {
             is_file_comment: false,
             in_reply_to_id: reply_to,
             body: format!("comment {id}"),
+            signed_body: String::new(),
             created_at: String::new(),
             html_url: String::new(),
         }
@@ -366,6 +380,7 @@ mod tests {
                 author: "alice".into(),
                 state: "CHANGES_REQUESTED".into(),
                 body: "Needs tests".into(),
+                signed_body: String::new(),
                 submitted_at: None,
                 html_url: String::new(),
             }],

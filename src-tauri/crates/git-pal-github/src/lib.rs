@@ -1,4 +1,5 @@
 mod api_client;
+mod attachments;
 mod custom_scalars;
 
 pub mod conversation;

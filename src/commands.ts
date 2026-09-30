@@ -220,6 +220,10 @@ function getPullRequestDiff(request: GetPullRequestRequest) {
   return invoke<PullRequestDiff>("get_pull_request_diff", { request });
 }
 
+function getPullRequestDescription(request: GetPullRequestRequest) {
+  return invoke<string | null>("get_pull_request_description", { request });
+}
+
 function getPullRequestConversation(request: GetPullRequestRequest) {
   return invoke<PullRequestConversation>("get_pull_request_conversation", {
     request,
@@ -425,6 +429,7 @@ export default {
   compareCommits,
   getFileSource,
   getPullRequestConversation,
+  getPullRequestDescription,
   editComment,
   deleteComment,
   listReviews,

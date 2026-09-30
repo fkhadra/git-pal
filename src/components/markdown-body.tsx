@@ -4,8 +4,22 @@ import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 
+import { ZoomableImage } from "./zoomable-image";
+
 // GitHub flavored
 const REMARK_PLUGINS = [remarkGfm];
+
+const VIDEO_PATH = /\.(mp4|mov|webm|m4v)$/i;
+
+function isVideo(href?: string) {
+  if (!href) return false;
+
+  try {
+    return VIDEO_PATH.test(new URL(href).pathname);
+  } catch {
+    return false;
+  }
+}
 const REHYPE_PLUGINS = [rehypeRaw, rehypeSanitize];
 
 function CodeBlock({
@@ -92,6 +106,17 @@ export function MarkdownBody({ content }: { content: string }) {
             );
           },
           a({ children, href }) {
+            if (isVideo(href)) {
+              return (
+                <video
+                  src={href}
+                  controls
+                  playsInline
+                  className="my-2 max-h-96 max-w-full rounded"
+                />
+              );
+            }
+
             return (
               <a
                 href={href}
@@ -105,9 +130,9 @@ export function MarkdownBody({ content }: { content: string }) {
           },
           img({ src, alt }) {
             return (
-              <img
-                src={src}
-                alt={alt ?? ""}
+              <ZoomableImage
+                src={typeof src === "string" ? src : undefined}
+                alt={alt}
                 className="my-0 inline max-w-full rounded"
               />
             );

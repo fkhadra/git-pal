@@ -25,6 +25,7 @@ function CommentBody({ comment }: { comment: InlineComment }) {
       id={comment.id}
       author={comment.author}
       body={comment.body}
+      signedBody={comment.signedBody}
       header={
         <>
           <span className="font-medium text-foreground">@{comment.author}</span>

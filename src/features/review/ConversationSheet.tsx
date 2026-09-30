@@ -17,14 +17,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+import type { GetSavedReviewRequest } from "~/models/code-review";
 import type {
   CommentKind,
   PullRequestConversation,
 } from "~/models/conversation";
 
+import { useDescriptionQuery } from "./data-loader";
 import { EditableComment } from "./EditableComment";
 import { WIDE_SHEET_CLASS } from "./utils";
-
 
 const DECISION_STATES = ["APPROVED", "CHANGES_REQUESTED"];
 
@@ -45,6 +46,7 @@ interface Entry {
   author: string;
   date: string;
   body: string;
+  signedBody: string;
   htmlUrl: string;
   state?: string;
 }
@@ -61,6 +63,7 @@ function reviewEntries(conversation: PullRequestConversation) {
       author: r.author,
       date: r.submittedAt!,
       body: r.body,
+      signedBody: r.signedBody,
       htmlUrl: r.htmlUrl,
       state: r.state,
     }));
@@ -76,6 +79,7 @@ function commentEntries(conversation: PullRequestConversation) {
     author: c.author,
     date: c.createdAt,
     body: c.body,
+    signedBody: c.signedBody,
     htmlUrl: c.htmlUrl,
   }));
 
@@ -92,6 +96,7 @@ function TimelineEntry({ entry }: { entry: Entry }) {
         id={entry.id}
         author={entry.author}
         body={entry.body}
+        signedBody={entry.signedBody}
         header={
           <>
             <span className="font-medium text-foreground">@{entry.author}</span>
@@ -171,13 +176,18 @@ function DescriptionEntry({ body }: { body: string }) {
 }
 
 export function ConversationSheet({
+  review,
   conversation,
   description,
 }: {
+  review: GetSavedReviewRequest;
   conversation?: PullRequestConversation;
   description?: string | null;
 }) {
   const [open, setOpen] = useState(false);
+  // needed for images on private repo
+  const { data: signedDescription } = useDescriptionQuery(review, open);
+  const shownDescription = signedDescription ?? description;
   const reviews = useMemo(
     () => (conversation ? reviewEntries(conversation) : []),
     [conversation],
@@ -217,7 +227,9 @@ export function ConversationSheet({
             </SheetTitle>
           </SheetHeader>
           <div className="flex flex-1 flex-col gap-2 overflow-y-auto p-4">
-            {description?.trim() && <DescriptionEntry body={description} />}
+            {shownDescription?.trim() && (
+              <DescriptionEntry body={shownDescription} />
+            )}
             {reviews.length > 0 && <ReviewsSection reviews={reviews} />}
             {count === 0 && (
               <p className="text-center text-sm text-muted-foreground">
