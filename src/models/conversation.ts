@@ -17,9 +17,9 @@ line: number | null, startLine: number | null,
 /**
  * Whether `line` refers to the new version of the file
  */
-onNewSide: boolean, isFileComment: boolean, inReplyToId: number | null, body: string, createdAt: string, htmlUrl: string, };
+onNewSide: boolean, isFileComment: boolean, inReplyToId: number | null, body: string, signedBody: string, createdAt: string, htmlUrl: string, };
 
-export type IssueComment = { id: number, author: string, body: string, createdAt: string, htmlUrl: string, };
+export type IssueComment = { id: number, author: string, body: string, signedBody: string, createdAt: string, htmlUrl: string, };
 
 export type PullRequestConversation = { reviews: Array<Review>, comments: Array<IssueComment>, inlineComments: Array<InlineComment>, };
 
@@ -27,4 +27,4 @@ export type Review = { id: number, author: string,
 /**
  * APPROVED, CHANGES_REQUESTED, COMMENTED, DISMISSED or PENDING
  */
-state: string, body: string, submittedAt: string | null, htmlUrl: string, };
+state: string, body: string, signedBody: string, submittedAt: string | null, htmlUrl: string, };

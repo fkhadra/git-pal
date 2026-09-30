@@ -8,6 +8,7 @@ use ts_rs::TS;
 use url::Url;
 
 use crate::api_client::{Client, Error, Response, Result};
+use crate::attachments::sign_attachments;
 use crate::conversation::truncate;
 use crate::github::Metadata;
 
@@ -151,6 +152,14 @@ struct PullRequestResponse {
     body: Option<String>,
     head: PullRequestHead,
     base: PullRequestBase,
+}
+
+pub(crate) const FULL_MEDIA_TYPE: &str = "application/vnd.github.full+json";
+
+#[derive(Debug, Deserialize)]
+struct DescriptionResponse {
+    body: Option<String>,
+    body_html: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -311,7 +320,7 @@ impl Client {
             .get(url)
             .query(&[("ref", &request.git_ref)])
             .header("Accept", "application/vnd.github.raw+json");
-        
+
         let Response { response, .. } = self.do_request(req).await?;
 
         Ok(response.text().await?)
@@ -403,6 +412,23 @@ impl Client {
         })
     }
 
+    /// Full description with attachments 
+    pub async fn pull_request_description(
+        &self,
+        request: &GetPullRequestRequest,
+    ) -> Result<Option<String>> {
+        let req = self
+            .http
+            .get(pull_request_url(request))
+            .header("Accept", FULL_MEDIA_TYPE);
+
+        let Response { response, .. } = self.do_request(req).await?;
+        let pr: DescriptionResponse = response.json().await?;
+        let html = pr.body_html.unwrap_or_default();
+
+        Ok(pr.body.map(|body| sign_attachments(&body, &html)))
+    }
+
     pub async fn compare_commits(
         &self,
         request: &CompareCommitsRequest,
@@ -452,13 +478,26 @@ impl Client {
 
     /// Follows GitHub's page based pagination until a partial page is returned.
     pub(crate) async fn get_all_pages<T: DeserializeOwned>(&self, url: &str) -> Result<Vec<T>> {
+        self.get_all_pages_as(url, None).await
+    }
+
+    /// Every page of `url`, in the `accept` media type when given.
+    pub(crate) async fn get_all_pages_as<T: DeserializeOwned>(
+        &self,
+        url: &str,
+        accept: Option<&str>,
+    ) -> Result<Vec<T>> {
         let mut items = Vec::new();
         let mut page = 1u32;
 
         loop {
-            let req = self
+            let mut req = self
                 .http
                 .get(format!("{url}?per_page={PER_PAGE}&page={page}"));
+
+            if let Some(accept) = accept {
+                req = req.header("Accept", accept);
+            }
 
             let Response { response, .. } = self.do_request(req).await?;
             let batch: Vec<T> = response.json().await?;

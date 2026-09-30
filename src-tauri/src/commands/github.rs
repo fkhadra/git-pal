@@ -153,6 +153,17 @@ pub async fn get_pull_request_diff(
 }
 
 #[tauri::command]
+pub async fn get_pull_request_description(
+    state: State<'_, AppState>,
+    request: GetPullRequestRequest,
+) -> Result<Option<String>> {
+    Ok(state
+        .github_client
+        .pull_request_description(&request)
+        .await?)
+}
+
+#[tauri::command]
 pub async fn get_file_source(
     state: State<'_, AppState>,
     request: FileSourceRequest,

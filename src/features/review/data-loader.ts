@@ -108,6 +108,30 @@ export function useNewCommitsQuery(review: CodeReview, headSha: string) {
   });
 }
 
+const DESCRIPTION_STALE_MS = minutesToMilliseconds(4);
+
+export function useDescriptionQuery(
+  review: GetSavedReviewRequest,
+  enabled: boolean,
+) {
+  return useQuery({
+    queryKey: [
+      "pr-description",
+      review.owner,
+      review.repository,
+      review.prNumber,
+    ],
+    queryFn: () =>
+      commands.getPullRequestDescription({
+        owner: review.owner,
+        repository: review.repository,
+        number: review.prNumber,
+      }),
+    staleTime: DESCRIPTION_STALE_MS,
+    enabled,
+  });
+}
+
 export function useConversationQuery(review?: GetSavedReviewRequest | null) {
   return useQuery({
     queryKey: [

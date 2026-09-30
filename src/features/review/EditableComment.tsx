@@ -59,10 +59,18 @@ interface Props {
   id: number;
   author: string;
   body: string;
+  signedBody?: string;
   header: React.ReactNode;
 }
 
-export function EditableComment({ kind, id, author, body, header }: Props) {
+export function EditableComment({
+  kind,
+  id,
+  author,
+  body,
+  signedBody,
+  header,
+}: Props) {
   const { userProfile } = useAppContext();
   const review = useCodeReviewSnapshot().selectedReview;
   const [isEditing, setIsEditing] = useState(false);
@@ -131,7 +139,7 @@ export function EditableComment({ kind, id, author, body, header }: Props) {
           onCancel={() => setIsEditing(false)}
         />
       ) : (
-        body.trim() && <MarkdownBody content={body} />
+        body.trim() && <MarkdownBody content={signedBody ?? body} />
       )}
     </div>
   );
