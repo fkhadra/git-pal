@@ -1,0 +1,73 @@
+.rich-text-editor .tiptap {
+  outline: none;
+  min-height: inherit;
+}
+
+.rich-text-editor .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+  color: var(--muted-foreground);
+}
+
+.rich-text-editor pre {
+  border: 1px solid var(--border);
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+/* Code block highlighting, colors come from the theme's --syntax-* tokens */
+.rich-text-editor .hljs-comment,
+.rich-text-editor .hljs-quote {
+  color: var(--syntax-comment);
+  font-style: italic;
+}
+
+.rich-text-editor .hljs-keyword,
+.rich-text-editor .hljs-selector-tag,
+.rich-text-editor .hljs-meta {
+  color: var(--syntax-keyword);
+}
+
+.rich-text-editor .hljs-string,
+.rich-text-editor .hljs-regexp,
+.rich-text-editor .hljs-link,
+.rich-text-editor .hljs-addition {
+  color: var(--syntax-string);
+}
+
+.rich-text-editor .hljs-title.function_,
+.rich-text-editor .hljs-section {
+  color: var(--syntax-function);
+}
+
+.rich-text-editor .hljs-number,
+.rich-text-editor .hljs-literal,
+.rich-text-editor .hljs-symbol {
+  color: var(--syntax-number);
+}
+
+.rich-text-editor .hljs-attr,
+.rich-text-editor .hljs-attribute,
+.rich-text-editor .hljs-property,
+.rich-text-editor .hljs-variable {
+  color: var(--syntax-property);
+}
+
+.rich-text-editor .hljs-name,
+.rich-text-editor .hljs-tag {
+  color: var(--syntax-tag);
+}
+
+.rich-text-editor .hljs-type,
+.rich-text-editor .hljs-title,
+.rich-text-editor .hljs-built_in {
+  color: var(--syntax-type);
+}
+
+.rich-text-editor .hljs-punctuation,
+.rich-text-editor .hljs-operator,
+.rich-text-editor .hljs-deletion {
+  color: var(--syntax-punctuation);
+}
