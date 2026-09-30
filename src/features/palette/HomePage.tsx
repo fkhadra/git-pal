@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 
 import commands from "~/commands";
+import { AgentAvatar } from "~/components/agent-avatar";
 import { CommandGroup, CommandItem } from "~/components/ui/command";
 import {
   OrganizationItem,
@@ -49,6 +50,13 @@ export function HomePage() {
     <>
       <CommandGroup heading="Reviews">
         <CommandItem
+          value="open-review-pal"
+          keywords={["review", "pal", "window"]}
+          onSelect={() => commands.showReview()}
+        >
+          <Page icon={<AgentAvatar size={20} />}>Open Review Pal</Page>
+        </CommandItem>
+        <CommandItem
           value="page-review-requested"
           keywords={["review", "request"]}
           onSelect={() => {
@@ -63,7 +71,7 @@ export function HomePage() {
             );
           }}
         >
-          <Page icon={<GitPullRequestArrow className="text-blue-500" />}>
+          <Page icon={<GitPullRequestArrow className="text-info" />}>
             Review Requested
           </Page>
         </CommandItem>
@@ -82,7 +90,7 @@ export function HomePage() {
             );
           }}
         >
-          <Page icon={<MessageCircleMore className="text-pink-400" />}>
+          <Page icon={<MessageCircleMore className="text-brand-alt" />}>
             Mentioned
           </Page>
         </CommandItem>

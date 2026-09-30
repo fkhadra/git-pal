@@ -37,7 +37,7 @@ export function SearchPage() {
       ) : (
         <>Start typing to search in</>
       )}{" "}
-      <div className="justify-center rounded-md border border-pink-300/40 bg-zinc-900 px-2 text-pink-200">
+      <div className="justify-center rounded-md border border-kbd-border bg-kbd px-2 text-kbd-foreground">
         {searchTarget}
       </div>
     </CommandItem>

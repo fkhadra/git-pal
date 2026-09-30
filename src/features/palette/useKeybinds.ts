@@ -1,36 +1,45 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
-import { state, usePaletteItem, useSyncStateSnapshot } from "./state";
+import { matchesShortcut } from "~/libs/keymap";
 
-const Key = {
-  Backspace: "Backspace",
-  Esc: "Escape",
-  Tab: "Tab",
-  Slash: "/",
-  QuestionMark: "?",
-};
+import { useItemActions } from "./actions";
+import { paletteKeybind } from "./shortcuts";
+import { state, useSyncStateSnapshot } from "./state";
+
+// cmdk only selects on Enter, other primary keys click the highlighted item
+const CMDK_SELECT_KEY = "Enter";
 
 export function useKeybinds() {
   const filter = useSyncStateSnapshot().filter;
-  const { selectedItem, parentItem } = usePaletteItem();
+  const actions = useItemActions();
 
   const handleKeyboard = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const { key, metaKey } = e;
+    const keybind = paletteKeybind;
+    const is = (shortcut: string) => matchesShortcut(e, shortcut);
     const canGoBack = state.canGoBack();
 
-    if (metaKey && key === Key.Slash) {
+    if (is(keybind.actions)) {
+      e.preventDefault();
+      state.toggleActions(true);
+      return;
+    }
+
+    if (is(keybind.help)) {
+      e.preventDefault();
       state.toggleHelp(true);
       return;
     }
 
     // back to previous page
-    if ((key === Key.Backspace || key === Key.Esc) && canGoBack && !filter) {
+    if ((is(keybind.goBack) || is(keybind.cancel)) && canGoBack && !filter) {
+      e.preventDefault();
       state.goBack();
       return;
     }
 
     // clear filter or hide window
-    if (key === Key.Esc) {
+    if (is(keybind.cancel)) {
+      e.preventDefault();
       if (filter.length > 0) {
         state.clearFilter();
       } else {
@@ -40,57 +49,26 @@ export function useKeybinds() {
       return;
     }
 
-    if (key === Key.Tab) {
+    // preventDefault keeps cmdk from also selecting the item, it already does on Enter
+    const action = actions.find((a) => is(keybind[a.id]));
+    const isCmdkSelect =
+      action?.id === "primaryAction" &&
+      keybind.primaryAction === CMDK_SELECT_KEY;
+    if (action && !isCmdkSelect) {
       e.preventDefault();
+      action.run();
+      return;
     }
 
-    // go to repo page
-    if (key === Key.Tab && selectedItem.kind === "repo") {
-      state.goTo(
-        {
-          to: "repository",
-          params: {
-            id: selectedItem.data.id,
-          },
-        },
-        `${selectedItem.owner()}/${selectedItem.data.name}`,
-      );
-    }
-
-    // go to org page
-    if (key === Key.Tab && selectedItem.kind === "org") {
+    // Enter no longer selects once remapped
+    if (keybind.primaryAction !== CMDK_SELECT_KEY && is(CMDK_SELECT_KEY)) {
       e.preventDefault();
-      state.goTo(
-        {
-          to: "org",
-          params: {
-            name: selectedItem.data.login,
-          },
-        },
-        selectedItem.data.login,
-      );
+      return;
     }
 
-    // code search, selected item first then root if any
-    if (
-      metaKey &&
-      key === "f" &&
-      (selectedItem?.supportGithubSearch() || parentItem?.supportGithubSearch())
-    ) {
-      state.clearFilter();
-      const item = selectedItem || parentItem;
-      const owner = item.owner();
-      const repo = item?.kind === "repo" ? item.data.name : void 0;
-
-      if (owner) {
-        state.goTo({
-          to: "search",
-          params: {
-            owner,
-            repo,
-          },
-        });
-      }
+    // Tab never leaves the search input
+    if (is(keybind.secondaryAction)) {
+      e.preventDefault();
     }
   };
 

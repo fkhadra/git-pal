@@ -1,9 +1,17 @@
 import { useId } from "react";
 
+import { ShortcutKeys } from "~/components/shortcut-keys";
 import { Typography } from "~/components/typography";
 import { Separator } from "~/components/ui/separator";
 
 import { PullRequestStatusIcon } from "./Github";
+import {
+  PALETTE_SHORTCUT_LABELS,
+  type PaletteAction,
+  usePaletteKeybind,
+} from "./shortcuts";
+
+const INLINE_KEYS = "inline-flex align-middle";
 
 function Section({
   title,
@@ -42,9 +50,56 @@ function Item({
   );
 }
 
+function ReviewPalIntro() {
+  const keybind = usePaletteKeybind();
+
+  return (
+    <Section title="Review Pal">
+      <Typography.p>
+        Review Pal reviews pull requests with AI. On a pull request, press{" "}
+        <ShortcutKeys shortcut={keybind.review} className={INLINE_KEYS} /> to
+        review it, or{" "}
+        <ShortcutKeys
+          shortcut={keybind.reviewWithTemplate}
+          className={INLINE_KEYS}
+        />{" "}
+        to pick a template first. Pull requests under Review Requested and
+        Mentioned open in Review Pal without reviewing them,{" "}
+        <ShortcutKeys
+          shortcut={keybind.secondaryAction}
+          className={INLINE_KEYS}
+        />{" "}
+        opens them on GitHub.
+      </Typography.p>
+    </Section>
+  );
+}
+
+function Shortcuts() {
+  const keybind = usePaletteKeybind();
+  const actions = Object.keys(PALETTE_SHORTCUT_LABELS) as PaletteAction[];
+
+  return (
+    <Section title="Shortcuts">
+      {actions.map((action) => (
+        <div key={action} className="mb-2 grid grid-cols-2 gap-2">
+          <span>{PALETTE_SHORTCUT_LABELS[action]}</span>
+          <ShortcutKeys shortcut={keybind[action]} />
+        </div>
+      ))}
+    </Section>
+  );
+}
+
 export function Help() {
   return (
     <div className="flex flex-col text-sm">
+      <ReviewPalIntro />
+      <Separator className="my-3" />
+
+      <Shortcuts />
+      <Separator className="my-3" />
+
       <Section title="Active Tasks">
         <Item
           icon={PullRequestStatusIcon.Building}

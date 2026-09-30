@@ -63,6 +63,14 @@ type Page =
         owner: string;
         repo?: string;
       };
+    }
+  | {
+      to: "review-template";
+      params: {
+        owner: string;
+        repository: string;
+        prNumber: number;
+      };
     };
 
 export function createPageMapper(map: Record<PageTo, React.FC>) {
@@ -110,6 +118,7 @@ export const state = proxy({
   path: "",
   query: "",
   displayHelp: false,
+  displayActions: false,
   clearPath() {
     state.path = "";
   },
@@ -159,6 +168,9 @@ export const state = proxy({
   },
   toggleHelp(v: boolean) {
     state.displayHelp = v;
+  },
+  toggleActions(v: boolean) {
+    state.displayActions = v;
   },
 });
 

@@ -1,45 +1,55 @@
 import { Keybind } from "~/components/keybind";
+import { shortcutSymbols } from "~/libs/keymap";
 
-import { useGHSearchActive, usePaletteItem } from "./state";
+import { useItemActions } from "./actions";
+import { ActionsMenu } from "./ActionsMenu";
+import { usePaletteKeybind } from "./shortcuts";
+import { useGHSearchActive } from "./state";
 
 export function PaletteFooter() {
-  const { selectedItem, parentItem: rootItem, isPage } = usePaletteItem();
   const isGhSearchActive = useGHSearchActive();
+  const keybind = usePaletteKeybind();
+  const actions = useItemActions();
 
   if (isGhSearchActive) {
     return (
       <Container>
-        <Keybind label="Go back" keys={["esc"]} />
-        <Keybind className="ml-auto" label="Search" keys={["↵"]} />
+        <Keybind label="Go back" keys={shortcutSymbols(keybind.cancel)} />
+        <Keybind
+          className="ml-auto"
+          label="Search"
+          keys={shortcutSymbols(keybind.primaryAction)}
+        />
       </Container>
     );
   }
 
+  const [primary, ...others] = actions;
+
   return (
     <Container>
-      <Keybind label="Help" keys={["⌘", "/"]} className="mr-auto" />
-      {(selectedItem?.supportGithubSearch() ||
-        rootItem?.supportGithubSearch()) && (
+      <Keybind
+        label="Help"
+        keys={shortcutSymbols(keybind.help)}
+        className="mr-auto"
+      />
+      <Keybind
+        label={primary.label}
+        keys={shortcutSymbols(keybind.primaryAction)}
+      />
+      {others.length > 0 && (
         <>
-          <Keybind label="Code Search" keys={["⌘", "f"]} />
           <Keybind.Separator />
+          <ActionsMenu actions={actions} />
         </>
       )}
-      {(selectedItem?.kind === "org" || selectedItem?.kind === "repo") && (
-        <>
-          <Keybind label="View" keys={["tab"]} />
-          <Keybind.Separator />
-        </>
-      )}
-
-      <Keybind label={isPage ? "View" : "Open"} keys={["↵"]} />
     </Container>
   );
 }
 
 function Container({ children }: { children: React.ReactNode }) {
   return (
-    <footer className="mt-1 flex h-12 items-center justify-end gap-2 border-t border-zinc-800/10 p-2 text-xs dark:border-pink-300/10">
+    <footer className="mt-1 flex h-12 items-center justify-end gap-2 border-t p-2 text-xs">
       {children}
     </footer>
   );
