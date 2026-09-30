@@ -4,16 +4,16 @@ export type FindRepositoriesSearch = { nodes: Array<FindRepositoriesSearchNodes 
 
 export type FindRepositoriesSearchNodes = { "__typename": "App" } | { "__typename": "Discussion" } | { "__typename": "Issue" } | { "__typename": "MarketplaceListing" } | { "__typename": "Organization" } | { "__typename": "PullRequest" } | { "__typename": "Repository" } & Repository | { "__typename": "User" };
 
-export type Repository = { id: string, name: string, url: string, isPrivate: boolean, isInOrganization: boolean, stargazerCount: bigint, pullRequests: RepositoryPullRequests, hasIssuesEnabled: boolean, hasDiscussionsEnabled: boolean, hasProjectsEnabled: boolean, hasWikiEnabled: boolean, homepageUrl: string | null, issues: RepositoryIssues, discussions: RepositoryDiscussions, owner: RepositoryOwner, };
+export type Repository = { id: string, name: string, url: string, isPrivate: boolean, isInOrganization: boolean, stargazerCount: number, pullRequests: RepositoryPullRequests, hasIssuesEnabled: boolean, hasDiscussionsEnabled: boolean, hasProjectsEnabled: boolean, hasWikiEnabled: boolean, homepageUrl: string | null, issues: RepositoryIssues, discussions: RepositoryDiscussions, owner: RepositoryOwner, };
 
-export type RepositoryDiscussions = { totalCount: bigint, };
+export type RepositoryDiscussions = { totalCount: number, };
 
-export type RepositoryIssues = { totalCount: bigint, };
+export type RepositoryIssues = { totalCount: number, };
 
 export type RepositoryOwner = { login: string, avatarUrl: string, } & ({ "__typename": "Organization" } | { "__typename": "User" });
 
 export type RepositoryOwnerOn = { "__typename": "Organization" } | { "__typename": "User" };
 
-export type RepositoryPullRequests = { totalCount: bigint, };
+export type RepositoryPullRequests = { totalCount: number, };
 
 export type ResponseData = { search: FindRepositoriesSearch, };

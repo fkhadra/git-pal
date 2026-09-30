@@ -4,15 +4,15 @@ export type HomepageViewer = { pullRequests: HomepageViewerPullRequests, topRepo
 
 export type HomepageViewerPullRequests = { nodes: Array<HomepageViewerPullRequestsNodes | null> | null, };
 
-export type HomepageViewerPullRequestsNodes = { id: string, number: bigint, title: string, url: string, isDraft: boolean, isInMergeQueue: boolean, mergeable: MergeableState, state: PullRequestState, reviewDecision: PullRequestReviewDecision | null, totalCommentsCount: bigint | null, statusCheckRollup: PullRequestStatusCheckRollup | null, autoMergeRequest: PullRequestAutoMergeRequest | null, author: PullRequestAuthor | null, repository: PullRequestRepository, baseRefName: string, headRefName: string, createdAt: string, mergedAt: string | null, };
+export type HomepageViewerPullRequestsNodes = { id: string, number: number, title: string, url: string, isDraft: boolean, isInMergeQueue: boolean, mergeable: MergeableState, state: PullRequestState, reviewDecision: PullRequestReviewDecision | null, totalCommentsCount: number | null, statusCheckRollup: PullRequestStatusCheckRollup | null, autoMergeRequest: PullRequestAutoMergeRequest | null, author: PullRequestAuthor | null, repository: PullRequestRepository, baseRefName: string, headRefName: string, createdAt: string, mergedAt: string | null, };
 
 export type HomepageViewerTopRepositories = { nodes: Array<HomepageViewerTopRepositoriesNodes | null> | null, };
 
-export type HomepageViewerTopRepositoriesNodes = { id: string, name: string, url: string, isPrivate: boolean, isInOrganization: boolean, stargazerCount: bigint, pullRequests: RepositoryPullRequests, hasIssuesEnabled: boolean, hasDiscussionsEnabled: boolean, hasProjectsEnabled: boolean, hasWikiEnabled: boolean, homepageUrl: string | null, issues: RepositoryIssues, discussions: RepositoryDiscussions, owner: RepositoryOwner, };
+export type HomepageViewerTopRepositoriesNodes = { id: string, name: string, url: string, isPrivate: boolean, isInOrganization: boolean, stargazerCount: number, pullRequests: RepositoryPullRequests, hasIssuesEnabled: boolean, hasDiscussionsEnabled: boolean, hasProjectsEnabled: boolean, hasWikiEnabled: boolean, homepageUrl: string | null, issues: RepositoryIssues, discussions: RepositoryDiscussions, owner: RepositoryOwner, };
 
 export type MergeableState = "CONFLICTING" | "MERGEABLE" | "UNKNOWN" | { "Other": string };
 
-export type PullRequest = { id: string, number: bigint, title: string, url: string, isDraft: boolean, isInMergeQueue: boolean, mergeable: MergeableState, state: PullRequestState, reviewDecision: PullRequestReviewDecision | null, totalCommentsCount: bigint | null, statusCheckRollup: PullRequestStatusCheckRollup | null, autoMergeRequest: PullRequestAutoMergeRequest | null, author: PullRequestAuthor | null, repository: PullRequestRepository, baseRefName: string, headRefName: string, createdAt: string, mergedAt: string | null, };
+export type PullRequest = { id: string, number: number, title: string, url: string, isDraft: boolean, isInMergeQueue: boolean, mergeable: MergeableState, state: PullRequestState, reviewDecision: PullRequestReviewDecision | null, totalCommentsCount: number | null, statusCheckRollup: PullRequestStatusCheckRollup | null, autoMergeRequest: PullRequestAutoMergeRequest | null, author: PullRequestAuthor | null, repository: PullRequestRepository, baseRefName: string, headRefName: string, createdAt: string, mergedAt: string | null, };
 
 export type PullRequestAuthor = { login: string, url: string, avatarUrl: string, } & ({ "__typename": "Bot" } | { "__typename": "EnterpriseUserAccount" } | { "__typename": "Mannequin" } | { "__typename": "Organization" } | { "__typename": "User" });
 
@@ -38,17 +38,17 @@ export type PullRequestStatusCheckRollupCommitStatus = { state: StatusState, con
 
 export type PullRequestStatusCheckRollupCommitStatusContexts = { state: StatusState, context: string, description: string | null, targetUrl: string | null, };
 
-export type Repository = { id: string, name: string, url: string, isPrivate: boolean, isInOrganization: boolean, stargazerCount: bigint, pullRequests: RepositoryPullRequests, hasIssuesEnabled: boolean, hasDiscussionsEnabled: boolean, hasProjectsEnabled: boolean, hasWikiEnabled: boolean, homepageUrl: string | null, issues: RepositoryIssues, discussions: RepositoryDiscussions, owner: RepositoryOwner, };
+export type Repository = { id: string, name: string, url: string, isPrivate: boolean, isInOrganization: boolean, stargazerCount: number, pullRequests: RepositoryPullRequests, hasIssuesEnabled: boolean, hasDiscussionsEnabled: boolean, hasProjectsEnabled: boolean, hasWikiEnabled: boolean, homepageUrl: string | null, issues: RepositoryIssues, discussions: RepositoryDiscussions, owner: RepositoryOwner, };
 
-export type RepositoryDiscussions = { totalCount: bigint, };
+export type RepositoryDiscussions = { totalCount: number, };
 
-export type RepositoryIssues = { totalCount: bigint, };
+export type RepositoryIssues = { totalCount: number, };
 
 export type RepositoryOwner = { login: string, avatarUrl: string, } & ({ "__typename": "Organization" } | { "__typename": "User" });
 
 export type RepositoryOwnerOn = { "__typename": "Organization" } | { "__typename": "User" };
 
-export type RepositoryPullRequests = { totalCount: bigint, };
+export type RepositoryPullRequests = { totalCount: number, };
 
 export type ResponseData = { viewer: HomepageViewer, };
 
