@@ -9,23 +9,6 @@ export function nil<T>(v: T): v is NonNullable<typeof v> {
   return v != null;
 }
 
-export function themeSwitcher(theme: string) {
-  switch (theme) {
-    case "light":
-      document.documentElement.classList.toggle("dark", false);
-      break;
-    case "dark":
-      document.documentElement.classList.toggle("dark", true);
-      break;
-    default:
-      document.documentElement.classList.toggle(
-        "dark",
-        window.matchMedia("(prefers-color-scheme: dark)").matches,
-      );
-      break;
-  }
-}
-
 export async function withDelay<T>(fn: Promise<T>, delay = 1000) {
   const [result] = await Promise.allSettled([
     fn,
@@ -37,4 +20,11 @@ export async function withDelay<T>(fn: Promise<T>, delay = 1000) {
   }
 
   return result.value;
+}
+
+const NON_DIGITS = /\D/g;
+
+/** Keeps the digits only, for numeric text inputs. */
+export function digitsOnly(value: string) {
+  return value.replace(NON_DIGITS, "");
 }
