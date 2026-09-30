@@ -12,7 +12,10 @@ export function useFullHeightRef<T extends HTMLElement>(
     (el: T) => {
       if (el) {
         nodeRef.current = el;
-        el.style.height = `calc(100dvh - ${el.getBoundingClientRect().top + bottomPadding}px)`;
+        const height = `calc(100dvh - ${el.getBoundingClientRect().top + bottomPadding}px)`;
+        el.style.height = height;
+        // lets children size themselves to the visible area
+        el.style.setProperty("--full-height", height);
       }
     },
     [bottomPadding],

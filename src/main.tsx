@@ -7,6 +7,10 @@ import "./style.css";
 import { TooltipProvider } from "~/components/ui/tooltip";
 
 import { App } from "./App";
+import { applyTheme } from "./libs/useColorScheme";
+
+// before the first render, avoids a flash of the wrong theme
+applyTheme(globalThis.settings.theme);
 
 const rootElement = document.getElementById("root") as HTMLElement;
 const queryClient = new QueryClient();

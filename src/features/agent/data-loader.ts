@@ -1,0 +1,96 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import commands from "~/commands";
+import type { ContextItem, PullRequestKey } from "~/models/agent";
+import type { Harness } from "~/models/harness";
+
+import { agentStore, useAgentSnapshot } from "./store";
+
+const messagesKey = (conversationId: number | null) => [
+  "agent-messages",
+  conversationId,
+];
+
+export function useConversationsQuery(pr: PullRequestKey | null) {
+  return useQuery({
+    queryKey: ["agent-conversations", pr],
+    queryFn: () => commands.agentListConversations(pr!),
+    enabled: !!pr,
+  });
+}
+
+/** Models of `harness`, the default harness when omitted. */
+export function useModelsQuery(harness?: Harness) {
+  return useQuery({
+    queryKey: ["models", harness],
+    queryFn: () => commands.listModels(harness),
+    staleTime: Infinity,
+  });
+}
+
+export function useMessagesQuery(conversationId: number | null) {
+  return useQuery({
+    queryKey: messagesKey(conversationId),
+    queryFn: () => commands.agentMessages(conversationId!),
+    enabled: conversationId != null,
+    // refreshed explicitly once a run completes
+    staleTime: Infinity,
+  });
+}
+
+export function useSendMessage(
+  pr: PullRequestKey | null,
+  currentFile?: string,
+) {
+  const queryClient = useQueryClient();
+  const snapshot = useAgentSnapshot();
+
+  return async (prompt: string) => {
+    if (!pr || snapshot.run || !prompt.trim()) return;
+
+    const context: ContextItem[] = [...snapshot.context];
+    const hasCurrentFile = context.some(
+      (c) => c.type === "file" && c.path === currentFile,
+    );
+    if (snapshot.includeCurrentFile && currentFile && !hasCurrentFile) {
+      context.push({ type: "file", path: currentFile });
+    }
+
+    agentStore.startRun(prompt);
+
+    try {
+      const conversationId = await commands.agentSend(
+        {
+          ...pr,
+          conversationId: snapshot.conversationId,
+          prompt,
+          context,
+          model: snapshot.model,
+        },
+        agentStore.applyEvent,
+      );
+
+      // load the persisted messages before dropping the streamed ones
+      await queryClient.fetchQuery({
+        queryKey: messagesKey(conversationId),
+        queryFn: () => commands.agentMessages(conversationId),
+        staleTime: 0,
+      });
+      queryClient.invalidateQueries({ queryKey: ["agent-conversations"] });
+      agentStore.finishRun(conversationId);
+    } catch (error) {
+      agentStore.fail(String(error));
+    }
+  };
+}
+
+export function useDeleteConversation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: commands.agentDeleteConversation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agent-conversations"] });
+    },
+  });
+}
