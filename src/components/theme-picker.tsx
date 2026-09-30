@@ -1,12 +1,39 @@
-import { MonitorCog, Moon, Sun } from "lucide-react";
+import { cn } from "cn";
 import { useState } from "react";
 
 import commands from "~/commands";
 import { useAppContext } from "~/features/shared";
-import { themeSwitcher } from "~/libs/utils";
 import type { settings } from "~/models";
 
-const themes: settings.Theme[] = ["light", "dark", "system"];
+const THEMES: { value: settings.Theme; label: string }[] = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Light" },
+  { value: "dark", label: "Dark" },
+  { value: "dracula", label: "Dracula" },
+  { value: "catppuccinMocha", label: "Catppuccin Mocha" },
+  { value: "catppuccinLatte", label: "Catppuccin Latte" },
+  { value: "andromeda", label: "Andromeda" },
+];
+
+/** Miniature window drawn with the theme's own tokens. */
+function ThemePreview({ theme }: { theme: string }) {
+  return (
+    <span
+      data-theme={theme}
+      className="flex h-12 w-full overflow-hidden rounded-md bg-background"
+    >
+      <span className="w-1/3 bg-sidebar" />
+      <span className="flex flex-1 flex-col justify-center gap-1 p-1.5">
+        <span className="h-1.5 w-3/4 rounded-full bg-foreground/70" />
+        <span className="flex gap-1">
+          <span className="size-1.5 rounded-full bg-primary" />
+          <span className="size-1.5 rounded-full bg-success" />
+          <span className="size-1.5 rounded-full bg-destructive" />
+        </span>
+      </span>
+    </span>
+  );
+}
 
 export function ThemePicker() {
   const appContext = useAppContext();
@@ -16,35 +43,35 @@ export function ThemePicker() {
     <fieldset>
       <legend className="sr-only">Select a theme</legend>
 
-      <div className="grid grid-cols-3 gap-4">
-        {themes.map((theme) => (
+      <div className="grid grid-cols-4 gap-2">
+        {THEMES.map(({ value, label }) => (
           <label
-            key={theme}
-            htmlFor={theme}
-            className="cursor-pointer rounded-md border-2 border-gray-300 bg-background p-4 hover:border-slate-400 has-checked:border-primary has-checked:bg-primary/15 hover:has-checked:border-primary dark:border-gray-500 dark:bg-input dark:hover:border-slate-50"
+            key={value}
+            className={cn(
+              "flex cursor-pointer flex-col gap-1.5 rounded-lg border-2 border-transparent p-1 text-center text-xs text-muted-foreground hover:border-border",
+              value === selectedTheme && "border-primary text-foreground",
+            )}
           >
             <input
               type="radio"
-              className="peer absolute appearance-none"
-              id={theme}
-              value={theme}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  themeSwitcher(theme);
-                  setTheme(theme);
-                  commands.updateSetting({
-                    theme,
-                  });
-                }
+              className="sr-only"
+              name="theme"
+              value={value}
+              checked={value === selectedTheme}
+              onChange={() => {
+                setTheme(value);
+                commands.updateSetting({ theme: value });
               }}
-              checked={theme === selectedTheme}
             />
-            <div className="flex flex-col items-center gap-2 text-center capitalize peer-checked:text-primary">
-              {theme === "light" && <Sun />}
-              {theme === "dark" && <Moon />}
-              {theme === "system" && <MonitorCog />}
-              <span>{theme}</span>
-            </div>
+            {value === "system" ? (
+              <span className="flex overflow-hidden rounded-md">
+                <ThemePreview theme="light" />
+                <ThemePreview theme="dark" />
+              </span>
+            ) : (
+              <ThemePreview theme={value} />
+            )}
+            {label}
           </label>
         ))}
       </div>
