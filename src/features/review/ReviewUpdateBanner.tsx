@@ -5,7 +5,11 @@ import { Button } from "~/components/ui/button";
 import type { CommitComparison } from "~/models";
 import type { CodeReview } from "~/models/code-review";
 
-import { useNewCommitsQuery, useReviewMutation } from "./data-loader";
+import {
+  useLatestHeadShaQuery,
+  useNewCommitsQuery,
+  useReviewMutation,
+} from "./data-loader";
 
 function isRewritten(comparison?: CommitComparison) {
   return comparison?.status !== "ahead";
@@ -30,10 +34,14 @@ export function ReviewUpdateBanner({
   headSha: string;
   isReviewing: boolean;
 }) {
-  const { data: comparison, isLoading } = useNewCommitsQuery(review, headSha);
+  const { data: latestHeadSha = headSha } = useLatestHeadShaQuery(review);
+  const { data: comparison, isLoading } = useNewCommitsQuery(
+    review,
+    latestHeadSha,
+  );
   const { mutateAsync, isPending } = useReviewMutation();
 
-  if (!review.reviewed || review.headSha === headSha) return null;
+  if (!review.reviewed || review.headSha === latestHeadSha) return null;
   if (isReviewing || isLoading) return null;
 
   const rewritten = isRewritten(comparison);

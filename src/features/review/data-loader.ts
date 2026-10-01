@@ -91,6 +91,22 @@ export function fileSourceQuery(request: FileSourceRequest) {
   });
 }
 
+const HEAD_POLL_MS = minutesToMilliseconds(2);
+
+export function useLatestHeadShaQuery(review: GetSavedReviewRequest) {
+  const request = {
+    owner: review.owner,
+    repository: review.repository,
+    number: review.prNumber,
+  };
+
+  return useQuery({
+    queryKey: ["pr-head", request],
+    queryFn: async () => (await commands.getPullRequest(request)).headSha,
+    refetchInterval: HEAD_POLL_MS,
+  });
+}
+
 export function useNewCommitsQuery(review: CodeReview, headSha: string) {
   const request = {
     owner: review.owner,
