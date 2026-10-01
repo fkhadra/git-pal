@@ -1,3 +1,4 @@
+use git_pal_code_review::git;
 use tauri::State;
 
 use crate::core::AppState;
@@ -149,7 +150,30 @@ pub async fn get_pull_request_diff(
     state: State<'_, AppState>,
     request: GetPullRequestRequest,
 ) -> Result<PullRequestDiff> {
-    Ok(state.github_client.get_pull_request_diff(&request).await?)
+    let client = &state.github_client;
+    let pr = client.get_pull_request(&request).await?;
+
+    if !pr.is_diff_too_large {
+        return Ok(client.get_pull_request_diff(&request).await?);
+    }
+
+    // too large for GitHub, the local clone has no limit
+    let files = client.get_pull_request_files(&request).await?;
+    let repositories_dir = state.repositories_dir();
+    let raw_diff = tokio::task::spawn_blocking(move || {
+        git::pull_request_diff(
+            &repositories_dir,
+            &request.owner,
+            &request.repository,
+            request.number,
+            &pr.base_ref,
+            &pr.head_sha,
+        )
+    })
+    .await
+    .map_err(anyhow::Error::from)??;
+
+    Ok(PullRequestDiff::new(files, raw_diff))
 }
 
 #[tauri::command]

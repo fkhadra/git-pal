@@ -324,6 +324,10 @@ function viewPullRequest(request: GetSavedReviewRequest) {
   return invoke<void>("view_pull_request", { request });
 }
 
+function isRepositoryCloned(owner: string, repository: string) {
+  return invoke<boolean>("is_repository_cloned", { owner, repository });
+}
+
 function takeRequestedReview() {
   return invoke<GetSavedReviewRequest | null>("take_requested_review");
 }
@@ -461,6 +465,7 @@ export default {
   listSkills,
   viewPullRequest,
   takeRequestedReview,
+  isRepositoryCloned,
   showReview,
   listJobs,
   cancelReview,

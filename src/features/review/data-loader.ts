@@ -23,7 +23,14 @@ import type {
 
 import { isPendingComment, reviewJobId } from "./utils";
 
+export const repositoryClonedKey = (owner: string, repository: string) => [
+  "repository-cloned",
+  owner,
+  repository,
+];
+
 export function useCodeReviewQuery(review?: GetSavedReviewRequest | null) {
+  const queryClient = useQueryClient();
   const enabled = !!review;
   const request = {
     owner: review?.owner ?? "",
@@ -35,7 +42,16 @@ export function useCodeReviewQuery(review?: GetSavedReviewRequest | null) {
     queries: [
       {
         queryKey: ["pr-diff", request],
-        queryFn: () => commands.getPullRequestDiff(request),
+        queryFn: async () => {
+          await queryClient.query({
+            queryKey: repositoryClonedKey(request.owner, request.repository),
+            queryFn: () =>
+              commands.isRepositoryCloned(request.owner, request.repository),
+            staleTime: 0,
+          });
+
+          return commands.getPullRequestDiff(request);
+        },
         staleTime: minutesToMilliseconds(5),
         enabled,
       },

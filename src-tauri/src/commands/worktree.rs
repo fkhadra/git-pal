@@ -40,6 +40,11 @@ pub async fn worktree_path(
 }
 
 #[tauri::command]
+pub fn is_repository_cloned(state: State<'_, AppState>, owner: String, repository: String) -> bool {
+    git::is_cloned(&state.repositories_dir(), &owner, &repository)
+}
+
+#[tauri::command]
 pub fn list_editors() -> Vec<String> {
     editor::installed()
 }

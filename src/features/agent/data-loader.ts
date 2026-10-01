@@ -104,7 +104,7 @@ export function useSendMessage(
       );
 
       // load the persisted messages before dropping the streamed ones
-      await queryClient.fetchQuery({
+      await queryClient.query({
         queryKey: messagesKey(conversationId),
         queryFn: () => commands.agentMessages(conversationId),
         staleTime: 0,
