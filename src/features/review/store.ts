@@ -9,12 +9,24 @@ import type {
 import { isSameReview } from "./utils";
 
 type RefreshStatus = "idle" | "checking" | "no-changes";
+export type FileView = "tree" | "list";
+
+const FILE_VIEW_KEY = "review:file-view";
+const DEFAULT_FILE_VIEW: FileView = "tree";
+
+function savedFileView(): FileView {
+  const saved = localStorage.getItem(FILE_VIEW_KEY);
+  if (saved === "tree" || saved === "list") return saved;
+
+  return DEFAULT_FILE_VIEW;
+}
 
 interface State {
   selectedFile: string | null;
   selectedReview: ReviewListEntry | null;
   requestedReview: GetSavedReviewRequest | null;
   viewType: ViewType;
+  fileView: FileView;
   refreshStatus: RefreshStatus;
   isSubmitOpen: boolean;
 }
@@ -24,6 +36,7 @@ const state = proxy<State>({
   selectedReview: null,
   requestedReview: null,
   viewType: "split",
+  fileView: savedFileView(),
   refreshStatus: "idle",
   isSubmitOpen: false,
 });
@@ -35,6 +48,10 @@ let preferredViewType: ViewType = state.viewType;
 export const store = {
   selectFile(file: string) {
     state.selectedFile = file;
+  },
+  setFileView(view: FileView) {
+    state.fileView = view;
+    localStorage.setItem(FILE_VIEW_KEY, view);
   },
   selectReview(review: ReviewListEntry) {
     const current = state.selectedReview;
