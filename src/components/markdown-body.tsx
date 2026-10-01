@@ -92,6 +92,13 @@ export function MarkdownBody({ content }: { content: string }) {
           pre({ children }) {
             return <>{children}</>;
           },
+          table({ children }) {
+            return (
+              <div className="my-2 max-w-full overflow-x-auto">
+                <table className="my-0">{children}</table>
+              </div>
+            );
+          },
           h1({ children }) {
             return <h1 className="mt-4 mb-2 text-xl font-bold">{children}</h1>;
           },
