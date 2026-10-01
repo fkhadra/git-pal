@@ -35,7 +35,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
-import { AgentPanel, agentStore } from "~/features/agent";
+import { AgentPanel, agentStore, useHarnessSync } from "~/features/agent";
 import { TemplateManager } from "~/features/templates/TemplateManager";
 import { useWindowReady } from "~/hooks";
 import type { CommentContext, PullRequestFile } from "~/models";
@@ -82,6 +82,7 @@ export function ReviewPage() {
   useWindowReady();
   useAgentEvent();
   useKeybindSync();
+  useHarnessSync();
 
   const reviewsPanelRef = useRef<PanelImperativeHandle>(null);
   const agentPanelRef = useRef<PanelImperativeHandle>(null);

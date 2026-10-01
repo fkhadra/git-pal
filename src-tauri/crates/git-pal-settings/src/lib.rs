@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs::{self},
     io,
     path::PathBuf,
@@ -30,16 +31,16 @@ pub struct Settings {
     pub auto_update: bool,
     pub monitor_pull_requests: bool,
     pub monitor_interval: u32,
-    /// AI harness used for reviews and new agent conversations
     #[serde(default)]
     pub harness: Harness,
+    #[serde(default)]
+    pub models: HashMap<Harness, String>,
     #[serde(default)]
     pub keybind: Keybind,
     #[serde(default)]
     pub avatar: Avatar,
     #[serde(default)]
     pub repository_filter: RepositoryFilter,
-    /// Pull requests fetched for Review Requested, Mentioned and notifications, across every repository
     #[serde(default = "default_pull_request_limit")]
     pub pull_request_limit: u32,
 }
@@ -242,6 +243,16 @@ const DEFAULT_SHORTCUT: &str = "ctrl+G";
 #[cfg(target_os = "windows")]
 const DEFAULT_SHORTCUT: &str = "ctrl+super+G";
 
+impl Settings {
+    /// Model `harness` runs with: the picked one, its default otherwise
+    pub fn model(&self, harness: Harness) -> Option<String> {
+        self.models
+            .get(&harness)
+            .cloned()
+            .or_else(|| harness.adapter().default_model())
+    }
+}
+
 impl Default for Settings {
     fn default() -> Self {
         Self {
@@ -250,6 +261,7 @@ impl Default for Settings {
             monitor_pull_requests: true,
             monitor_interval: 20,
             harness: Harness::default(),
+            models: HashMap::new(),
             keybind: Keybind::default(),
             avatar: Avatar::default(),
             repository_filter: RepositoryFilter::default(),
@@ -267,6 +279,7 @@ pub enum SettingValue {
     MonitorPullRequests(bool),
     MonitorInterval(u32),
     Harness(Harness),
+    Models(HashMap<Harness, String>),
     PaletteKeybind(PaletteKeybind),
     ReviewKeybind(ReviewKeybind),
     Avatar(Avatar),
@@ -282,6 +295,7 @@ pub enum SettingKey {
     MonitorPullRequests,
     MonitorInterval,
     Harness,
+    Models,
     PaletteKeybind,
     ReviewKeybind,
     Avatar,
@@ -327,6 +341,7 @@ impl SettingManager {
             }
             SettingKey::Theme => SettingValue::Theme(self.settings.theme.clone()),
             SettingKey::Harness => SettingValue::Harness(self.settings.harness),
+            SettingKey::Models => SettingValue::Models(self.settings.models.clone()),
             SettingKey::PaletteKeybind => {
                 SettingValue::PaletteKeybind(self.settings.keybind.palette.clone())
             }
@@ -350,6 +365,7 @@ impl SettingManager {
             SettingValue::MonitorPullRequests(val) => self.settings.monitor_pull_requests = val,
             SettingValue::Theme(val) => self.settings.theme = val,
             SettingValue::Harness(val) => self.settings.harness = val,
+            SettingValue::Models(val) => self.settings.models = val,
             SettingValue::PaletteKeybind(val) => self.settings.keybind.palette = val,
             SettingValue::ReviewKeybind(val) => self.settings.keybind.review = val,
             SettingValue::Avatar(val) => self.settings.avatar = val,

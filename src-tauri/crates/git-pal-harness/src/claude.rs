@@ -1,5 +1,3 @@
-mod skills;
-
 use std::{
     env, fs,
     path::{Path, PathBuf},
@@ -8,10 +6,13 @@ use std::{
 use anyhow::Result;
 use serde_json::Value;
 
-use crate::{Adapter, Block, ChatOptions, Model, Skill, StreamItem};
+use crate::{Adapter, Block, ChatOptions, Model, Skill, StreamItem, skills};
 
 /// Tool outputs can be huge (file dumps), keep what is useful to display.
 const MAX_TOOL_RESULT_CHARS: usize = 4000;
+
+/// Used when `~/.claude/settings.json` sets no model, the plan decides otherwise.
+const DEFAULT_MODEL: &str = "opus";
 
 /// Read-only until the agent is allowed to fix pull requests.
 const DISALLOWED_TOOLS: &str = "Edit,Write,NotebookEdit";
@@ -58,6 +59,17 @@ impl Adapter for Claude {
             .collect()
     }
 
+    fn default_model(&self) -> Option<String> {
+        let configured = env::var_os("HOME")
+            .and_then(|home| {
+                fs::read_to_string(PathBuf::from(home).join(".claude/settings.json")).ok()
+            })
+            .and_then(|text| serde_json::from_str::<Value>(&text).ok())
+            .and_then(|settings| settings["model"].as_str().map(String::from));
+
+        Some(configured.unwrap_or_else(|| DEFAULT_MODEL.to_string()))
+    }
+
     fn env_denylist(&self) -> &'static [&'static str] {
         ENV_DENYLIST
     }
@@ -72,10 +84,14 @@ impl Adapter for Claude {
         configure_project(cwd);
     }
 
-    fn run_args(&self, prompt: &str, skills: &[String]) -> Vec<String> {
+    fn run_args(&self, prompt: &str, skills: &[String], model: Option<&str>) -> Vec<String> {
         let mut args = ["-p", "--output-format", "json", prompt]
             .map(String::from)
             .to_vec();
+
+        if let Some(model) = model {
+            args.extend(["--model".to_string(), model.to_string()]);
+        }
 
         // `-p` denies tools lacking permission
         if !skills.is_empty() {

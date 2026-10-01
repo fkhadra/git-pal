@@ -219,6 +219,7 @@ export function useReviewMutation() {
     mutationFn: commands.reviewPullRequest,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["saved-review"] });
       // the review now remembers its template
       queryClient.invalidateQueries({
         queryKey: ["review-templates", "resolved"],

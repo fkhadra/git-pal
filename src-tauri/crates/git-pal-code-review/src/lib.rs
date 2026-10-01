@@ -38,6 +38,8 @@ impl CodeReview {
             comment_count,
             error_count,
             warning_count,
+            harness: self.harness,
+            model: self.model.clone(),
         }
     }
 }
@@ -62,7 +64,7 @@ impl CodeReviewStore {
 
     pub async fn list_reviews(&self) -> Result<Vec<ReviewListEntry>> {
         let rows = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, error, warning, cancelled, reviewed \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
              FROM code_reviews ORDER BY reviewed_at DESC",
         )
         .fetch_all(&self.pool)
@@ -78,7 +80,7 @@ impl CodeReviewStore {
         pr_number: i64,
     ) -> Result<Option<CodeReview>> {
         let row = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, error, warning, cancelled, reviewed \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
              FROM code_reviews WHERE owner = ? AND repository = ? AND pr_number = ?",
         )
         .bind(owner)
@@ -94,8 +96,8 @@ impl CodeReviewStore {
         let comments_json = serde_json::to_string(&review.comments)?;
 
         let row = sqlx::query(
-            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, error, warning, cancelled, reviewed) \
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
+            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed) \
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
              ON CONFLICT(owner, repository, pr_number) DO UPDATE SET \
                 pr_title = excluded.pr_title, \
                 branch = excluded.branch, \
@@ -105,6 +107,8 @@ impl CodeReviewStore {
                 comments = excluded.comments, \
                 reviewed_at = excluded.reviewed_at, \
                 template = excluded.template, \
+                harness = excluded.harness, \
+                model = excluded.model, \
                 error = excluded.error, \
                 warning = excluded.warning, \
                 cancelled = excluded.cancelled, \
@@ -128,6 +132,8 @@ impl CodeReviewStore {
                 .map(serde_json::to_string)
                 .transpose()?,
         )
+        .bind(review.harness.map(|h| serde_json::to_string(&h)).transpose()?)
+        .bind(&review.model)
         .bind(&review.error)
         .bind(&review.warning)
         .bind(review.cancelled)

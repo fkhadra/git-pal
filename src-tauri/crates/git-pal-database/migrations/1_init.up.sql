@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS code_reviews (
     reviewed_at   TEXT    NOT NULL,
     -- { "type": "template", "id": 1 } or { "type": "built-in" } or NULL when not reviewing by ai
     template      TEXT,
+    harness       TEXT,
+    model         TEXT,
     error         TEXT,
     -- e.g. skills the template asked for but no longer installed
     warning       TEXT,

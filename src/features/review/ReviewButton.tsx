@@ -1,4 +1,5 @@
 import { AgentAvatar } from "~/components/agent-avatar";
+import { HARNESS_LABELS, useDefaultHarness } from "~/components/harness";
 import { SlidingContent } from "~/components/sliding-content";
 import { Spinner } from "~/components/spinner";
 import { Button } from "~/components/ui/button";
@@ -42,6 +43,8 @@ export function ReviewButton({
   onReview,
 }: Props) {
   const primaryInk = useCssColor("--primary-foreground");
+  const harness = useDefaultHarness();
+  const title = `Review with ${HARNESS_LABELS[harness]}`;
   const avatarColor = variant === "default" ? primaryInk : undefined;
 
   const label = (
@@ -62,7 +65,7 @@ export function ReviewButton({
         type="button"
         variant={variant}
         size={size}
-        title="Review"
+        title={title}
         disabled={disabled || isPending}
         className="relative overflow-hidden border-r-0"
         onClick={() => onReview(AUTO_TEMPLATE)}

@@ -1,6 +1,7 @@
 import { ScrollText } from "lucide-react";
 import { useState } from "react";
 
+import { HarnessLogo, reviewedBy } from "~/components/harness";
 import { MarkdownBody } from "~/components/markdown-body";
 import { Button } from "~/components/ui/button";
 import {
@@ -62,6 +63,15 @@ export function ReviewSummarySheet({ review }: { review: CodeReview }) {
             <SheetTitle className="flex items-center gap-2 text-sm">
               <ScrollText className="size-4 shrink-0" />
               Review summary
+              {review.harness && (
+                <span
+                  title={reviewedBy(review.harness, review.model)}
+                  className="flex items-center gap-1 text-xs font-normal text-muted-foreground"
+                >
+                  <HarnessLogo harness={review.harness} />
+                  {review.model}
+                </span>
+              )}
             </SheetTitle>
           </SheetHeader>
           <div className="flex-1 overflow-y-auto p-4">

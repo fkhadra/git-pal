@@ -91,6 +91,7 @@ pub fn review(
     description: &str,
     discussion: &str,
     since: Option<&str>,
+    model: Option<&str>,
 ) -> Result<PullRequestReview> {
     let text = git_pal_harness::run_once(
         harness,
@@ -98,6 +99,7 @@ pub fn review(
         env_vars,
         &review_prompt(instructions, skills, description, discussion, since),
         skills,
+        model,
     )?;
 
     let review = match serde_json::from_str::<PullRequestReview>(extract_json(&text)) {

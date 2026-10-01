@@ -1,5 +1,7 @@
 pub mod claude;
+pub mod codex;
 pub mod shell;
+mod skills;
 
 use std::{
     collections::HashMap,
@@ -11,24 +13,27 @@ use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize, TS)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Hash, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "harness.ts")]
 pub enum Harness {
     #[default]
     Claude,
+    Codex,
 }
 
 impl Harness {
     pub fn adapter(self) -> &'static dyn Adapter {
         match self {
             Harness::Claude => &claude::Claude,
+            Harness::Codex => &codex::Codex,
         }
     }
 
     pub fn as_str(self) -> &'static str {
         match self {
             Harness::Claude => "claude",
+            Harness::Codex => "codex",
         }
     }
 }
@@ -39,6 +44,7 @@ impl TryFrom<String> for Harness {
     fn try_from(s: String) -> std::result::Result<Self, Self::Error> {
         match s.as_str() {
             "claude" => Ok(Harness::Claude),
+            "codex" => Ok(Harness::Codex),
             other => Err(format!("unknown Harness: {other}")),
         }
     }
@@ -105,6 +111,9 @@ pub trait Adapter: Sync {
     /// Models to choose from, the harness' own default applies when none is picked
     fn models(&self) -> Vec<Model>;
 
+    /// Model the harness runs when none is picked
+    fn default_model(&self) -> Option<String>;
+
     /// Variables that must not reach the spawned process
     fn env_denylist(&self) -> &'static [&'static str] {
         &[]
@@ -118,8 +127,8 @@ pub trait Adapter: Sync {
     /// Setup needed before running in `cwd`, e.g. tool permissions
     fn prepare(&self, _cwd: &Path) {}
 
-    /// Arguments of a single read-only run of `prompt`, allowed to use `skills`
-    fn run_args(&self, prompt: &str, skills: &[String]) -> Vec<String>;
+    /// Arguments of a single read-only run of `prompt` with `model`, allowed to use `skills`
+    fn run_args(&self, prompt: &str, skills: &[String], model: Option<&str>) -> Vec<String>;
 
     /// Final answer out of a single run's stdout
     fn run_output(&self, stdout: &str) -> Result<String>;
@@ -150,12 +159,13 @@ pub fn run_once(
     env: &HashMap<String, String>,
     prompt: &str,
     skills: &[String],
+    model: Option<&str>,
 ) -> Result<String> {
     let adapter = harness.adapter();
     adapter.prepare(cwd);
 
     let output = command(harness, cwd, env)
-        .args(adapter.run_args(prompt, skills))
+        .args(adapter.run_args(prompt, skills, model))
         .stdin(Stdio::null())
         .output()?;
 
