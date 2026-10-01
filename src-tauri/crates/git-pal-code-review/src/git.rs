@@ -39,6 +39,42 @@ pub fn prepare_worktree(
     Ok(worktree_dir)
 }
 
+/// Diff of a pull request out of the bare clone, leaving review worktrees untouched.
+pub fn pull_request_diff(
+    repositories_dir: &Path,
+    owner: &str,
+    repo: &str,
+    pr_number: i64,
+    base_ref: &str,
+    head_sha: &str,
+) -> Result<String> {
+    let bare_dir = ensure_bare_repo(repositories_dir, owner, repo)?;
+    fetch_pull_request(&bare_dir, pr_number)?;
+
+    // from the merge base, like GitHub; prefixes and paths as `parseDiff` expects
+    let output = Command::new("git")
+        .args([
+            "-C",
+            &bare_dir.to_string_lossy(),
+            "-c",
+            "core.quotepath=false",
+            "diff",
+            "--no-color",
+            "--no-ext-diff",
+            "--src-prefix=a/",
+            "--dst-prefix=b/",
+            &format!("refs/heads/{base_ref}...{head_sha}"),
+        ])
+        .output()?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        bail!("git diff of pull request #{pr_number} failed: {stderr}");
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+}
+
 /// Whether `sha` is still in the history of the worktree's HEAD, false once force-pushed away.
 pub fn is_ancestor(worktree_dir: &Path, sha: &str) -> Result<bool> {
     let status = Command::new("git")
@@ -165,6 +201,13 @@ pub fn remove_worktree(bare_dir: &Path, worktree_dir: &Path) -> Result<()> {
         fs::remove_dir_all(worktree_dir)?;
     }
     Ok(())
+}
+
+/// Whether the repository's bare clone exists, otherwise the next diff or review clones it.
+pub fn is_cloned(repositories_dir: &Path, owner: &str, repo: &str) -> bool {
+    bare_dir(repositories_dir, owner, repo)
+        .join("HEAD")
+        .exists()
 }
 
 /// Ensures a bare repository exists and is up to date (including tags).

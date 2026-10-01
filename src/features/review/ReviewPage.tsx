@@ -54,6 +54,7 @@ import { DiffErrorBoundary } from "./DiffErrorBoundary";
 import { DiffFileTree } from "./DiffFileTree";
 import { DiffFind } from "./DiffFind";
 import { DiffViewer, type NewComment } from "./DiffViewer";
+import { LargeDiffNotice } from "./LargeDiffNotice";
 
 import "./pr-review.css";
 import { PullRequestAuthor } from "./PullRequestAuthor";
@@ -520,6 +521,13 @@ export function ReviewPage() {
         {/* Main content area */}
         <ResizablePanel defaultSize="80%" minSize="30%" className="px-1 pb-2">
           <div className="flex h-full flex-col overflow-hidden rounded-xl border bg-background shadow-sm">
+            {diffQuery.isLoading && detailsQuery.data?.isDiffTooLarge && (
+              <LargeDiffNotice
+                owner={selectedReview?.owner ?? ""}
+                repository={selectedReview?.repository ?? ""}
+                changedFiles={detailsQuery.data.changedFiles}
+              />
+            )}
             {isLoading && <ReviewSkeleton />}
 
             {diffQuery.error && (

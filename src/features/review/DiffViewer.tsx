@@ -199,7 +199,7 @@ export function DiffViewer({
   const expand = async (index: number, direction: ExpandDirection) => {
     setExpandingIndex(index);
     try {
-      const lines = toLines(await queryClient.fetchQuery(sourceOptions));
+      const lines = toLines(await queryClient.query(sourceOptions));
       const gap = findGap(shownHunks, index, lines.length);
       if (!gap) return;
 

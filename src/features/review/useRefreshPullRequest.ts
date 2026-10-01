@@ -29,7 +29,7 @@ export function useRefreshPullRequest() {
       };
 
       try {
-        const fresh = await queryClient.fetchQuery({
+        const fresh = await queryClient.query({
           queryKey: ["pr-details", request],
           queryFn: () => commands.getPullRequest(request),
           staleTime: 0,

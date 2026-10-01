@@ -27,7 +27,11 @@ export type PullRequestDetails = { title: string, htmlUrl: string, headRef: stri
 /**
  * Markdown description, `None` when left empty
  */
-body: string | null, };
+body: string | null, changedFiles: number, 
+/**
+ * GitHub refuses its diff, it comes from a local clone instead
+ */
+isDiffTooLarge: boolean, };
 
 export type PullRequestDiff = { files: Array<PullRequestFile>, rawDiff: string, totalAdditions: number, totalDeletions: number, totalFiles: number, };
 

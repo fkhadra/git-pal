@@ -130,6 +130,9 @@ pub struct PullRequestDetails {
     pub base_ref: String,
     /// Markdown description, `None` when left empty
     pub body: Option<String>,
+    pub changed_files: i64,
+    /// GitHub refuses its diff, it comes from a local clone instead
+    pub is_diff_too_large: bool,
 }
 
 /// Bot descriptions (e.g. dependency updates) can be huge, prompts only need the gist.
@@ -150,6 +153,7 @@ struct PullRequestResponse {
     title: String,
     html_url: String,
     body: Option<String>,
+    changed_files: i64,
     head: PullRequestHead,
     base: PullRequestBase,
 }
@@ -234,6 +238,21 @@ pub struct PullRequestDiff {
     pub total_deletions: i64,
     pub total_files: i64,
 }
+
+impl PullRequestDiff {
+    pub fn new(files: Vec<PullRequestFile>, raw_diff: String) -> Self {
+        Self {
+            total_additions: files.iter().map(|f| f.additions).sum(),
+            total_deletions: files.iter().map(|f| f.deletions).sum(),
+            total_files: files.len() as i64,
+            files,
+            raw_diff,
+        }
+    }
+}
+
+/// GitHub refuses the diff of a pull request changing more files.
+const MAX_DIFF_FILES: i64 = 300;
 
 const PER_PAGE: usize = 100;
 
@@ -409,6 +428,8 @@ impl Client {
             head_sha: pr.head.sha,
             base_ref: pr.base.ref_field,
             body: pr.body,
+            changed_files: pr.changed_files,
+            is_diff_too_large: pr.changed_files > MAX_DIFF_FILES,
         })
     }
 
@@ -455,20 +476,10 @@ impl Client {
         let files = self.get_pull_request_files(request).await?;
         let raw_diff = self.get_pull_request_raw_diff(request).await?;
 
-        let total_additions = files.iter().map(|f| f.additions).sum();
-        let total_deletions = files.iter().map(|f| f.deletions).sum();
-        let total_files = files.len() as i64;
-
-        Ok(PullRequestDiff {
-            files,
-            raw_diff,
-            total_additions,
-            total_deletions,
-            total_files,
-        })
+        Ok(PullRequestDiff::new(files, raw_diff))
     }
 
-    async fn get_pull_request_files(
+    pub async fn get_pull_request_files(
         &self,
         request: &GetPullRequestRequest,
     ) -> Result<Vec<PullRequestFile>> {
