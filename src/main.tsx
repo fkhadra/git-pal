@@ -3,6 +3,7 @@ import { StrictMode, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 
 import "@fontsource-variable/geist";
+import "@fontsource-variable/geist-mono";
 import "./style.css";
 
 import { TooltipProvider } from "~/components/ui/tooltip";

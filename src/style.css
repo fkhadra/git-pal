@@ -354,6 +354,7 @@
 }
 
 @theme inline {
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
   --color-sidebar: var(--sidebar);
   --color-success: var(--success);
   --color-info: var(--info);

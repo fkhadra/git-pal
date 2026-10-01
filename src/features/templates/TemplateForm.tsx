@@ -19,6 +19,25 @@ interface FormValues {
   skills: string[];
 }
 
+interface FieldProps {
+  label: string;
+  hint?: string;
+  className?: string;
+  children: React.ReactNode;
+}
+
+function Field({ label, hint, className, children }: FieldProps) {
+  return (
+    <FormControl className={className}>
+      <div className="flex flex-col gap-1">
+        <Label className="text-xs">{label}</Label>
+        {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
+      </div>
+      {children}
+    </FormControl>
+  );
+}
+
 interface Props {
   template?: ReviewTemplate;
   initialContent?: string;
@@ -60,44 +79,30 @@ export function TemplateForm({
 
   return (
     <form className="flex h-full min-h-0 flex-col gap-4" onSubmit={onSubmit}>
-      <div className="grid grid-cols-2 gap-4">
-        <FormControl>
-          <Label>Name</Label>
-          <Input
-            placeholder="Frontend review"
-            {...register("name", { required: "Name is required" })}
-            error={formState.errors.name?.message}
-          />
-        </FormControl>
+      <Field label="Name">
+        <Input
+          placeholder="Frontend review"
+          {...register("name", { required: "Name is required" })}
+          error={formState.errors.name?.message}
+        />
+      </Field>
 
-        <FormControl>
-          <Label>Repository matcher</Label>
-          <Input
-            placeholder="Regex on owner/repo, e.g. ^acme/ or /frontend$"
-            className="font-mono"
-            {...register("matcher")}
-          />
-        </FormControl>
-      </div>
-
-      <FormControl className="min-h-0 flex-1">
-        <Label>Instructions</Label>
+      <Field
+        label="Instructions"
+        hint="The output format and the existing PR discussion are appended automatically."
+        className="min-h-0 flex-1"
+      >
         <Textarea
-          className="min-h-0 flex-1 resize-none font-mono text-xs"
+          className="min-h-0 flex-1 resize-none"
           placeholder="What the review should focus on"
           {...register("content", {
             required: "Instructions are required",
           })}
         />
         <ErrorMessage error={formState.errors.content?.message} />
-        <span className="text-xs text-muted-foreground">
-          The output format and the existing PR discussion are appended
-          automatically.
-        </span>
-      </FormControl>
+      </Field>
 
-      <FormControl>
-        <Label>Skills</Label>
+      <Field label="Skills" hint="Installed skills the review must use.">
         <Controller
           control={control}
           name="skills"
@@ -106,21 +111,40 @@ export function TemplateForm({
             <SkillsField value={field.value} onChange={field.onChange} />
           )}
         />
-        <span className="text-xs text-muted-foreground">
-          Installed skills the review must use.
-        </span>
-      </FormControl>
+      </Field>
 
-      <label className="flex cursor-pointer items-center gap-2 text-sm">
-        <Controller
-          control={control}
-          name="isDefault"
-          render={({ field }) => (
-            <Switch checked={field.value} onCheckedChange={field.onChange} />
-          )}
-        />
-        Use when no matcher applies (default)
-      </label>
+      <Field
+        label="When to use"
+        hint="The first template whose matcher accepts the repository is used, then the default one, then the built-in instructions."
+      >
+        <div className="grid grid-cols-2 items-center gap-4">
+          <Input
+            aria-label="Repository matcher"
+            placeholder="Regex on owner/repo, e.g. ^acme/"
+            className="font-mono"
+            {...register("matcher")}
+          />
+
+          <label className="flex cursor-pointer items-center gap-2">
+            <Controller
+              control={control}
+              name="isDefault"
+              render={({ field }) => (
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              )}
+            />
+            <span className="flex flex-col">
+              <span className="text-sm">Default template</span>
+              <span className="text-xs text-muted-foreground">
+                Used when no matcher applies
+              </span>
+            </span>
+          </label>
+        </div>
+      </Field>
 
       <ErrorMessage error={formState.errors.root?.message} />
 
