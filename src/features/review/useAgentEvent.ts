@@ -15,6 +15,11 @@ export function useAgentEvent() {
       queryClient.invalidateQueries({ queryKey: ["saved-review"] });
     });
 
+    // a freshly opened window missed the selection event
+    commands.takeRequestedReview().then((review) => {
+      if (review) store.requestReview(review);
+    });
+
     // the selected review may have just been saved, e.g. viewed from the palette
     const unlistenSelection = commands.onReviewSelected(({ payload }) => {
       store.requestReview(payload.reviewSelected);

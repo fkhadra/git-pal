@@ -324,6 +324,10 @@ function viewPullRequest(request: GetSavedReviewRequest) {
   return invoke<void>("view_pull_request", { request });
 }
 
+function takeRequestedReview() {
+  return invoke<GetSavedReviewRequest | null>("take_requested_review");
+}
+
 function showReview(target?: GetSavedReviewRequest) {
   return invoke<void>("show_review", { target });
 }
@@ -456,6 +460,7 @@ export default {
   resolveReviewTemplate,
   listSkills,
   viewPullRequest,
+  takeRequestedReview,
   showReview,
   listJobs,
   cancelReview,

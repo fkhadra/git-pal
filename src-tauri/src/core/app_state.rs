@@ -52,6 +52,7 @@ pub struct AppState {
     pub code_review_store: CodeReviewStore,
     pub agent_store: AgentStore,
     pub agent_runs: Mutex<HashMap<i64, oneshot::Sender<()>>>,
+    pub requested_review: Mutex<Option<GetSavedReviewRequest>>,
     app_dir: PathBuf,
 }
 
@@ -82,6 +83,7 @@ impl AppState {
             code_review_store: CodeReviewStore::new(db.clone()),
             agent_store: AgentStore::new(db),
             agent_runs: Mutex::new(HashMap::new()),
+            requested_review: Mutex::new(None),
         }
     }
 
