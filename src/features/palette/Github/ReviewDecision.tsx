@@ -2,24 +2,39 @@ import { cn } from "cn";
 
 import type { PullRequestReviewDecision } from "~/models";
 
+type Decision = Extract<PullRequestReviewDecision, string>;
+
+const DOT_COLORS: Record<Decision, string> = {
+  APPROVED: "bg-success",
+  REVIEW_REQUIRED: "bg-info",
+  CHANGES_REQUESTED: "bg-warning",
+};
+
+function toLabel(value: Decision) {
+  const words = value.toLowerCase().replace("_", " ");
+
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
 export function ReviewDecision({
   value,
 }: {
   value: PullRequestReviewDecision | null;
 }) {
-  if (!value) return;
+  if (!value || typeof value !== "string") return;
 
   return (
     <span
       className={cn(
-        "ml-auto min-w-fit rounded-md border bg-muted px-2 py-1 text-sm capitalize",
-        value === "APPROVED" && "border-success text-success",
-        value === "REVIEW_REQUIRED" && "border-info text-info",
-        value === "CHANGES_REQUESTED" && "border-warning text-warning",
-        "group-data-[selected=true]:border-primary-foreground/40 group-data-[selected=true]:bg-primary-foreground/15 group-data-[selected=true]:text-primary-foreground",
+        "ml-auto flex min-w-fit items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium",
+        value === "APPROVED" && "bg-success/15 text-success",
+        value === "REVIEW_REQUIRED" && "bg-info/15 text-info",
+        value === "CHANGES_REQUESTED" && "bg-warning/15 text-warning",
+        "group-data-[selected=true]:bg-primary-foreground/15 group-data-[selected=true]:text-primary-foreground",
       )}
     >
-      {typeof value === "string" && value.toLowerCase().replace("_", " ")}
+      <span className={cn("size-1.5 rounded-full", DOT_COLORS[value])} />
+      {toLabel(value)}
     </span>
   );
 }
