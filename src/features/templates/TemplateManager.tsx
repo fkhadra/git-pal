@@ -58,8 +58,8 @@ function TemplateRow({
       dragControls={dragControls}
       onDragEnd={onDragEnd}
       className={cn(
-        "group relative flex items-center gap-1 rounded-md bg-background px-1 py-1.5 hover:bg-muted/60",
-        selected && "bg-muted hover:bg-muted",
+        "group relative flex items-center gap-1 rounded-md bg-popover px-1 py-1.5 hover:bg-muted/60",
+        selected && "bg-accent hover:bg-accent",
       )}
     >
       <button
@@ -197,10 +197,6 @@ export function TemplateManager() {
               <Plus />
               New template
             </Button>
-            <p className="text-xs text-muted-foreground">
-              The first template whose matcher accepts the repository is used,
-              then the default one, then the built-in instructions.
-            </p>
           </div>
 
           <TemplateForm
