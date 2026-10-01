@@ -18,8 +18,14 @@ function Building({ className, ...rest }: React.ComponentPropsWithRef<"svg">) {
   );
 }
 
-function Draft(props: React.ComponentPropsWithRef<"svg">) {
-  return <GitPullRequestDraft aria-label="Pull request in draft" {...props} />;
+function Draft({ className, ...rest }: React.ComponentPropsWithRef<"svg">) {
+  return (
+    <GitPullRequestDraft
+      aria-label="Pull request in draft"
+      className={cn("text-muted-foreground", className)}
+      {...rest}
+    />
+  );
 }
 
 function Failed({ className, ...rest }: React.ComponentPropsWithRef<"svg">) {
