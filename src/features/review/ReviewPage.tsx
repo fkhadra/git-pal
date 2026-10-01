@@ -38,6 +38,7 @@ import {
 import { AgentPanel, agentStore, useHarnessSync } from "~/features/agent";
 import { TemplateManager } from "~/features/templates/TemplateManager";
 import { useWindowReady } from "~/hooks";
+import { treeItems } from "~/libs/path-tree";
 import type { CommentContext, PullRequestFile } from "~/models";
 import type { ReviewComment } from "~/models/code-review";
 
@@ -51,7 +52,7 @@ import {
   useViewedFilesQuery,
 } from "./data-loader";
 import { DiffErrorBoundary } from "./DiffErrorBoundary";
-import { DiffFileTree } from "./DiffFileTree";
+import { DiffFileTree, fileTree } from "./DiffFileTree";
 import { DiffFind } from "./DiffFind";
 import { DiffViewer, type NewComment } from "./DiffViewer";
 import { LargeDiffNotice } from "./LargeDiffNotice";
@@ -121,7 +122,13 @@ export function ReviewPage() {
     return () => observer.disconnect();
   }, []);
 
-  const files = diffQuery.data?.files ?? [];
+  // ordered as displayed, so file shortcuts follow the panel
+  const files = useMemo(() => {
+    const prFiles = diffQuery.data?.files ?? [];
+    if (snapshot.fileView === "list") return prFiles;
+
+    return treeItems(fileTree(prFiles));
+  }, [diffQuery.data, snapshot.fileView]);
   const currentFile =
     files.find((f) => f.filename === selectedFile) ?? files[0];
 
@@ -153,10 +160,14 @@ export function ReviewPage() {
     [conversation, currentFile],
   );
 
-  const reviewedFiles = useMemo(
-    () => new Set(savedReviewQuery.data?.comments.map((c) => c.file)),
-    [savedReviewQuery],
-  );
+  const fileComments = useMemo(() => {
+    const byFile = new Map<string, ReviewComment[]>();
+    for (const comment of savedReviewQuery.data?.comments ?? []) {
+      byFile.set(comment.file, [...(byFile.get(comment.file) ?? []), comment]);
+    }
+
+    return byFile;
+  }, [savedReviewQuery]);
 
   // a file viewed at another sha changed since, it needs another look
   const viewedFiles = useMemo(() => {
@@ -560,7 +571,7 @@ export function ReviewPage() {
                     files={files}
                     selectedFile={currentFile?.filename ?? null}
                     onSelectFile={selectFile}
-                    reviewedFiles={reviewedFiles}
+                    fileComments={fileComments}
                     viewedFiles={viewedFiles}
                     additions={diffQuery.data?.totalAdditions ?? 0}
                     deletions={diffQuery.data?.totalDeletions ?? 0}

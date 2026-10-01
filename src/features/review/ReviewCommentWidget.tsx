@@ -21,7 +21,7 @@ import { AskAgentButton } from "./AskAgentButton";
 import { EditCommentDialog } from "./EditCommentDialog";
 import { isPendingComment } from "./utils";
 
-const severityConfig = {
+export const severityConfig = {
   error: {
     icon: AlertCircle,
     accent: "border-destructive/50",
