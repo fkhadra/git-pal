@@ -16,6 +16,7 @@ tokio = { workspace = true }
 tauri-plugin-opener = { workspace = true }
 anyhow = {workspace = true}
 regex = { workspace = true }
+globset = "0.4.20"
 
 graphql_client = "0.14.0"
 serde_yaml = "0.9.34"

@@ -2197,6 +2197,7 @@ name = "git-pal-github"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "globset",
  "graphql_client",
  "log",
  "oauth2",

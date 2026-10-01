@@ -2,6 +2,7 @@ mod api_client;
 mod attachments;
 mod custom_scalars;
 
+pub mod codeowners;
 pub mod conversation;
 pub mod graphql;
 pub mod oauth;

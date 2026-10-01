@@ -184,7 +184,7 @@ impl Client {
             .ok_or(Error::MissingData)
     }
 
-    async fn send_graphql<T, R>(&self, body: &QueryBody<T>) -> Result<GraphQLResponse<R>>
+    pub(crate) async fn send_graphql<T, R>(&self, body: &QueryBody<T>) -> Result<GraphQLResponse<R>>
     where
         T: Serialize,
         R: DeserializeOwned + Clone + Debug,
