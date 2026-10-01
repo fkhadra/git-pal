@@ -68,7 +68,7 @@ export function PalettePage() {
   }, []);
 
   return (
-    <div className="h-screen rounded-(--body-radius) border border-foreground/15 bg-linear-to-tl from-brand-alt/10 to-brand/10">
+    <div className="h-screen rounded-(--body-radius) border border-foreground/15 bg-linear-to-tl from-brand-alt/10 to-brand/10 light:bg-none">
       <Command
         loop
         className="relative h-full overflow-hidden rounded-none! bg-transparent p-0 text-inherit"

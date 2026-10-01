@@ -50,7 +50,7 @@ export function ReviewTemplatePage() {
         >
           <Page icon={<Sparkles className="text-agent" />}>
             Auto
-            <span className="ml-2 text-xs text-muted-foreground">
+            <span className="ml-2 text-xs text-muted-foreground group-data-[selected=true]:text-primary-foreground/80">
               {resolved?.name ?? "Built-in"}
             </span>
           </Page>

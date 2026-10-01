@@ -16,6 +16,7 @@ export function ReviewDecision({
         value === "APPROVED" && "border-success text-success",
         value === "REVIEW_REQUIRED" && "border-info text-info",
         value === "CHANGES_REQUESTED" && "border-warning text-warning",
+        "group-data-[selected=true]:border-primary-foreground/40 group-data-[selected=true]:bg-primary-foreground/15 group-data-[selected=true]:text-primary-foreground",
       )}
     >
       {typeof value === "string" && value.toLowerCase().replace("_", " ")}
