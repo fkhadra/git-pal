@@ -13,6 +13,7 @@ interface State {
     conversationId: number | null;
     prompt: string;
     blocks: Block[];
+    isPreparing: boolean;
   } | null;
   error: string | null;
 }
@@ -81,7 +82,12 @@ export const agentStore = {
   },
   startRun(prompt: string) {
     state.error = null;
-    state.run = { conversationId: state.conversationId, prompt, blocks: [] };
+    state.run = {
+      conversationId: state.conversationId,
+      prompt,
+      blocks: [],
+      isPreparing: false,
+    };
   },
   applyEvent(event: AgentEvent) {
     const run = state.run;
@@ -91,13 +97,18 @@ export const agentStore = {
       case "started":
         run.conversationId = event.conversationId;
         break;
+      case "preparingRepository":
+        run.isPreparing = true;
+        break;
       case "textDelta": {
+        run.isPreparing = false;
         const last = run.blocks[run.blocks.length - 1];
         if (last?.type === "text") last.text += event.text;
         else run.blocks.push({ type: "text", text: event.text });
         break;
       }
       case "block":
+        run.isPreparing = false;
         run.blocks.push(event.block);
         break;
       case "error":

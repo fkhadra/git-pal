@@ -99,6 +99,13 @@ async fn run_agent(
         .ok_or_else(|| anyhow!("Conversation not found"))?;
 
     let repositories_dir = state.repositories_dir();
+    if !git::worktree_dir(&repositories_dir, &pr.owner, &pr.repository, pr.pr_number)
+        .join(".git")
+        .exists()
+    {
+        let _ = on_event.send(AgentEvent::PreparingRepository);
+    }
+
     let (owner, repository, pr_number) = (pr.owner.clone(), pr.repository.clone(), pr.pr_number);
     let (cwd, env) = tokio::task::spawn_blocking(move || -> anyhow::Result<_> {
         let mut cwd = git::worktree_dir(&repositories_dir, &owner, &repository, pr_number);

@@ -4,7 +4,7 @@ import type { Block, Harness } from "./harness";
 /**
  * Streamed to the UI while the agent runs.
  */
-export type AgentEvent = { "type": "started", conversationId: number, } | { "type": "textDelta", text: string, } | { "type": "block", block: Block, } | { "type": "done", message: AgentMessage, } | { "type": "error", message: string, };
+export type AgentEvent = { "type": "started", conversationId: number, } | { "type": "preparingRepository" } | { "type": "textDelta", text: string, } | { "type": "block", block: Block, } | { "type": "done", message: AgentMessage, } | { "type": "error", message: string, };
 
 export type AgentMessage = { id: number, conversationId: number, role: Role, blocks: Array<Block>, createdAt: string, };
 

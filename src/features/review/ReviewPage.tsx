@@ -277,14 +277,6 @@ export function ReviewPage() {
     setTimeout(() => setIsAnimating(false), PANEL_ANIMATION_MS);
   }
 
-  // the agent works on a reviewed pull request
-  const isReviewed = !!savedReviewQuery.data?.reviewed;
-
-  useEffect(() => {
-    const panel = agentPanelRef.current;
-    if (!isReviewed && panel && !panel.isCollapsed()) panel.collapse();
-  }, [isReviewed]);
-
   const toggleReviewsPanel = () => togglePanel(reviewsPanelRef.current);
   const toggleAgentPanel = () =>
     togglePanel(agentPanelRef.current, AGENT_PANEL_SIZE);
@@ -332,7 +324,7 @@ export function ReviewPage() {
         toggleReviewsPanel();
         break;
       case "toggleAgent":
-        if (isReviewed) toggleAgentPanel();
+        toggleAgentPanel();
         break;
       case "refresh":
         handleRefresh();
@@ -488,17 +480,15 @@ export function ReviewPage() {
             </>
           )}
 
-          {isReviewed && (
-            <ShortcutTooltip label="Agent" shortcut={keybind.toggleAgent}>
-              <Button
-                variant={showAgent ? "secondary" : "ghost"}
-                size="icon-sm"
-                onClick={toggleAgentPanel}
-              >
-                <AgentAvatar size={18} paused={showAgent} />
-              </Button>
-            </ShortcutTooltip>
-          )}
+          <ShortcutTooltip label="Agent" shortcut={keybind.toggleAgent}>
+            <Button
+              variant={showAgent ? "secondary" : "ghost"}
+              size="icon-sm"
+              onClick={toggleAgentPanel}
+            >
+              <AgentAvatar size={18} paused={showAgent} />
+            </Button>
+          </ShortcutTooltip>
           {selectedReview && <ReviewActionsMenu review={selectedReview} />}
         </div>
       </div>
@@ -645,7 +635,7 @@ export function ReviewPage() {
                             onAddComment={handleAddComment}
                             onDeleteComment={handleDeleteComment}
                             onUpdateComment={handleUpdateComment}
-                            onAskAgent={isReviewed ? askAgent : undefined}
+                            onAskAgent={askAgent}
                           />
                         </DiffErrorBoundary>
                       </>

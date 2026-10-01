@@ -1,5 +1,8 @@
-import { AgentAvatar } from "~/components/agent-avatar";
-import { HARNESS_LABELS, useDefaultHarness } from "~/components/harness";
+import {
+  HARNESS_LABELS,
+  HarnessLogo,
+  useDefaultHarness,
+} from "~/components/harness";
 import { SlidingContent } from "~/components/sliding-content";
 import { Spinner } from "~/components/spinner";
 import { Button } from "~/components/ui/button";
@@ -8,7 +11,6 @@ import {
   ButtonGroupSeparator,
 } from "~/components/ui/button-group";
 import { TemplatePicker } from "~/features/templates/TemplatePicker";
-import { useCssColor } from "~/libs/useCssColor";
 import type { TemplateChoice } from "~/models/code-review";
 
 export const AUTO_TEMPLATE: TemplateChoice = { type: "auto" };
@@ -27,7 +29,6 @@ interface Props {
   size?: "xs" | "sm";
   disabled?: boolean;
   isPending?: boolean;
-  animated?: boolean;
   onReview: (template: TemplateChoice) => void;
 }
 
@@ -39,22 +40,14 @@ export function ReviewButton({
   size = "sm",
   disabled,
   isPending = false,
-  animated = false,
   onReview,
 }: Props) {
-  const primaryInk = useCssColor("--primary-foreground");
   const harness = useDefaultHarness();
   const title = `Review with ${HARNESS_LABELS[harness]}`;
-  const avatarColor = variant === "default" ? primaryInk : undefined;
 
   const label = (
     <>
-      <AgentAvatar
-        size={16}
-        color={avatarColor}
-        paused={!animated}
-        state={animated ? "working" : "default"}
-      />
+      <HarnessLogo harness={harness} />
       Review
     </>
   );
