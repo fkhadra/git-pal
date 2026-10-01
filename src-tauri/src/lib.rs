@@ -173,6 +173,7 @@ pub fn run() {
             commands::review::cancel_review,
             commands::review::show_review,
             commands::review::view_pull_request,
+            commands::review::take_requested_review,
             commands::agent::agent_send,
             commands::agent::agent_cancel,
             commands::agent::list_models,

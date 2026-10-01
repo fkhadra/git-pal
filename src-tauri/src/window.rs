@@ -76,12 +76,20 @@ pub fn show_settings(app: &AppHandle) -> Result {
     }
 }
 
+pub fn is_review_focused(app: &AppHandle) -> bool {
+    app.get_webview_window(REVIEW_WINDOW_LABEL)
+        .is_some_and(|window| window.is_focused().unwrap_or(false))
+}
+
 pub fn show_review(app: &AppHandle, target: Option<GetSavedReviewRequest>) -> Result {
     let Some(window) = app.get_webview_window(REVIEW_WINDOW_LABEL) else {
+        // a new window misses the event, it takes the target once loaded
+        *app.state::<AppState>().requested_review.lock().unwrap() = target;
+
         return create_window(
             app,
             WindowConfig {
-                title: "Reviews Pal",
+                title: "Git Pal - Reviews",
                 current_view: "review",
                 url: "review",
                 label: REVIEW_WINDOW_LABEL,

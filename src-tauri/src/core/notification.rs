@@ -34,12 +34,15 @@ pub fn review_metadata(
 
 pub enum Category {
     ReviewRequested,
+    /// ReviewCompleted covers both successful and failed review
+    ReviewCompleted,
 }
 
 impl Category {
     fn id(&self) -> String {
         match self {
             Category::ReviewRequested => format!("{}.review.requested", APP_ID),
+            Category::ReviewCompleted => format!("{}.review.completed", APP_ID),
         }
     }
 }
@@ -58,13 +61,16 @@ impl NotificationManager {
     pub fn register_handler(&self, app: AppHandle) {
         log::info!("Registering notification handler");
 
-        let categories = vec![NotificationCategory {
-            identifier: Category::ReviewRequested.id(),
-            actions: vec![NotificationCategoryAction::Action {
-                identifier: ACTION_REVIEW.to_string(),
-                title: String::from("View"),
-            }],
-        }];
+        let categories = [Category::ReviewRequested, Category::ReviewCompleted]
+            .iter()
+            .map(|category| NotificationCategory {
+                identifier: category.id(),
+                actions: vec![NotificationCategoryAction::Action {
+                    identifier: ACTION_REVIEW.to_string(),
+                    title: String::from("View"),
+                }],
+            })
+            .collect();
 
         self.manager
             .register(

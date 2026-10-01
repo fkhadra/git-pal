@@ -1,8 +1,10 @@
+use std::collections::HashMap;
+
 use anyhow::anyhow;
-use tauri::{Manager, State};
+use tauri::{AppHandle, Manager, State};
 
 use crate::{
-    core::AppState,
+    core::{AppState, notification},
     window::{self},
 };
 
@@ -135,6 +137,8 @@ pub async fn review_pull_request(
 
     let repositories_dir = state.repositories_dir();
     let job_name = format!("Review - {}", placeholder.pr_title);
+    let app = app_handle.clone();
+    let pr_url = pr.html_url.clone();
 
     state.job_runner.run(
         job_id.clone(),
@@ -143,6 +147,7 @@ pub async fn review_pull_request(
         move || async move {
             let owner = placeholder.owner.clone();
             let repository = placeholder.repository.clone();
+            let pr_title = placeholder.pr_title.clone();
 
             let result = async {
                 let owner = owner.clone();
@@ -222,11 +227,43 @@ pub async fn review_pull_request(
                 log::error!("Failed to save review error: {e}");
             }
 
+            let message = match &result {
+                Ok(_) => format!("Pull request {pr_title} reviewed"),
+                Err(_) => format!("Pull request {pr_title} review failed"),
+            };
+            let metadata = notification::review_metadata(pr_url, owner, repository, pr_number);
+            notify_review(&app, &message, metadata).await;
+
             result
         },
     );
 
     Ok(job_id)
+}
+
+const REVIEWED_TITLE: &str = "Agent Review";
+
+async fn notify_review(app: &AppHandle, message: &str, metadata: HashMap<String, String>) {
+    if window::is_review_focused(app) {
+        return;
+    }
+
+    let state: State<'_, AppState> = app.state();
+    state
+        .notification_manager
+        .push_notification(
+            REVIEWED_TITLE,
+            message,
+            Some(notification::Category::ReviewCompleted),
+            Some(metadata),
+        )
+        .await;
+}
+
+/// Review the review window was opened for, taken once.
+#[tauri::command]
+pub fn take_requested_review(state: State<'_, AppState>) -> Option<GetSavedReviewRequest> {
+    state.requested_review.lock().unwrap().take()
 }
 
 /// Requested skills still installed, and a warning naming the missing ones.
