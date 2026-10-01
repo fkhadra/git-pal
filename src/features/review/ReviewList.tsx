@@ -34,6 +34,7 @@ import {
   AlertDialogTrigger,
 } from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
 import {
   InputGroup,
   InputGroupAddon,
@@ -50,13 +51,15 @@ import type { ReviewListEntry } from "~/models/code-review";
 
 import {
   useDeleteReviewMutation,
+  useDeleteReviewsMutation,
   useIsReviewing,
+  useReviewingJobIds,
   useSavedReviewsQuery,
 } from "./data-loader";
 import { PrUrlInput } from "./PrUrlInput";
 import { StatusBadge } from "./StatusBadge";
 import { store, useCodeReviewSnapshot } from "./store";
-import { isSameReview } from "./utils";
+import { isSameReview, reviewJobId } from "./utils";
 
 function commentLabel(count: number) {
   const noun = count === 1 ? "comment" : "comments";
@@ -67,9 +70,16 @@ function commentLabel(count: number) {
 function ReviewItem({
   entry,
   isSelected,
+  isChecked,
+  isSelecting,
+  onCheck,
 }: {
   entry: ReviewListEntry;
   isSelected: boolean;
+  isChecked: boolean;
+  /** Some reviews are checked, every checkbox shows */
+  isSelecting: boolean;
+  onCheck: (checked: boolean) => void;
 }) {
   const isReviewing = useIsReviewing(entry);
   const defaultHarness = useDefaultHarness();
@@ -86,6 +96,17 @@ function ReviewItem({
         isSelected && "bg-accent hover:bg-accent",
       )}
     >
+      <Checkbox
+        aria-label="Select review"
+        checked={isChecked}
+        disabled={isReviewing}
+        onCheckedChange={onCheck}
+        onClick={(e) => e.stopPropagation()}
+        className={cn(
+          "opacity-0 group-hover/item:opacity-100 focus-visible:opacity-100",
+          isSelecting && "opacity-100",
+        )}
+      />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="min-w-0 flex-1 truncate text-sm">
@@ -159,7 +180,9 @@ const reviewKey = (e: ReviewListEntry) =>
 export function ReviewList() {
   const { data, isLoading } = useSavedReviewsQuery();
   const [reviewFilter, setReviewFilter] = useState("");
+  const [checkedKeys, setCheckedKeys] = useState<Set<string>>(new Set());
   const snapshot = useCodeReviewSnapshot();
+  const reviewingJobIds = useReviewingJobIds();
 
   useEffect(() => {
     if (data) store.syncReviews(data);
@@ -179,17 +202,47 @@ export function ReviewList() {
     );
   }, [data, reviewFilter]);
 
+  // only visible reviews count, a filter hides the others from bulk actions
+  const checkedReviews = filteredReviews.filter((e) =>
+    checkedKeys.has(reviewKey(e)),
+  );
+  const checkableReviews = filteredReviews.filter(
+    (e) => !reviewingJobIds.has(reviewJobId(e)),
+  );
+
+  const toggleCheck = (entry: ReviewListEntry, checked: boolean) => {
+    const next = new Set(checkedKeys);
+    if (checked) next.add(reviewKey(entry));
+    else next.delete(reviewKey(entry));
+
+    setCheckedKeys(next);
+  };
+
+  const toggleAll = (checked: boolean) => {
+    const keys = checked ? checkableReviews.map(reviewKey) : [];
+    setCheckedKeys(new Set(keys));
+  };
+
   return (
     <div className="flex h-full flex-col">
       <div className="px-3 pt-3 pb-2">
         <PrUrlInput />
       </div>
-      <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-        <List className="size-3.5 text-muted-foreground" />
-        <span className="flex-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Reviews
-        </span>
-      </div>
+      {checkedReviews.length > 0 ? (
+        <BulkActions
+          reviews={checkedReviews}
+          isAllChecked={checkedReviews.length === checkableReviews.length}
+          onToggleAll={toggleAll}
+          onDeleted={() => setCheckedKeys(new Set())}
+        />
+      ) : (
+        <div className="flex items-center gap-2 px-4 pt-3 pb-1">
+          <List className="size-3.5 text-muted-foreground" />
+          <span className="flex-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            Reviews
+          </span>
+        </div>
+      )}
       <div className="px-3 py-2">
         <InputGroup>
           <InputGroupAddon align="inline-start">
@@ -231,6 +284,9 @@ export function ReviewList() {
               !!snapshot.selectedReview &&
               isSameReview(entry, snapshot.selectedReview)
             }
+            isChecked={checkedKeys.has(reviewKey(entry))}
+            isSelecting={checkedReviews.length > 0}
+            onCheck={(checked) => toggleCheck(entry, checked)}
           />
         ))}
       </div>
@@ -245,6 +301,97 @@ export function ReviewList() {
           Manage templates…
         </Button>
       </div>
+    </div>
+  );
+}
+
+function reviewLabel(count: number) {
+  const noun = count === 1 ? "review" : "reviews";
+
+  return `${count} ${noun}`;
+}
+
+function BulkActions({
+  reviews,
+  isAllChecked,
+  onToggleAll,
+  onDeleted,
+}: {
+  reviews: ReviewListEntry[];
+  isAllChecked: boolean;
+  onToggleAll: (checked: boolean) => void;
+  onDeleted: () => void;
+}) {
+  const { mutateAsync: deleteReviews, isPending } = useDeleteReviewsMutation();
+
+  const remove = async () => {
+    try {
+      await deleteReviews(reviews);
+      reviews.forEach(store.clearReview);
+      onDeleted();
+    } catch (error) {
+      toast.error(String(error));
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 px-5 pt-2">
+      <Checkbox
+        aria-label="Select all reviews"
+        checked={isAllChecked}
+        onCheckedChange={onToggleAll}
+      />
+      <span className="flex-1 text-xs text-muted-foreground">
+        {reviews.length} selected
+      </span>
+      <AlertDialog>
+        <AlertDialogTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="xs"
+              className="text-destructive"
+              disabled={isPending}
+            >
+              <Trash2 />
+              Delete
+            </Button>
+          }
+        />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Delete {reviewLabel(reviews.length)}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the selected reviews. This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            {!isPending && <AlertDialogCancel>Cancel</AlertDialogCancel>}
+            <AlertDialogAction
+              variant="destructive"
+              className="relative overflow-hidden"
+              onClick={remove}
+            >
+              <SlidingContent
+                from={<span>Delete</span>}
+                to={<Spinner className="size-4" />}
+                toggle={isPending}
+              />
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <Button
+        variant="ghost"
+        size="icon-xs"
+        title="Clear selection"
+        onClick={() => onToggleAll(false)}
+      >
+        <X />
+      </Button>
     </div>
   );
 }
