@@ -40,4 +40,4 @@ harness: Harness, keybind: Keybind, avatar: Avatar, repositoryFilter: Repository
  */
 pullRequestLimit: number, };
 
-export type Theme = "system" | "light" | "dark" | "dracula" | "catppuccinMocha" | "catppuccinLatte" | "andromeda";
+export type Theme = "system" | "light" | "dark" | "dracula" | "catppuccinMocha" | "catppuccinLatte" | "andromeda" | "deepPurple";

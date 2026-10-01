@@ -6,7 +6,7 @@
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:where(.dark, .dark *));
-@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+@custom-variant deep-purple (&:where([data-theme="deepPurple"], [data-theme="deepPurple"] *));
 
 :root {
   --body-bg: #fcfcfc;
@@ -62,8 +62,8 @@
   --card-foreground: var(--foreground);
   --popover: oklch(1 0 0);
   --popover-foreground: var(--foreground);
-  --primary: oklch(0.5 0.22 293);
-  --primary-foreground: oklch(0.98 0.01 293);
+  --primary: oklch(0.5 0.22 277);
+  --primary-foreground: oklch(0.98 0.01 277);
   --secondary: oklch(0.955 0.003 286);
   --secondary-foreground: var(--foreground);
   --muted: oklch(0.955 0.003 286);
@@ -73,7 +73,7 @@
   --destructive: oklch(0.58 0.2 25);
   --border: oklch(0 0 0 / 8%);
   --input: oklch(0 0 0 / 10%);
-  --ring: oklch(0.5 0.22 293);
+  --ring: oklch(0.5 0.22 277);
   --success: oklch(0.58 0.14 150);
   --warning: oklch(0.66 0.14 70);
   --info: oklch(0.56 0.14 245);
@@ -303,6 +303,48 @@
   --kbd: #1e2025;
   --kbd-foreground: #f7a6dd;
   --kbd-border: rgb(255 0 170 / 35%);
+}
+
+[data-theme="deepPurple"] {
+  --body-bg: oklch(0.215 0.005 286);
+  --background: oklch(0.215 0.005 286);
+  --foreground: oklch(0.93 0.004 286);
+  --sidebar: oklch(0.19 0.005 286);
+  --card: oklch(0.25 0.006 286);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.25 0.006 286);
+  --popover-foreground: var(--foreground);
+  --primary: oklch(0.55 0.2 293);
+  --primary-foreground: oklch(0.98 0.01 293);
+  --secondary: oklch(0.27 0.006 286);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.27 0.006 286);
+  --muted-foreground: oklch(0.68 0.012 286);
+  --accent: oklch(0.29 0.007 286);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.7 0.16 22);
+  --border: oklch(1 0 0 / 7%);
+  --input: oklch(1 0 0 / 9%);
+  --ring: oklch(0.55 0.2 293);
+  --success: oklch(0.76 0.14 150);
+  --warning: oklch(0.82 0.13 85);
+  --info: oklch(0.74 0.11 235);
+  --alert: var(--destructive);
+  --agent: oklch(0.75 0.13 300);
+  --syntax-comment: #8b949e;
+  --syntax-keyword: #ff7b72;
+  --syntax-string: #a5d6ff;
+  --syntax-function: #d2a8ff;
+  --syntax-number: #79c0ff;
+  --syntax-property: #79c0ff;
+  --syntax-tag: #7ee787;
+  --syntax-type: #ffa657;
+  --syntax-punctuation: #a6acb5;
+  --brand: #9333ea;
+  --brand-alt: #ec4899;
+  --kbd: #18181b;
+  --kbd-foreground: #fbcfe8;
+  --kbd-border: rgb(249 168 212 / 40%);
 }
 
 @layer base {

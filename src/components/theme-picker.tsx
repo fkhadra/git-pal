@@ -13,6 +13,7 @@ const THEMES: { value: settings.Theme; label: string }[] = [
   { value: "catppuccinMocha", label: "Catppuccin Mocha" },
   { value: "catppuccinLatte", label: "Catppuccin Latte" },
   { value: "andromeda", label: "Andromeda" },
+  { value: "deepPurple", label: "Deep Purple" },
 ];
 
 /** Miniature window drawn with the theme's own tokens. */
