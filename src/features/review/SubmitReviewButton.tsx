@@ -3,6 +3,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { ThinkingOrb } from "thinking-orbs";
 
+import { HarnessName, useDefaultHarness } from "~/components/harness";
 import { ShortcutTooltip } from "~/components/shortcut-tooltip";
 import { SlidingContent } from "~/components/sliding-content";
 import { Spinner } from "~/components/spinner";
@@ -60,6 +61,7 @@ export function SubmitReviewButton({
   const [body, setBody] = useState("");
   const [event, setEvent] = useState<ReviewEvent>("COMMENT");
   const { mutateAsync, isPending } = useSubmitReviewMutation();
+  const defaultHarness = useDefaultHarness();
 
   const pending = review?.comments.filter(isPendingComment) ?? [];
   const isEmpty = event === "COMMENT" && !body.trim() && pending.length === 0;
@@ -91,7 +93,8 @@ export function SubmitReviewButton({
               {isReviewing ? (
                 <>
                   <ThinkingOrb state="solving" size={20} />
-                  Reviewing...
+                  Reviewing with
+                  <HarnessName harness={review?.harness ?? defaultHarness} />
                 </>
               ) : (
                 <>

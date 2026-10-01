@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 
 import commands from "~/commands";
 import type { ContextItem, PullRequestKey } from "~/models/agent";
@@ -25,6 +26,38 @@ export function useModelsQuery(harness?: Harness) {
     queryKey: ["models", harness],
     queryFn: () => commands.listModels(harness),
     staleTime: Infinity,
+  });
+}
+
+export function useHarnessSync() {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const listener = commands.onSettingChanged((event) => {
+      const value = event.payload.settingChanged;
+      if ("models" in value) {
+        queryClient.invalidateQueries({ queryKey: ["harness-model"] });
+      }
+
+      if (!("harness" in value)) return;
+
+      agentStore.setDefaultHarness(value.harness);
+      queryClient.invalidateQueries({ queryKey: ["harness-model"] });
+      queryClient.invalidateQueries({ queryKey: ["models"] });
+      queryClient.invalidateQueries({ queryKey: ["skills"] });
+    });
+
+    return () => {
+      listener.then((unsub) => unsub());
+    };
+  }, [queryClient]);
+}
+
+/** Model `harness` runs with when none is picked, the default harness when omitted. */
+export function useHarnessModelQuery(harness?: Harness) {
+  return useQuery({
+    queryKey: ["harness-model", harness],
+    queryFn: () => commands.harnessModel(harness),
   });
 }
 

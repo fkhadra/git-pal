@@ -31,7 +31,7 @@ import type { CommentContext } from "~/models";
 import type { ContextItem } from "~/models/agent";
 import type { Harness } from "~/models/harness";
 
-import { useModelsQuery } from "./data-loader";
+import { useHarnessModelQuery, useModelsQuery } from "./data-loader";
 import { agentStore, useAgentSnapshot } from "./store";
 
 const MENTION_TRIGGER = "@";
@@ -193,7 +193,15 @@ const DEFAULT_MODEL = "default";
 function ModelSelect({ harness }: { harness?: Harness }) {
   const snapshot = useAgentSnapshot();
   const { data: models = [] } = useModelsQuery(harness);
-  const options = [{ id: DEFAULT_MODEL, label: "Default" }, ...models];
+  const { data: defaultModel } = useHarnessModelQuery(harness);
+  const defaultLabel = models.find((m) => m.id === defaultModel)?.label;
+  const options = [
+    {
+      id: DEFAULT_MODEL,
+      label: defaultLabel ? `Default (${defaultLabel})` : "Default",
+    },
+    ...models,
+  ];
   const value = snapshot.model ?? DEFAULT_MODEL;
 
   return (

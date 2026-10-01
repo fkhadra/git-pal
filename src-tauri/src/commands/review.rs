@@ -81,7 +81,9 @@ pub async fn review_pull_request(
         )
         .await?;
     let used_template = templates::used_choice(resolved.as_ref());
-    let harness = state.get_settings().harness;
+    let settings = state.get_settings();
+    let harness = settings.harness;
+    let model = settings.model(harness);
     let (skills, warning) = installed_skills(
         harness,
         resolved
@@ -122,6 +124,8 @@ pub async fn review_pull_request(
             .unwrap_or_default(),
         reviewed_at: chrono::Utc::now().to_rfc3339(),
         template: Some(used_template),
+        harness: Some(harness),
+        model: model.clone(),
         error: None,
         warning,
         cancelled: false,
@@ -168,6 +172,7 @@ pub async fn review_pull_request(
                             &description,
                             &discussion,
                             scope.as_deref(),
+                            model.as_deref(),
                         )
                     })
                     .await
@@ -484,6 +489,8 @@ pub async fn view_pull_request(
                 comments: vec![],
                 reviewed_at: chrono::Utc::now().to_rfc3339(),
                 template: None,
+                harness: None,
+                model: None,
                 error: None,
                 warning: None,
                 cancelled: false,

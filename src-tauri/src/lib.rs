@@ -176,6 +176,7 @@ pub fn run() {
             commands::agent::agent_send,
             commands::agent::agent_cancel,
             commands::agent::list_models,
+            commands::agent::harness_model,
             commands::templates::list_skills,
             commands::agent::agent_list_conversations,
             commands::agent::agent_messages,

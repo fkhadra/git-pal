@@ -53,7 +53,7 @@ pub fn list(home: &Path) -> Vec<Skill> {
 }
 
 /// Skills anywhere under `dir`, named `plugin:skill` when they come from a plugin.
-fn read_skills(dir: &Path, plugin: Option<&str>) -> Vec<Skill> {
+pub(crate) fn read_skills(dir: &Path, plugin: Option<&str>) -> Vec<Skill> {
     WalkBuilder::new(dir)
         .hidden(false)
         .build()

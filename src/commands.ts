@@ -351,6 +351,10 @@ function listModels(harness?: Harness) {
   return invoke<Model[]>("list_models", { harness });
 }
 
+function harnessModel(harness?: Harness) {
+  return invoke<string | null>("harness_model", { harness });
+}
+
 function listSkills() {
   return invoke<Skill[]>("list_skills");
 }
@@ -460,6 +464,7 @@ export default {
   agentSend,
   agentCancel,
   listModels,
+  harnessModel,
   agentListConversations,
   agentMessages,
   agentDeleteConversation,

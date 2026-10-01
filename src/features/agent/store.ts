@@ -1,16 +1,14 @@
 import { proxy, useSnapshot } from "valtio";
 
 import type { AgentEvent, ContextItem } from "~/models/agent";
-import type { Block } from "~/models/harness";
+import type { Block, Harness } from "~/models/harness";
 
 interface State {
   conversationId: number | null;
-  /** `null` lets the harness pick its default model */
   model: string | null;
-  /** Context attached by the user, the current file is handled separately */
+  harness: Harness;
   context: ContextItem[];
   includeCurrentFile: boolean;
-  /** Set while the agent runs */
   run: {
     conversationId: number | null;
     prompt: string;
@@ -24,6 +22,7 @@ const DEFAULT_CONTEXT: ContextItem[] = [{ type: "pullRequest" }];
 const state = proxy<State>({
   conversationId: null,
   model: null,
+  harness: globalThis.settings.harness,
   context: [...DEFAULT_CONTEXT],
   includeCurrentFile: true,
   run: null,
@@ -39,6 +38,13 @@ function isSameContext(a: ContextItem, b: ContextItem) {
   return a.type === b.type;
 }
 
+function switchHarness(harness: Harness) {
+  if (state.harness === harness) return;
+
+  state.harness = harness;
+  state.model = null;
+}
+
 export const agentStore = {
   newChat() {
     // a pending run keeps going in the background and is persisted there
@@ -47,10 +53,17 @@ export const agentStore = {
     state.context = [...DEFAULT_CONTEXT];
     state.includeCurrentFile = true;
     state.error = null;
+    switchHarness(globalThis.settings.harness);
   },
-  openConversation(id: number) {
+  openConversation(id: number, harness: Harness) {
     state.conversationId = id;
     state.error = null;
+    switchHarness(harness);
+  },
+  setDefaultHarness(harness: Harness) {
+    globalThis.settings.harness = harness;
+    // an open conversation keeps its harness
+    if (state.conversationId === null) switchHarness(harness);
   },
   setModel(model: string | null) {
     state.model = model;
@@ -92,7 +105,6 @@ export const agentStore = {
         break;
     }
   },
-  /** Swaps the streamed run for the persisted conversation */
   finishRun(conversationId: number) {
     if (!state.run) return;
 

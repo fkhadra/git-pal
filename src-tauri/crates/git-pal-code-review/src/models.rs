@@ -1,3 +1,4 @@
+use git_pal_harness::Harness;
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use ts_rs::TS;
@@ -20,6 +21,8 @@ pub struct ReviewListEntry {
     pub comment_count: usize,
     pub error_count: usize,
     pub warning_count: usize,
+    pub harness: Option<Harness>,
+    pub model: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
@@ -64,6 +67,12 @@ pub struct CodeReview {
     pub reviewed_at: String,
     #[sqlx(json(nullable))]
     pub template: Option<TemplateChoice>,
+    /// Harness running the AI review
+    #[serde(default)]
+    #[sqlx(json(nullable))]
+    pub harness: Option<Harness>,
+    #[serde(default)]
+    pub model: Option<String>,
     #[serde(default)]
     pub error: Option<String>,
     #[serde(default)]

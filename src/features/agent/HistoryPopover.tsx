@@ -62,7 +62,7 @@ export function HistoryPopover({ pr }: { pr: PullRequestKey | null }) {
               type="button"
               className="min-w-0 flex-1 text-left"
               onClick={() => {
-                agentStore.openConversation(c.id);
+                agentStore.openConversation(c.id, c.harness);
                 setOpen(false);
               }}
             >

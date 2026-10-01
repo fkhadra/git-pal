@@ -14,6 +14,12 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { ThinkingOrb } from "thinking-orbs";
 
+import {
+  HARNESS_LABELS,
+  HarnessLogo,
+  reviewedBy,
+  useDefaultHarness,
+} from "~/components/harness";
 import { SlidingContent } from "~/components/sliding-content";
 import { Spinner } from "~/components/spinner";
 import {
@@ -66,6 +72,8 @@ function ReviewItem({
   isSelected: boolean;
 }) {
   const isReviewing = useIsReviewing(entry);
+  const defaultHarness = useDefaultHarness();
+  const harnessLabel = HARNESS_LABELS[entry.harness ?? defaultHarness];
 
   return (
     <div
@@ -97,6 +105,20 @@ function ReviewItem({
               : "Not reviewed"}
           </span>
           {entry.reviewed && <span>{commentLabel(entry.commentCount)}</span>}
+          {entry.reviewed && entry.harness && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span className="flex items-center">
+                    <HarnessLogo harness={entry.harness} className="size-3" />
+                  </span>
+                }
+              />
+              <TooltipContent>
+                {reviewedBy(entry.harness, entry.model)}
+              </TooltipContent>
+            </Tooltip>
+          )}
           {entry.errorCount > 0 && (
             <span className="flex items-center gap-1 text-destructive">
               <AlertCircle className="size-3" />
@@ -122,7 +144,7 @@ function ReviewItem({
                 </Button>
               }
             />
-            <TooltipContent>Reviewing...</TooltipContent>
+            <TooltipContent>Reviewing with {harnessLabel}…</TooltipContent>
           </Tooltip>
         }
         toggle={isReviewing}

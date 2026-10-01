@@ -28,13 +28,17 @@ exclude: Array<string>, };
 
 export type ReviewKeybind = { toggleReviews: string, previousFile: string, nextFile: string, refresh: string, toggleViewType: string, toggleSubmit: string, openPullRequest: string, toggleAgent: string, showShortcuts: string, findInDiff: string, findFile: string, };
 
-export type SettingValue = { "theme": Theme } | { "autoUpdate": boolean } | { "monitorPullRequests": boolean } | { "monitorInterval": number } | { "harness": Harness } | { "paletteKeybind": PaletteKeybind } | { "reviewKeybind": ReviewKeybind } | { "avatar": Avatar } | { "repositoryFilter": RepositoryFilter } | { "pullRequestLimit": number };
+export type SettingValue = { "theme": Theme } | { "autoUpdate": boolean } | { "monitorPullRequests": boolean } | { "monitorInterval": number } | { "harness": Harness } | { "models": { [key in Harness]?: string } } | { "paletteKeybind": PaletteKeybind } | { "reviewKeybind": ReviewKeybind } | { "avatar": Avatar } | { "repositoryFilter": RepositoryFilter } | { "pullRequestLimit": number };
 
 export type Settings = { theme: Theme, autoUpdate: boolean, monitorPullRequests: boolean, monitorInterval: number, 
 /**
  * AI harness used for reviews and new agent conversations
  */
-harness: Harness, keybind: Keybind, avatar: Avatar, repositoryFilter: RepositoryFilter, 
+harness: Harness, 
+/**
+ * Models picked per harness, an unpicked harness runs its inferred default
+ */
+models: { [key in Harness]?: string }, keybind: Keybind, avatar: Avatar, repositoryFilter: RepositoryFilter, 
 /**
  * Pull requests fetched for Review Requested, Mentioned and notifications, across every repository
  */

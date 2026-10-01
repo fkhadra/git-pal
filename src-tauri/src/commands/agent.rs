@@ -128,7 +128,9 @@ async fn run_agent(
             &details.prompt_description(),
             &discussion,
         ),
-        model: request.model,
+        model: request
+            .model
+            .or_else(|| state.get_settings().model(conversation.harness)),
         session_id: conversation.session_id,
         env,
     };
@@ -165,7 +167,12 @@ async fn run_agent(
     Ok(())
 }
 
-/// Models of `harness`, the default one when omitted.
+#[tauri::command]
+pub fn harness_model(state: State<'_, AppState>, harness: Option<Harness>) -> Option<String> {
+    let settings = state.get_settings();
+    settings.model(harness.unwrap_or(settings.harness))
+}
+
 #[tauri::command]
 pub fn list_models(state: State<'_, AppState>, harness: Option<Harness>) -> Vec<Model> {
     harness
