@@ -23,6 +23,8 @@ export type FindWorkflowsRequest = { owner: string, repository: string, };
 
 export type GetPullRequestRequest = { owner: string, repository: string, number: number, };
 
+export type OwnedFilesRequest = { owner: string, repository: string, baseRef: string, files: Array<string>, };
+
 export type PullRequestDetails = { title: string, htmlUrl: string, headRef: string, headSha: string, baseRef: string, 
 /**
  * Markdown description, `None` when left empty

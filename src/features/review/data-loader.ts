@@ -98,6 +98,28 @@ export function usePullRequestStatusQuery(review: GetSavedReviewRequest) {
   });
 }
 
+const OWNED_FILES_STALE_MS = minutesToMilliseconds(10);
+
+export function useOwnedFilesQuery(
+  review: GetSavedReviewRequest | null,
+  baseRef: string | undefined,
+  files: string[],
+) {
+  const request = {
+    owner: review?.owner ?? "",
+    repository: review?.repository ?? "",
+    baseRef: baseRef ?? "",
+    files,
+  };
+
+  return useQuery({
+    queryKey: ["owned-files", request],
+    queryFn: () => commands.getOwnedFiles(request),
+    staleTime: OWNED_FILES_STALE_MS,
+    enabled: !!review && !!baseRef && files.length > 0,
+  });
+}
+
 export function fileSourceQuery(request: FileSourceRequest) {
   return queryOptions({
     queryKey: ["file-source", request],

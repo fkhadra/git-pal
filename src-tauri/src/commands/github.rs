@@ -4,6 +4,7 @@ use tauri::State;
 use crate::core::AppState;
 
 use git_pal_github::{
+    codeowners::OwnedFilesRequest,
     conversation::{DeleteCommentRequest, EditCommentRequest, PullRequestConversation},
     graphql::{
         FindPullRequestResult, FindPullRequestsFilter, FindRepositoriesRequest,
@@ -174,6 +175,14 @@ pub async fn get_pull_request_diff(
     .map_err(anyhow::Error::from)??;
 
     Ok(PullRequestDiff::new(files, raw_diff))
+}
+
+#[tauri::command]
+pub async fn get_owned_files(
+    state: State<'_, AppState>,
+    request: OwnedFilesRequest,
+) -> Result<Option<Vec<String>>> {
+    Ok(state.github_client.owned_files(&request).await?)
 }
 
 #[tauri::command]

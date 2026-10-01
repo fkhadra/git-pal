@@ -10,6 +10,7 @@ import type {
   FileRequest,
   FindPullRequestsFilter,
   FindWorkflowsRequest,
+  OwnedFilesRequest,
   GetPullRequestRequest,
   JobMessagePayload,
   PullRequestDetails,
@@ -324,6 +325,10 @@ function viewPullRequest(request: GetSavedReviewRequest) {
   return invoke<void>("view_pull_request", { request });
 }
 
+function getOwnedFiles(request: OwnedFilesRequest) {
+  return invoke<string[] | null>("get_owned_files", { request });
+}
+
 function isRepositoryCloned(owner: string, repository: string) {
   return invoke<boolean>("is_repository_cloned", { owner, repository });
 }
@@ -466,6 +471,7 @@ export default {
   viewPullRequest,
   takeRequestedReview,
   isRepositoryCloned,
+  getOwnedFiles,
   showReview,
   listJobs,
   cancelReview,

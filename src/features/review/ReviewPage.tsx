@@ -45,6 +45,7 @@ import type { ReviewComment } from "~/models/code-review";
 import { ConversationSheet } from "./ConversationSheet";
 import {
   useCodeReviewQuery,
+  useOwnedFilesQuery,
   useConversationQuery,
   useIsReviewing,
   useSaveCommentsMutation,
@@ -123,12 +124,32 @@ export function ReviewPage() {
   }, []);
 
   // ordered as displayed, so file shortcuts follow the panel
-  const files = useMemo(() => {
+  const allFiles = useMemo(() => {
     const prFiles = diffQuery.data?.files ?? [];
     if (snapshot.fileView === "list") return prFiles;
 
     return treeItems(fileTree(prFiles));
   }, [diffQuery.data, snapshot.fileView]);
+
+  const filenames = useMemo(
+    () => (diffQuery.data?.files ?? []).map((f) => f.filename),
+    [diffQuery.data],
+  );
+  const ownedQuery = useOwnedFilesQuery(
+    selectedReview,
+    detailsQuery.data?.baseRef,
+    filenames,
+  );
+  // null without a CODEOWNERS file
+  const ownedFiles = useMemo(
+    () => (ownedQuery.data ? new Set(ownedQuery.data) : null),
+    [ownedQuery.data],
+  );
+  const files = useMemo(() => {
+    if (!snapshot.isOwnedOnly || !ownedFiles) return allFiles;
+
+    return allFiles.filter((f) => ownedFiles.has(f.filename));
+  }, [allFiles, ownedFiles, snapshot.isOwnedOnly]);
   const currentFile =
     files.find((f) => f.filename === selectedFile) ?? files[0];
 
@@ -305,10 +326,6 @@ export function ReviewPage() {
       },
     [selectedReview],
   );
-  const filenames = useMemo(
-    () => (diffQuery.data?.files ?? []).map((f) => f.filename),
-    [diffQuery.data],
-  );
 
   const handleKeyDown = useEffectEvent((e: KeyboardEvent) => {
     // already handled, e.g. ⌘B formatting in a text editor
@@ -423,7 +440,10 @@ export function ReviewPage() {
           )}
           {pr && (
             <>
-              <ViewedProgress viewed={viewedFiles.size} total={files.length} />
+              <ViewedProgress
+                viewed={viewedFiles.size}
+                total={allFiles.length}
+              />
               <ShortcutTooltip
                 label="Previous file"
                 shortcut={keybind.previousFile}
@@ -554,11 +574,13 @@ export function ReviewPage() {
               </div>
             )}
 
-            {!isLoading && diffQuery.data && files.length > 0 && (
+            {!isLoading && diffQuery.data && allFiles.length > 0 && (
               <ResizablePanelGroup className="flex-1" orientation="horizontal">
                 <ResizablePanel defaultSize="25%" minSize="10%">
                   <DiffFileTree
                     files={files}
+                    totalFiles={allFiles.length}
+                    ownedFiles={ownedFiles}
                     selectedFile={currentFile?.filename ?? null}
                     onSelectFile={selectFile}
                     fileComments={fileComments}

@@ -27,6 +27,7 @@ interface State {
   requestedReview: GetSavedReviewRequest | null;
   viewType: ViewType;
   fileView: FileView;
+  isOwnedOnly: boolean;
   refreshStatus: RefreshStatus;
   isSubmitOpen: boolean;
 }
@@ -37,6 +38,7 @@ const state = proxy<State>({
   requestedReview: null,
   viewType: "split",
   fileView: savedFileView(),
+  isOwnedOnly: false,
   refreshStatus: "idle",
   isSubmitOpen: false,
 });
@@ -48,6 +50,9 @@ let preferredViewType: ViewType = state.viewType;
 export const store = {
   selectFile(file: string) {
     state.selectedFile = file;
+  },
+  toggleOwnedOnly() {
+    state.isOwnedOnly = !state.isOwnedOnly;
   },
   setFileView(view: FileView) {
     state.fileView = view;

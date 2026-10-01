@@ -146,6 +146,7 @@ pub fn run() {
             commands::github::get_pull_request_diff,
             commands::github::get_file_source,
             commands::github::get_pull_request_description,
+            commands::github::get_owned_files,
             commands::github::get_pull_request_status,
             commands::github::compare_commits,
             commands::github::get_pull_request_conversation,

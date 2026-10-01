@@ -6,6 +6,7 @@ import {
   ListTree,
   MessageSquare,
   Search,
+  UserRound,
   X,
 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
@@ -19,6 +20,11 @@ import {
   InputGroupButton,
   InputGroupInput,
 } from "~/components/ui/input-group";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "~/components/ui/tooltip";
 import { ancestorIds, buildPathTree, folderIds } from "~/libs/path-tree";
 import type { PullRequestFile } from "~/models";
 import type { ReviewComment } from "~/models/code-review";
@@ -35,6 +41,10 @@ const MAX_ANIMATED_FILES = 500;
 
 interface DiffFileTreeProps {
   files: PullRequestFile[];
+  /** Before the owner filter */
+  totalFiles: number;
+  /** `null` without a CODEOWNERS file */
+  ownedFiles: Set<string> | null;
   selectedFile: string | null;
   onSelectFile: (filename: string) => void;
   fileComments: Map<string, ReviewComment[]>;
@@ -50,6 +60,8 @@ export function fileTree(files: PullRequestFile[]) {
 
 export function DiffFileTree({
   files,
+  totalFiles,
+  ownedFiles,
   selectedFile,
   onSelectFile,
   fileComments,
@@ -58,7 +70,9 @@ export function DiffFileTree({
   deletions,
   searchRef,
 }: DiffFileTreeProps) {
-  const { fileView } = useCodeReviewSnapshot();
+  const { fileView, isOwnedOnly } = useCodeReviewSnapshot();
+  const fileCount =
+    files.length === totalFiles ? totalFiles : `${files.length}/${totalFiles}`;
   const [filter, setFilter] = useState("");
   const query = filter.trim().toLowerCase();
   const visibleFiles = useMemo(() => {
@@ -93,12 +107,15 @@ export function DiffFileTree({
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="flex h-9 shrink-0 items-center gap-2 border-b px-4 text-xs font-medium tracking-wide text-muted-foreground">
-        <span className="uppercase">Files changed ({files.length})</span>
+        <span className="uppercase">Files changed ({fileCount})</span>
         <FileViewToggle value={fileView} />
         <span className="ml-auto font-mono text-success">+{additions}</span>
         <span className="font-mono text-destructive">-{deletions}</span>
       </div>
-      <div ref={searchBoxRef} className="shrink-0 px-2 pt-2">
+      <div
+        ref={searchBoxRef}
+        className="flex shrink-0 items-center gap-1 px-2 pt-2"
+      >
         <InputGroup className="h-7">
           <InputGroupAddon align="inline-start">
             <Search />
@@ -123,6 +140,7 @@ export function DiffFileTree({
             </InputGroupAddon>
           )}
         </InputGroup>
+        {ownedFiles && <OwnedToggle isActive={isOwnedOnly} />}
       </div>
       <div
         ref={filesRef}
@@ -130,7 +148,7 @@ export function DiffFileTree({
       >
         {visibleFiles.length === 0 && (
           <p className="p-2 text-center text-xs text-muted-foreground">
-            No matching files
+            {query ? "No matching files" : "No files owned by you"}
           </p>
         )}
 
@@ -176,6 +194,29 @@ function FileViewToggle({ value }: { value: FileView }) {
     >
       {isTree ? <List /> : <ListTree />}
     </Button>
+  );
+}
+
+function OwnedToggle({ isActive }: { isActive: boolean }) {
+  const label = isActive ? "Show all files" : "Only files owned by me";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant={isActive ? "secondary" : "ghost"}
+            size="icon-xs"
+            aria-label={label}
+            aria-pressed={isActive}
+            onClick={store.toggleOwnedOnly}
+          >
+            <UserRound />
+          </Button>
+        }
+      />
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -281,7 +322,7 @@ function FileTreeView({
   const [collapsed, setCollapsed] = useState(new Set<string>());
   const [searchCollapsed, setSearchCollapsed] = useState(new Set<string>());
   const [searchedQuery, setSearchedQuery] = useState(query);
-  
+
   if (query !== searchedQuery) {
     setSearchedQuery(query);
     setSearchCollapsed(new Set());
