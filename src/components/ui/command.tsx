@@ -159,7 +159,7 @@ function CommandItem({ className, children, ...props }: CommandItemProps) {
       <CommandPrimitive.Item
         data-slot="command-item"
         className={cn(
-          "group flex min-h-12 cursor-pointer items-center gap-2 overflow-hidden rounded-lg px-2 py-0 select-none data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-40 data-[selected=true]:bg-primary/90 data-[selected=true]:text-primary-foreground [&>img]:size-5 [&>svg]:size-5",
+          "group flex min-h-12 cursor-pointer items-center gap-2 overflow-hidden rounded-lg px-2 py-0 select-none data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-40 data-[selected=true]:bg-primary/90 data-[selected=true]:text-primary-foreground deep-purple:data-[selected=true]:bg-transparent deep-purple:data-[selected=true]:bg-linear-to-r deep-purple:data-[selected=true]:from-brand/90 deep-purple:data-[selected=true]:via-brand/60 deep-purple:data-[selected=true]:to-brand-alt/20 [&>img]:size-5 [&>svg]:size-5",
           // cmdk selects on mousemove, which fights keyboard nav; the item is
           // inert and the overlay sibling below owns the click.
           "pointer-events-none",

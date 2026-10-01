@@ -270,7 +270,7 @@ fn background_color(theme: &Theme, appearance: tauri::Theme) -> Color {
     match theme {
         Theme::System if appearance == tauri::Theme::Dark => DARK_BG,
         Theme::System | Theme::Light => LIGHT_BG,
-        Theme::Dark => DARK_BG,
+        Theme::Dark | Theme::DeepPurple => DARK_BG,
         Theme::Dracula => DRACULA_BG,
         Theme::CatppuccinMocha => CATPPUCCIN_MOCHA_BG,
         Theme::CatppuccinLatte => CATPPUCCIN_LATTE_BG,

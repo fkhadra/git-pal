@@ -19,6 +19,7 @@ pub enum Theme {
     CatppuccinMocha,
     CatppuccinLatte,
     Andromeda,
+    DeepPurple,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, TS)]
