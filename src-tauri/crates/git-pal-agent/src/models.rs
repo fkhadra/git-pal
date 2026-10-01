@@ -112,6 +112,8 @@ pub enum AgentEvent {
         #[serde(rename = "conversationId")]
         conversation_id: i64,
     },
+    /// Cloning the repository, the first message on a pull request never reviewed
+    PreparingRepository,
     TextDelta {
         text: String,
     },

@@ -122,6 +122,11 @@ export function AgentPanel({
               <MessageList
                 messages={messages}
                 isRunning={!!snapshot.run}
+                status={
+                  snapshot.run?.isPreparing
+                    ? "Preparing the repository…"
+                    : undefined
+                }
                 error={snapshot.error}
               />
             )}

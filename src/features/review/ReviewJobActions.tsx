@@ -67,10 +67,8 @@ export function CancelReviewButton({
 
 export function RestartReviewButton({
   review,
-  animated = false,
 }: {
   review: GetSavedReviewRequest;
-  animated?: boolean;
 }) {
   const { restart, isPending } = useRestartReview(review);
 
@@ -82,7 +80,6 @@ export function RestartReviewButton({
       variant="default"
       size="xs"
       isPending={isPending}
-      animated={animated}
       onReview={restart}
     />
   );
@@ -131,12 +128,8 @@ function nextStep(review: CodeReview) {
     return <ReviewErrorButton review={review} error={review.error} />;
   }
 
-  if (review.cancelled) {
+  if (review.cancelled || !review.reviewed) {
     return <RestartReviewButton review={review} />;
-  }
-
-  if (!review.reviewed) {
-    return <RestartReviewButton review={review} animated />;
   }
 
   return null;

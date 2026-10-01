@@ -110,10 +110,12 @@ function UserMessage({ blocks }: { blocks: readonly Block[] }) {
 export function MessageList({
   messages,
   isRunning,
+  status,
   error,
 }: {
   messages: ChatMessage[];
   isRunning: boolean;
+  status?: string;
   error: string | null;
 }) {
   return (
@@ -144,7 +146,10 @@ export function MessageList({
             })}
             {isRunning && (
               <MessageScrollerItem>
-                <ThinkingOrb state="working" size={20} />
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <ThinkingOrb state="working" size={20} />
+                  {status}
+                </div>
               </MessageScrollerItem>
             )}
             {error && (
