@@ -349,6 +349,32 @@ export function useSubmitReviewMutation() {
   });
 }
 
+export function useReviewingJobIds() {
+  const { tasks } = useJobs();
+
+  return new Set(
+    tasks
+      .filter((t) => t.status === "queued" || t.status === "running")
+      .map((t) => t.jobId),
+  );
+}
+
+export function useDeleteReviewsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    // one at a time, deleting a review also prunes its repository's worktrees
+    mutationFn: async (reviews: GetSavedReviewRequest[]) => {
+      for (const review of reviews) {
+        await commands.deleteReview(review);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["saved-reviews"] });
+    },
+  });
+}
+
 export function useIsReviewing(review?: GetSavedReviewRequest | null) {
   const { tasks } = useJobs();
 
