@@ -20,6 +20,7 @@ export function useRefreshPullRequest() {
       store.toggleRefreshStatus("checking");
       queryClient.invalidateQueries({ queryKey: ["pr-status"] });
       queryClient.invalidateQueries({ queryKey: ["pr-conversation"] });
+      queryClient.invalidateQueries({ queryKey: ["pr-head"] });
 
       const request = {
         owner: selectedReview.owner,
