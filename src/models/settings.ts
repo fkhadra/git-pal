@@ -26,7 +26,7 @@ include: Array<string>,
  */
 exclude: Array<string>, };
 
-export type ReviewKeybind = { toggleReviews: string, previousFile: string, nextFile: string, refresh: string, toggleViewType: string, toggleSubmit: string, openPullRequest: string, toggleAgent: string, showShortcuts: string, findInDiff: string, findFile: string, };
+export type ReviewKeybind = { toggleReviews: string, previousFile: string, nextFile: string, refresh: string, toggleViewType: string, toggleSubmit: string, openPullRequest: string, toggleAgent: string, showShortcuts: string, findInDiff: string, findFile: string, pastePullRequest: string, };
 
 export type SettingValue = { "theme": Theme } | { "autoUpdate": boolean } | { "monitorPullRequests": boolean } | { "monitorInterval": number } | { "harness": Harness } | { "models": { [key in Harness]?: string } } | { "paletteKeybind": PaletteKeybind } | { "reviewKeybind": ReviewKeybind } | { "avatar": Avatar } | { "repositoryFilter": RepositoryFilter } | { "pullRequestLimit": number };
 

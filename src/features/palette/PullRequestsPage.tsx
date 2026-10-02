@@ -91,11 +91,7 @@ export function PullRequestsPage() {
               key={v.id}
               keywords={[v.title, v.repository.name]}
               onSelect={() => {
-                viewPullRequest({
-                  owner: v.repository.owner.login,
-                  repository: v.repository.name,
-                  prNumber: v.number,
-                });
+                viewPullRequest(v);
               }}
             >
               <PullRequestItem pullRequest={v} />

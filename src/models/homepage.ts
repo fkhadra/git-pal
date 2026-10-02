@@ -4,7 +4,7 @@ export type HomepageViewer = { pullRequests: HomepageViewerPullRequests, topRepo
 
 export type HomepageViewerPullRequests = { nodes: Array<HomepageViewerPullRequestsNodes | null> | null, };
 
-export type HomepageViewerPullRequestsNodes = { id: string, number: number, title: string, url: string, isDraft: boolean, isInMergeQueue: boolean, mergeable: MergeableState, state: PullRequestState, reviewDecision: PullRequestReviewDecision | null, totalCommentsCount: number | null, statusCheckRollup: PullRequestStatusCheckRollup | null, autoMergeRequest: PullRequestAutoMergeRequest | null, author: PullRequestAuthor | null, repository: PullRequestRepository, baseRefName: string, headRefName: string, createdAt: string, mergedAt: string | null, };
+export type HomepageViewerPullRequestsNodes = { id: string, number: number, title: string, url: string, isDraft: boolean, isInMergeQueue: boolean, mergeable: MergeableState, state: PullRequestState, reviewDecision: PullRequestReviewDecision | null, totalCommentsCount: number | null, statusCheckRollup: PullRequestStatusCheckRollup | null, autoMergeRequest: PullRequestAutoMergeRequest | null, author: PullRequestAuthor | null, repository: PullRequestRepository, baseRefName: string, headRefName: string, headRefOid: string, createdAt: string, mergedAt: string | null, };
 
 export type HomepageViewerTopRepositories = { nodes: Array<HomepageViewerTopRepositoriesNodes | null> | null, };
 
@@ -12,7 +12,7 @@ export type HomepageViewerTopRepositoriesNodes = { id: string, name: string, url
 
 export type MergeableState = "CONFLICTING" | "MERGEABLE" | "UNKNOWN" | { "Other": string };
 
-export type PullRequest = { id: string, number: number, title: string, url: string, isDraft: boolean, isInMergeQueue: boolean, mergeable: MergeableState, state: PullRequestState, reviewDecision: PullRequestReviewDecision | null, totalCommentsCount: number | null, statusCheckRollup: PullRequestStatusCheckRollup | null, autoMergeRequest: PullRequestAutoMergeRequest | null, author: PullRequestAuthor | null, repository: PullRequestRepository, baseRefName: string, headRefName: string, createdAt: string, mergedAt: string | null, };
+export type PullRequest = { id: string, number: number, title: string, url: string, isDraft: boolean, isInMergeQueue: boolean, mergeable: MergeableState, state: PullRequestState, reviewDecision: PullRequestReviewDecision | null, totalCommentsCount: number | null, statusCheckRollup: PullRequestStatusCheckRollup | null, autoMergeRequest: PullRequestAutoMergeRequest | null, author: PullRequestAuthor | null, repository: PullRequestRepository, baseRefName: string, headRefName: string, headRefOid: string, createdAt: string, mergedAt: string | null, };
 
 export type PullRequestAuthor = { login: string, url: string, avatarUrl: string, } & ({ "__typename": "Bot" } | { "__typename": "EnterpriseUserAccount" } | { "__typename": "Mannequin" } | { "__typename": "Organization" } | { "__typename": "User" });
 

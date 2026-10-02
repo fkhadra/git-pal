@@ -11,6 +11,8 @@ export type GetSavedReviewRequest = { owner: string, repository: string, prNumbe
 
 export type PullRequestReview = { comments: Array<ReviewComment>, summary: string, };
 
+export type PullRequestSummary = { title: string, branch: string, headSha: string, };
+
 export type ReviewComment = { file: string, 
 /**
  * Last line of the range, `None` for a file level comment

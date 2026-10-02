@@ -1,7 +1,7 @@
 import type { PullRequest } from "~/models";
 
 import type { PaletteAction } from "./shortcuts";
-import { state, useCurrentPage, usePaletteItem } from "./state";
+import { state, usePaletteItem } from "./state";
 import { openUrl, reviewPullRequest } from "./utils";
 
 export interface ItemAction {
@@ -54,10 +54,8 @@ function pullRequestActions(pr: PullRequest): ItemAction[] {
 
 export function useItemActions() {
   const { selectedItem, parentItem, isPage } = usePaletteItem();
-  const currentPage = useCurrentPage();
 
-  const isReviewable =
-    selectedItem?.kind === "pr" && currentPage.to === "pull-requests";
+  const isReviewable = selectedItem?.kind === "pr";
   const actions: ItemAction[] = [
     {
       id: "primaryAction",

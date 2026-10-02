@@ -12,9 +12,9 @@ use git_pal_agent::models::PullRequestKey;
 use git_pal_code_review::{
     git,
     models::{
-        CodeReview, GetSavedReviewRequest, PullRequestReview, ReviewComment, ReviewListEntry,
-        ReviewPullRequestRequest, ReviewStatus, SetFileViewedRequest, UpdateReviewCommentsRequest,
-        UpdateReviewStatusRequest, ViewedFile,
+        CodeReview, GetSavedReviewRequest, PullRequestReview, PullRequestSummary, ReviewComment,
+        ReviewListEntry, ReviewPullRequestRequest, ReviewStatus, SetFileViewedRequest,
+        UpdateReviewCommentsRequest, UpdateReviewStatusRequest, ViewedFile,
     },
     review, templates,
 };
@@ -497,6 +497,7 @@ pub async fn cancel_review(
 pub async fn view_pull_request(
     app_handle: tauri::AppHandle,
     request: GetSavedReviewRequest,
+    summary: Option<PullRequestSummary>,
 ) -> Result<()> {
     let state: State<'_, AppState> = app_handle.state();
     let store = &state.code_review_store;
@@ -505,14 +506,25 @@ pub async fn view_pull_request(
         .await?;
 
     if existing.is_none() {
-        let pr = state
-            .github_client
-            .get_pull_request(&GetPullRequestRequest {
-                owner: request.owner.clone(),
-                repository: request.repository.clone(),
-                number: request.pr_number,
-            })
-            .await?;
+        let pr = match summary {
+            Some(summary) => summary,
+            None => {
+                let details = state
+                    .github_client
+                    .get_pull_request(&GetPullRequestRequest {
+                        owner: request.owner.clone(),
+                        repository: request.repository.clone(),
+                        number: request.pr_number,
+                    })
+                    .await?;
+
+                PullRequestSummary {
+                    title: details.title,
+                    branch: details.head_ref,
+                    head_sha: details.head_sha,
+                }
+            }
+        };
 
         store
             .upsert_review(&CodeReview {
@@ -521,7 +533,7 @@ pub async fn view_pull_request(
                 repository: request.repository.clone(),
                 pr_number: request.pr_number,
                 pr_title: pr.title,
-                branch: pr.head_ref,
+                branch: pr.branch,
                 head_sha: pr.head_sha,
                 status: ReviewStatus::default(),
                 summary: String::new(),
