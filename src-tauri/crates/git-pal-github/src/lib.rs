@@ -5,6 +5,7 @@ mod custom_scalars;
 pub mod codeowners;
 pub mod conversation;
 pub mod graphql;
+pub mod mentions;
 pub mod oauth;
 pub mod query;
 pub mod rest;

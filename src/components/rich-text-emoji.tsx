@@ -6,14 +6,14 @@ import {
   shortcodeToEmoji,
 } from "@tiptap/extension-emoji";
 import type { EditorState } from "@tiptap/pm/state";
-import { ReactRenderer } from "@tiptap/react";
-import type { SuggestionOptions, SuggestionProps } from "@tiptap/suggestion";
 import { cn } from "cn";
 
+import {
+  type SuggestionListProps,
+  suggestionPopup,
+} from "./rich-text-suggestion";
+
 const MAX_SUGGESTIONS = 8;
-const POPUP_GAP_PX = 4;
-// opens above the caret when this much room is missing below
-const POPUP_MAX_HEIGHT_PX = 300;
 
 // GitHub's custom emojis (e.g. :octocat:) have no character to insert
 const EMOJIS = gitHubEmojis.filter((item) => item.emoji);
@@ -25,13 +25,11 @@ function matches(item: EmojiItem, query: string) {
   );
 }
 
-interface ListProps {
-  items: EmojiItem[];
-  selected: number;
-  onSelect: (item: EmojiItem) => void;
-}
-
-function EmojiList({ items, selected, onSelect }: ListProps) {
+function EmojiList({
+  items,
+  selected,
+  onSelect,
+}: SuggestionListProps<EmojiItem>) {
   if (items.length === 0) return null;
 
   return (
@@ -58,83 +56,6 @@ function EmojiList({ items, selected, onSelect }: ListProps) {
   );
 }
 
-const renderSuggestions: SuggestionOptions<EmojiItem>["render"] = () => {
-  let renderer: ReactRenderer<unknown, ListProps> | null = null;
-  let props: SuggestionProps<EmojiItem> | null = null;
-  let selected = 0;
-
-  function select(item: EmojiItem) {
-    props?.command({ name: item.name });
-  }
-
-  function update() {
-    if (!props) return;
-
-    renderer?.updateProps({ items: props.items, selected, onSelect: select });
-  }
-
-  function place() {
-    const rect = props?.clientRect?.();
-    const element = renderer?.element as HTMLElement | undefined;
-    if (!rect || !element) return;
-
-    const fitsBelow = rect.bottom + POPUP_MAX_HEIGHT_PX < window.innerHeight;
-    element.style.left = `${rect.left}px`;
-    element.style.top = fitsBelow ? `${rect.bottom + POPUP_GAP_PX}px` : "";
-    element.style.bottom = fitsBelow
-      ? ""
-      : `${window.innerHeight - rect.top + POPUP_GAP_PX}px`;
-  }
-
-  return {
-    onStart: (next) => {
-      props = next;
-      selected = 0;
-      renderer = new ReactRenderer(EmojiList, {
-        props: { items: next.items, selected, onSelect: select },
-        editor: next.editor,
-      });
-
-      const element = renderer.element as HTMLElement;
-      element.style.position = "fixed";
-      element.style.zIndex = "50";
-      document.body.appendChild(element);
-      place();
-    },
-
-    onUpdate: (next) => {
-      props = next;
-      selected = 0;
-      update();
-      place();
-    },
-
-    onKeyDown: ({ event }) => {
-      const count = props?.items.length ?? 0;
-      if (!props || count === 0) return false;
-
-      if (event.key === "Enter" || event.key === "Tab") {
-        select(props.items[selected]);
-        return true;
-      }
-
-      const offset = { ArrowDown: 1, ArrowUp: -1 }[event.key];
-      if (!offset) return false;
-
-      selected = (selected + offset + count) % count;
-      update();
-      return true;
-    },
-
-    onExit: () => {
-      renderer?.element.remove();
-      renderer?.destroy();
-      renderer = null;
-      props = null;
-    },
-  };
-};
-
 /** True while the `:` suggestions are open, they own Enter and Escape. */
 export function isSuggestingEmoji(state: EditorState) {
   return !!EmojiSuggestionPluginKey.getState(state)?.active;
@@ -156,6 +77,6 @@ export const EmojiExtension = Emoji.extend({
         0,
         MAX_SUGGESTIONS,
       ),
-    render: renderSuggestions,
+    render: suggestionPopup(EmojiList, (item) => ({ name: item.name })),
   },
 });

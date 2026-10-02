@@ -7,6 +7,11 @@ import { useLayoutEffect, useRef } from "react";
 
 import { CodeBlock } from "./rich-text-code-block";
 import { EmojiExtension, isSuggestingEmoji } from "./rich-text-emoji";
+import {
+  isSuggestingMention,
+  mentionExtension,
+  type SearchUsers,
+} from "./rich-text-mention";
 import { RichTextToolbar } from "./rich-text-toolbar";
 
 import "./rich-text-editor.css";
@@ -17,6 +22,8 @@ interface Props {
   autoFocus?: boolean;
   toolbar?: boolean;
   className?: string;
+  /** Enables `@` mentions, read when the editor is created */
+  searchMentions?: SearchUsers;
   onChange?: (markdown: string) => void;
   /** Cmd+Enter */
   onSubmit?: () => void;
@@ -29,15 +36,25 @@ export function RichTextEditor({
   autoFocus,
   toolbar = true,
   className,
+  searchMentions,
   onChange,
   onSubmit,
   onCancel,
 }: Props) {
-  const handlers = useRef({ onChange, onSubmit, onCancel });
+  const handlers = useRef({ onChange, onSubmit, onCancel, searchMentions });
 
   useLayoutEffect(() => {
-    handlers.current = { onChange, onSubmit, onCancel };
+    handlers.current = { onChange, onSubmit, onCancel, searchMentions };
   });
+
+  const mentions = searchMentions
+    ? [
+        mentionExtension(
+          (query) =>
+            handlers.current.searchMentions?.(query) ?? Promise.resolve([]),
+        ),
+      ]
+    : [];
 
   const editor = useEditor({
     extensions: [
@@ -47,6 +64,7 @@ export function RichTextEditor({
       }),
       CodeBlock,
       EmojiExtension,
+      ...mentions,
       Markdown,
       Placeholder.configure({ placeholder }),
     ],
@@ -60,7 +78,8 @@ export function RichTextEditor({
       },
       handleKeyDown: (view, event) => {
         const { onSubmit, onCancel } = handlers.current;
-        if (isSuggestingEmoji(view.state)) return false;
+        if (isSuggestingEmoji(view.state) || isSuggestingMention(view.state))
+          return false;
 
         if (event.key === "Enter" && event.metaKey && onSubmit) {
           onSubmit();

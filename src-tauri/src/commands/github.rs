@@ -10,6 +10,7 @@ use git_pal_github::{
         FindPullRequestResult, FindPullRequestsFilter, FindRepositoriesRequest,
         FindRepositoriesResult, Homepage,
     },
+    mentions::{MentionableUser, MentionableUsersRequest},
     query::search_pull_request::SearchPullRequestSearchNodes::PullRequest,
     rest::{
         CommitComparison, CompareCommitsRequest, FileSourceRequest, GetPullRequestRequest,
@@ -183,6 +184,14 @@ pub async fn get_owned_files(
     request: OwnedFilesRequest,
 ) -> Result<Option<Vec<String>>> {
     Ok(state.github_client.owned_files(&request).await?)
+}
+
+#[tauri::command]
+pub async fn get_mentionable_users(
+    state: State<'_, AppState>,
+    request: MentionableUsersRequest,
+) -> Result<Vec<MentionableUser>> {
+    Ok(state.github_client.mentionable_users(&request).await?)
 }
 
 #[tauri::command]
