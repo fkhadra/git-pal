@@ -4,7 +4,7 @@ use anyhow::{Result, bail};
 use serde::Deserialize;
 use serde_json::Value;
 
-use crate::{Adapter, Block, ChatOptions, Model, Skill, StreamItem, skills::read_skills};
+use crate::{Adapter, Block, ChatOptions, Model, Skill, StreamItem, skills::user_skills};
 
 /// Read-only until the agent is allowed to fix pull requests.
 const SANDBOX: &str = "sandbox_mode=\"read-only\"";
@@ -180,19 +180,6 @@ fn listed_models(cache: &str) -> Vec<Model> {
             id: m.slug,
             label: m.display_name,
         })
-        .collect()
-}
-
-/// Skills under `dir`, minus Codex's hidden built-in ones (`.system`).
-fn user_skills(dir: &PathBuf) -> Vec<Skill> {
-    let Ok(entries) = fs::read_dir(dir) else {
-        return vec![];
-    };
-
-    entries
-        .flatten()
-        .filter(|entry| !entry.file_name().to_string_lossy().starts_with('.'))
-        .flat_map(|entry| read_skills(&entry.path(), None))
         .collect()
 }
 

@@ -25,7 +25,8 @@ export function useModelsQuery(harness?: Harness) {
   return useQuery({
     queryKey: ["models", harness],
     queryFn: () => commands.listModels(harness),
-    staleTime: Infinity,
+    // an empty list is a failed listing, asked again next time
+    staleTime: (query) => (query.state.data?.length ? Infinity : 0),
   });
 }
 

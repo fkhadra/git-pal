@@ -5,7 +5,7 @@
  */
 export type Block = { "type": "text", text: string, } | { "type": "toolUse", id: string, name: string, input: unknown, } | { "type": "toolResult", toolUseId: string, content: string, isError: boolean, };
 
-export type Harness = "claude" | "codex";
+export type Harness = "claude" | "codex" | "cursor" | "antigravity" | "opencode";
 
 export type Model = { id: string, label: string, };
 
