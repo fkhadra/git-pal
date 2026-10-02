@@ -35,6 +35,7 @@ import type { GraphQLResponse, RestResponse, Token } from "./models/api";
 import type {
   CodeReview,
   GetSavedReviewRequest,
+  PullRequestSummary,
   ReviewListEntry,
   ReviewPullRequestRequest,
   ReviewTemplate,
@@ -325,8 +326,11 @@ function resolveReviewTemplate(
 }
 
 /** Shows a pull request in the review window without reviewing it. */
-function viewPullRequest(request: GetSavedReviewRequest) {
-  return invoke<void>("view_pull_request", { request });
+function viewPullRequest(
+  request: GetSavedReviewRequest,
+  summary?: PullRequestSummary,
+) {
+  return invoke<void>("view_pull_request", { request, summary });
 }
 
 function getOwnedFiles(request: OwnedFilesRequest) {

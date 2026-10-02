@@ -9,6 +9,8 @@ use user_notify::{
     get_notification_manager,
 };
 
+use crate::commands;
+
 const APP_ID: &str = "com.gugu.git-pal";
 const ACTION_REVIEW: &str = "com.gugu.git-pal.action.review";
 
@@ -139,7 +141,7 @@ fn open_review(app: &AppHandle, response: NotificationResponse) {
 
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
-        if let Err(err) = crate::commands::review::view_pull_request(app, target).await {
+        if let Err(err) = commands::review::view_pull_request(app, target, None).await {
             log::error!("Notification callback failed to open the review: {}", err);
         }
     });

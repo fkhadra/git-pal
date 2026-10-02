@@ -2,6 +2,7 @@ import { openUrl as open } from "@tauri-apps/plugin-opener";
 import { toast } from "react-toastify";
 
 import commands from "~/commands";
+import type { PullRequest } from "~/models";
 import type {
   GetSavedReviewRequest,
   TemplateChoice,
@@ -23,9 +24,21 @@ export async function reviewPullRequest(
 }
 
 /** Shows the pull request in the review window, the user decides whether to review. */
-export async function viewPullRequest(review: GetSavedReviewRequest) {
+export async function viewPullRequest(pr: PullRequest) {
+  const review = {
+    owner: pr.repository.owner.login,
+    repository: pr.repository.name,
+    prNumber: pr.number,
+  };
+  // already known, the window opens without fetching the pull request
+  const summary = {
+    title: pr.title,
+    branch: pr.headRefName,
+    headSha: pr.headRefOid,
+  };
+
   try {
-    await commands.viewPullRequest(review);
+    await commands.viewPullRequest(review, summary);
     state.resetPalette();
   } catch (error) {
     toast.error(String(error));

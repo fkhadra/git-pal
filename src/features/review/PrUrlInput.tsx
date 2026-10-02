@@ -28,7 +28,11 @@ import { parsePrUrl } from "./utils";
 const INVALID_URL =
   "Invalid PR URL. Use https://github.com/owner/repo/pull/123";
 
-export function PrUrlInput() {
+interface Props {
+  inputRef?: React.Ref<HTMLInputElement>;
+}
+
+export function PrUrlInput({ inputRef }: Props) {
   const [value, setValue] = useState("");
   const [isViewing, setIsViewing] = useState(false);
   const [isPickerOpen, setPickerOpen] = useState(false);
@@ -90,6 +94,7 @@ export function PrUrlInput() {
           <GitPullRequest />
         </InputGroupAddon>
         <InputGroupInput
+          ref={inputRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="Paste PR URL"

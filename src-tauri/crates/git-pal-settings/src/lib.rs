@@ -193,6 +193,7 @@ pub struct ReviewKeybind {
     pub show_shortcuts: String,
     pub find_in_diff: String,
     pub find_file: String,
+    pub paste_pull_request: String,
 }
 
 #[cfg(target_os = "macos")]
@@ -210,6 +211,7 @@ impl Default for ReviewKeybind {
             show_shortcuts: "cmd+/".into(),
             find_in_diff: "cmd+F".into(),
             find_file: "shift+cmd+F".into(),
+            paste_pull_request: "cmd+N".into(),
         }
     }
 }
@@ -230,6 +232,7 @@ impl Default for ReviewKeybind {
             show_shortcuts: "ctrl+/".into(),
             find_in_diff: "ctrl+F".into(),
             find_file: "shift+ctrl+F".into(),
+            paste_pull_request: "ctrl+N".into(),
         }
     }
 }

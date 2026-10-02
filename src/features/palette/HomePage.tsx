@@ -19,7 +19,7 @@ import { nil } from "~/libs/utils";
 import { useAppContext } from "../shared";
 import GithubLogo from "./github.svg";
 import { state } from "./state";
-import { openUrl } from "./utils";
+import { openUrl, viewPullRequest } from "./utils";
 
 function useHomePageQuery() {
   return useSuspenseQuery({
@@ -126,7 +126,7 @@ export function HomePage() {
             key={v.id}
             keywords={[v.title, "pull request", "pr"]}
             onSelect={() => {
-              openUrl(v.url);
+              viewPullRequest(v);
             }}
           >
             <PullRequestItem pullRequest={v} hideAvatar />

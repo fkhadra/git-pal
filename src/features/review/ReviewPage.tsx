@@ -110,6 +110,7 @@ export function ReviewPage() {
   const { mutate: setFileViewed } = useSetFileViewedMutation();
   const diffViewerRef = useRef<HTMLDivElement>(null);
   const fileSearchRef = useRef<HTMLInputElement>(null);
+  const prUrlRef = useRef<HTMLInputElement>(null);
 
   const observeDiffWidth = useCallback((element: HTMLDivElement | null) => {
     diffViewerRef.current = element;
@@ -373,6 +374,11 @@ export function ReviewPage() {
         fileSearchRef.current?.focus();
         fileSearchRef.current?.select();
         break;
+      case "pastePullRequest":
+        if (reviewsPanelRef.current?.isCollapsed()) toggleReviewsPanel();
+        prUrlRef.current?.focus();
+        prUrlRef.current?.select();
+        break;
     }
   });
 
@@ -533,7 +539,7 @@ export function ReviewPage() {
         >
           <div className="h-full pr-1 pb-2 pl-2">
             <div className="h-full overflow-hidden rounded-xl border bg-background shadow-sm">
-              <ReviewList />
+              <ReviewList prUrlRef={prUrlRef} />
             </div>
           </div>
         </ResizablePanel>

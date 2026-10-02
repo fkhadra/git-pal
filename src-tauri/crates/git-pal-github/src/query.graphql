@@ -42,6 +42,7 @@ fragment PullRequest on PullRequest {
   }
   baseRefName
   headRefName
+  headRefOid
   createdAt
   mergedAt
 }

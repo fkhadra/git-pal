@@ -46,8 +46,6 @@ export function ActionsMenu({ actions }: { actions: ItemAction[] }) {
       (a) => a.id !== "primaryAction" && matchesShortcut(e, keybind[a.id]),
     );
 
-    console.log({ action })
-
     if (!action) return;
 
     e.preventDefault();

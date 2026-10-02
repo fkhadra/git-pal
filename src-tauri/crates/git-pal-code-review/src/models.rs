@@ -92,6 +92,15 @@ pub struct GetSavedReviewRequest {
     pub pr_number: i64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "code-review.ts")]
+pub struct PullRequestSummary {
+    pub title: String,
+    pub branch: String,
+    pub head_sha: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "code-review.ts")]

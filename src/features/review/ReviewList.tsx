@@ -177,7 +177,11 @@ function ReviewItem({
 const reviewKey = (e: ReviewListEntry) =>
   `${e.owner}/${e.repository}/${e.prNumber}`;
 
-export function ReviewList() {
+interface Props {
+  prUrlRef?: React.Ref<HTMLInputElement>;
+}
+
+export function ReviewList({ prUrlRef }: Props) {
   const { data, isLoading } = useSavedReviewsQuery();
   const [reviewFilter, setReviewFilter] = useState("");
   const [checkedKeys, setCheckedKeys] = useState<Set<string>>(new Set());
@@ -226,7 +230,7 @@ export function ReviewList() {
   return (
     <div className="flex h-full flex-col">
       <div className="px-3 pt-3 pb-2">
-        <PrUrlInput />
+        <PrUrlInput inputRef={prUrlRef} />
       </div>
       {checkedReviews.length > 0 ? (
         <BulkActions

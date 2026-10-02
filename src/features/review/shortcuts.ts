@@ -19,6 +19,7 @@ export const SHORTCUT_LABELS: Record<ShortcutAction, string> = {
   showShortcuts: "Keyboard shortcuts",
   findInDiff: "Find in file",
   findFile: "Search files",
+  pastePullRequest: "Paste pull request URL",
 };
 
 const keybind = proxy<ReviewKeybind>({ ...globalThis.settings.keybind.review });
