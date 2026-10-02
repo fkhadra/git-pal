@@ -72,6 +72,12 @@ pub async fn resolve_review_template(
 }
 
 #[tauri::command]
-pub fn list_skills(state: State<'_, AppState>) -> Vec<Skill> {
-    state.get_settings().harness.adapter().skills()
+pub async fn list_skills(state: State<'_, AppState>) -> Result<Vec<Skill>> {
+    let harness = state.get_settings().harness;
+
+    let skills = tokio::task::spawn_blocking(move || harness.adapter().skills())
+        .await
+        .map_err(anyhow::Error::from)?;
+
+    Ok(skills)
 }

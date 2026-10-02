@@ -1,23 +1,25 @@
 import { cn } from "cn";
-import { Check, Plus, Search, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { X } from "lucide-react";
 
+import { Spinner } from "~/components/spinner";
 import { Button } from "~/components/ui/button";
 import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "~/components/ui/input-group";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "~/components/ui/popover";
+  Combobox,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+  ComboboxTrigger,
+} from "~/components/ui/combobox";
+import type { Skill } from "~/models/harness";
 
 import { useSkillsQuery } from "./data-loader";
 
-function skillId(name: string) {
-  return `skill-${name}`;
+function matches(skill: Skill, query: string) {
+  const text = `${skill.name} ${skill.description}`.toLowerCase();
+
+  return text.includes(query.trim().toLowerCase());
 }
 
 interface Props {
@@ -26,22 +28,13 @@ interface Props {
 }
 
 export function SkillsField({ value, onChange }: Props) {
-  const { data: skills = [], isSuccess } = useSkillsQuery();
-  const [filter, setFilter] = useState("");
-  const [activeName, setActiveName] = useState<string | null>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
-
-  const query = filter.trim().toLowerCase();
-  const matching = skills.filter(
-    (s) =>
-      s.name.toLowerCase().includes(query) ||
-      s.description.toLowerCase().includes(query),
-  );
-
-  const active = matching.find((s) => s.name === activeName) ?? matching[0];
+  const { data: skills = [], isSuccess, isLoading } = useSkillsQuery();
 
   const isMissing = (name: string) =>
     isSuccess && !skills.some((s) => s.name === name);
+  const selected = skills.filter((skill) => value.includes(skill.name));
+  // kept when picking others, they can only be removed from their chip
+  const missing = value.filter(isMissing);
 
   const toggle = (name: string) => {
     if (value.includes(name)) {
@@ -51,24 +44,6 @@ export function SkillsField({ value, onChange }: Props) {
 
     onChange([...value, name]);
   };
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter" && active) {
-      e.preventDefault();
-      toggle(active.name);
-      return;
-    }
-
-    const offset = { ArrowDown: 1, ArrowUp: -1 }[e.key];
-    const next = offset && matching[matching.indexOf(active) + offset];
-    if (!next) return;
-
-    e.preventDefault();
-    setActiveName(next.name);
-    document
-      .getElementById(skillId(next.name))
-      ?.scrollIntoView({ block: "nearest" });
-  }
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -93,66 +68,45 @@ export function SkillsField({ value, onChange }: Props) {
         </span>
       ))}
 
-      <Popover onOpenChange={() => setFilter("")}>
-        <PopoverTrigger
-          render={
-            <Button type="button" size="xs" variant="outline">
-              <Plus />
-              Add skill
-            </Button>
-          }
-        />
-        <PopoverContent
-          align="start"
-          initialFocus={searchRef}
-          className="w-96 gap-2 p-2"
+      <Combobox
+        multiple
+        items={skills}
+        value={selected}
+        itemToStringLabel={(skill: Skill) => skill.name}
+        isItemEqualToValue={(a: Skill, b: Skill) => a.name === b.name}
+        filter={(skill: Skill, query) => matches(skill, query)}
+        onValueChange={(next: Skill[]) =>
+          onChange([...missing, ...next.map((skill) => skill.name)])
+        }
+      >
+        <ComboboxTrigger
+          render={<Button type="button" size="xs" variant="outline" />}
         >
-          <InputGroup>
-            <InputGroupAddon align="inline-start">
-              <Search />
-            </InputGroupAddon>
-            <InputGroupInput
-              ref={searchRef}
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Search skills..."
-            />
-          </InputGroup>
-
-          <div className="flex max-h-72 flex-col gap-0.5 overflow-y-auto">
-            {matching.length === 0 && (
-              <p className="p-2 text-xs text-muted-foreground">No skills</p>
-            )}
-            {matching.map((skill) => (
-              <button
+          Add skill
+        </ComboboxTrigger>
+        <ComboboxContent className="w-96">
+          <ComboboxInput showTrigger={false} placeholder="Search skills..." />
+          <ComboboxEmpty>
+            {isLoading ? <Spinner className="size-4" /> : "No skills"}
+          </ComboboxEmpty>
+          <ComboboxList>
+            {(skill: Skill) => (
+              <ComboboxItem
                 key={skill.name}
-                id={skillId(skill.name)}
-                type="button"
-                onMouseEnter={() => setActiveName(skill.name)}
-                onClick={() => toggle(skill.name)}
-                className={cn(
-                  "flex items-start gap-2 rounded-md px-2 py-1.5 text-left focus-visible:outline-none",
-                  active?.name === skill.name && "bg-muted",
-                )}
+                value={skill}
+                className="items-start"
               >
-                <Check
-                  className={cn(
-                    "mt-0.5 size-4 shrink-0",
-                    !value.includes(skill.name) && "invisible",
-                  )}
-                />
                 <span className="min-w-0">
                   <span className="block font-mono text-sm">{skill.name}</span>
                   <span className="line-clamp-2 text-xs text-muted-foreground">
                     {skill.description}
                   </span>
                 </span>
-              </button>
-            ))}
-          </div>
-        </PopoverContent>
-      </Popover>
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
     </div>
   );
 }

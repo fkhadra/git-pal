@@ -54,6 +54,7 @@ pub async fn review_pull_request(
     };
     let pr = state.github_client.get_pull_request(&pr_request).await?;
     let description = pr.prompt_description();
+    let base_ref = pr.base_ref.clone();
     let mut discussion = discussion_summary(&state, &pr_request).await;
 
     let store = state.code_review_store.clone();
@@ -173,6 +174,7 @@ pub async fn review_pull_request(
                             &worktree_dir,
                             env_vars,
                             &instructions,
+                            &base_ref,
                             &skills,
                             &description,
                             &discussion,

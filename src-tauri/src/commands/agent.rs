@@ -175,17 +175,34 @@ async fn run_agent(
 }
 
 #[tauri::command]
-pub fn harness_model(state: State<'_, AppState>, harness: Option<Harness>) -> Option<String> {
+pub async fn harness_model(
+    state: State<'_, AppState>,
+    harness: Option<Harness>,
+) -> Result<Option<String>> {
     let settings = state.get_settings();
-    settings.model(harness.unwrap_or(settings.harness))
+    let harness = harness.unwrap_or(settings.harness);
+
+    // off the main thread, inferring the default may list models over the network
+    let model = tokio::task::spawn_blocking(move || settings.model(harness))
+        .await
+        .map_err(anyhow::Error::from)?;
+
+    Ok(model)
 }
 
 #[tauri::command]
-pub fn list_models(state: State<'_, AppState>, harness: Option<Harness>) -> Vec<Model> {
-    harness
-        .unwrap_or(state.get_settings().harness)
-        .adapter()
-        .models()
+pub async fn list_models(
+    state: State<'_, AppState>,
+    harness: Option<Harness>,
+) -> Result<Vec<Model>> {
+    let harness = harness.unwrap_or(state.get_settings().harness);
+
+    // off the main thread, some harnesses list their models over the network
+    let models = tokio::task::spawn_blocking(move || harness.adapter().models())
+        .await
+        .map_err(anyhow::Error::from)?;
+
+    Ok(models)
 }
 
 #[tauri::command]

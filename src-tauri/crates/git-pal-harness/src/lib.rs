@@ -1,5 +1,8 @@
+pub mod antigravity;
 pub mod claude;
 pub mod codex;
+pub mod cursor;
+pub mod opencode;
 pub mod shell;
 mod skills;
 
@@ -20,6 +23,10 @@ pub enum Harness {
     #[default]
     Claude,
     Codex,
+    Cursor,
+    Antigravity,
+    #[serde(rename = "opencode")]
+    OpenCode,
 }
 
 impl Harness {
@@ -27,6 +34,9 @@ impl Harness {
         match self {
             Harness::Claude => &claude::Claude,
             Harness::Codex => &codex::Codex,
+            Harness::Cursor => &cursor::Cursor,
+            Harness::Antigravity => &antigravity::Antigravity,
+            Harness::OpenCode => &opencode::OpenCode,
         }
     }
 
@@ -34,6 +44,9 @@ impl Harness {
         match self {
             Harness::Claude => "claude",
             Harness::Codex => "codex",
+            Harness::Cursor => "cursor",
+            Harness::Antigravity => "antigravity",
+            Harness::OpenCode => "opencode",
         }
     }
 }
@@ -45,6 +58,9 @@ impl TryFrom<String> for Harness {
         match s.as_str() {
             "claude" => Ok(Harness::Claude),
             "codex" => Ok(Harness::Codex),
+            "cursor" => Ok(Harness::Cursor),
+            "antigravity" => Ok(Harness::Antigravity),
+            "opencode" => Ok(Harness::OpenCode),
             other => Err(format!("unknown Harness: {other}")),
         }
     }
@@ -139,11 +155,42 @@ pub trait Adapter: Sync {
     fn parse_line(&self, line: &str) -> Vec<StreamItem>;
 }
 
+/// Stdout of `program args`, run with the user's shell environment since GUI apps lack its PATH.
+pub(crate) fn cli_output(program: &str, args: &[&str]) -> Option<String> {
+    let output = Command::new(program)
+        .args(args)
+        .envs(shell::get_shell_env().ok()?)
+        .stdin(Stdio::null())
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        log::warn!("{program} {} failed", args.join(" "));
+        return None;
+    }
+
+    String::from_utf8(output.stdout).ok()
+}
+
+/// The prompt of a harness without a system prompt option: the context leads the first turn,
+/// resumed sessions already hold it.
+pub(crate) fn prompt_with_context(options: &ChatOptions) -> String {
+    if options.session_id.is_some() {
+        return options.prompt.to_string();
+    }
+
+    format!(
+        "<context>\n{}\n</context>\n\n{}",
+        options.system_prompt, options.prompt
+    )
+}
+
 /// Command running `harness` in `cwd` with `env`, minus the variables it must not see.
 pub fn command(harness: Harness, cwd: &Path, env: &HashMap<String, String>) -> Command {
     let adapter = harness.adapter();
     let mut cmd = Command::new(adapter.program());
-    cmd.current_dir(cwd).envs(env);
+    // the login shell's PWD would win over current_dir for some harnesses, e.g. opencode
+    cmd.current_dir(cwd).envs(env).env("PWD", cwd);
 
     for key in adapter.env_denylist() {
         cmd.env_remove(key);

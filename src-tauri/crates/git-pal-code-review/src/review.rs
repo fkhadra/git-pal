@@ -38,6 +38,16 @@ Rules for the JSON output:
 // TODO: Not sure how I should handle interactive skill, will have to see the usage
 const SKILLS_INSTRUCTIONS: &str = "Use these skills for the review:";
 
+/// Where the changes live, so agents don't go looking on GitHub.
+fn local_context(base_ref: &str) -> String {
+    format!(
+        "## Repository\nThe pull request is checked out in the current directory, detached at its head. \
+It merges into `{base_ref}`, available as a local branch: the changes are `git diff {base_ref}...HEAD`. \
+Everything you need is local: only read files and run git, don't reach GitHub (no gh CLI or API calls) \
+and don't run scripts or other commands, e.g. to check your output."
+    )
+}
+
 /// Narrows an incremental review to the commits pushed since `since`, overriding the instructions' scope.
 fn incremental_scope(since: &str) -> String {
     format!(
@@ -49,12 +59,13 @@ Only review the changes made since then (`git diff {since}..HEAD`), use the rest
 /// The output format is always appended so the review can be parsed whatever the instructions.
 fn review_prompt(
     instructions: &str,
+    base_ref: &str,
     skills: &[String],
     description: &str,
     discussion: &str,
     since: Option<&str>,
 ) -> String {
-    let mut prompt = instructions.to_string();
+    let mut prompt = format!("{instructions}\n\n{}", local_context(base_ref));
 
     if !skills.is_empty() {
         let list: Vec<_> = skills.iter().map(|s| format!("- {s}")).collect();
@@ -87,6 +98,7 @@ pub fn review(
     worktree_dir: &Path,
     env_vars: &HashMap<String, String>,
     instructions: &str,
+    base_ref: &str,
     skills: &[String],
     description: &str,
     discussion: &str,
@@ -97,7 +109,14 @@ pub fn review(
         harness,
         worktree_dir,
         env_vars,
-        &review_prompt(instructions, skills, description, discussion, since),
+        &review_prompt(
+            instructions,
+            base_ref,
+            skills,
+            description,
+            discussion,
+            since,
+        ),
         skills,
         model,
     )?;

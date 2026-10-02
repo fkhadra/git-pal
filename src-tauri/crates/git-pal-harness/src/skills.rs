@@ -52,6 +52,19 @@ pub fn list(home: &Path) -> Vec<Skill> {
     skills
 }
 
+/// Skills under `dir`, minus hidden built-in ones (e.g. Codex's `.system`).
+pub(crate) fn user_skills(dir: &Path) -> Vec<Skill> {
+    let Ok(entries) = fs::read_dir(dir) else {
+        return vec![];
+    };
+
+    entries
+        .flatten()
+        .filter(|entry| !entry.file_name().to_string_lossy().starts_with('.'))
+        .flat_map(|entry| read_skills(&entry.path(), None))
+        .collect()
+}
+
 /// Skills anywhere under `dir`, named `plugin:skill` when they come from a plugin.
 pub(crate) fn read_skills(dir: &Path, plugin: Option<&str>) -> Vec<Skill> {
     WalkBuilder::new(dir)
