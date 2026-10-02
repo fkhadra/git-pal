@@ -58,9 +58,13 @@ function findRanges(root: HTMLElement, query: string) {
   return ranges;
 }
 
+
 function clearHighlights() {
-  CSS.highlights.delete(MATCH_HIGHLIGHT);
-  CSS.highlights.delete(CURRENT_HIGHLIGHT);
+  for (const name of [MATCH_HIGHLIGHT, CURRENT_HIGHLIGHT]) {
+    
+    CSS.highlights.get(name)?.clear();
+    CSS.highlights.delete(name);
+  }
 }
 
 interface Props {
@@ -103,16 +107,14 @@ export function DiffFind({ containerRef, focusKey, onClose }: Props) {
   const index = Math.min(current, Math.max(ranges.length - 1, 0));
 
   useEffect(() => {
-    if (ranges.length === 0) {
-      clearHighlights();
-      return;
-    }
+    clearHighlights();
+    if (ranges.length === 0) return;
 
     // https://developer.mozilla.org/en-US/docs/Web/API/CSS_Custom_Highlight_API
     // baseline 2025 not sure if it's old enough
     CSS.highlights.set(MATCH_HIGHLIGHT, new Highlight(...ranges));
     CSS.highlights.set(CURRENT_HIGHLIGHT, new Highlight(ranges[index]));
-    
+
     ranges[index].startContainer.parentElement?.scrollIntoView({
       block: "center",
     });
