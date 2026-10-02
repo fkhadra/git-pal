@@ -1,4 +1,4 @@
-import { Check, Loader2, RefreshCw } from "lucide-react";
+import { Check, RefreshCw } from "lucide-react";
 
 import { ShortcutTooltip } from "~/components/shortcut-tooltip";
 import { Button } from "~/components/ui/button";
@@ -9,7 +9,10 @@ import { useCodeReviewSnapshot } from "./store";
 import { useRefreshPullRequest } from "./useRefreshPullRequest";
 
 function RefreshIcon({ status }: { status: string }) {
-  if (status === "checking") return <Loader2 className="size-4 animate-spin" />;
+  if (status === "checking") {
+    return <RefreshCw className="size-4 text-success animate-spin" />;
+  }
+
   if (status === "no-changes") {
     return <Check className="size-4 text-success" />;
   }

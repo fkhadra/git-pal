@@ -165,18 +165,22 @@ export function useLatestHeadShaQuery(review: GetSavedReviewRequest) {
   });
 }
 
-export function useNewCommitsQuery(review: CodeReview, headSha: string) {
+export function useNewCommitsQuery(
+  review: CodeReview,
+  base: string,
+  head: string,
+) {
   const request = {
     owner: review.owner,
     repository: review.repository,
-    base: review.headSha,
-    head: headSha,
+    base,
+    head,
   };
 
   return useQuery({
     queryKey: ["pr-compare", request],
     queryFn: () => commands.compareCommits(request),
-    enabled: review.headSha !== headSha,
+    enabled: base !== head,
     staleTime: Infinity,
     retry: false,
   });
