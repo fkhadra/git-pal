@@ -4,6 +4,8 @@ import { useState } from "react";
 import { RichTextEditor } from "~/components/rich-text-editor";
 import { Button } from "~/components/ui/button";
 
+import { useMentionSearch } from "./data-loader";
+
 interface CommentFormProps {
   label: string;
   defaultValue?: string;
@@ -20,6 +22,7 @@ export function CommentForm({
   onCancel,
 }: CommentFormProps) {
   const [value, setValue] = useState(defaultValue ?? "");
+  const searchMentions = useMentionSearch();
 
   function submit() {
     const text = value.trim();
@@ -48,6 +51,7 @@ export function CommentForm({
         <RichTextEditor
           autoFocus
           defaultValue={defaultValue}
+          searchMentions={searchMentions}
           placeholder="Write a comment..."
           className="min-h-14 rounded-md bg-muted/50 px-2 py-1.5 text-foreground"
           onChange={setValue}

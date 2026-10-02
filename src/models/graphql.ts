@@ -3,3 +3,7 @@
 export type FindPullRequestsFilter = "mentionned" | "reviewRequested";
 
 export type FindRepositoriesRequest = { owner: string, query: string, };
+
+export type MentionableUser = { login: string, name: string | null, avatarUrl: string, };
+
+export type MentionableUsersRequest = { owner: string, repository: string, query: string, };

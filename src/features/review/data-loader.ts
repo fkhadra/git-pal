@@ -8,6 +8,7 @@ import {
 import { minutesToMilliseconds } from "date-fns";
 
 import commands from "~/commands";
+import type { SearchUsers } from "~/components/rich-text-mention";
 import { useJobs } from "~/features/jobs";
 import { getPullRequestStatus } from "~/features/palette/Github/PullRequestStatus";
 import type { FileSourceRequest, ReviewEvent } from "~/models";
@@ -21,7 +22,10 @@ import type {
   ReviewStatus,
 } from "~/models/code-review";
 
+import { useCodeReviewSnapshot } from "./store";
 import { isPendingComment, reviewJobId } from "./utils";
+
+const MENTIONS_STALE_MS = minutesToMilliseconds(5);
 
 export const repositoryClonedKey = (owner: string, repository: string) => [
   "repository-cloned",
@@ -118,6 +122,22 @@ export function useOwnedFilesQuery(
     staleTime: OWNED_FILES_STALE_MS,
     enabled: !!review && !!baseRef && files.length > 0,
   });
+}
+
+/** Searches the selected review's repository for users to mention. */
+export function useMentionSearch(): SearchUsers | undefined {
+  const queryClient = useQueryClient();
+  const { selectedReview } = useCodeReviewSnapshot();
+  if (!selectedReview) return;
+
+  const { owner, repository } = selectedReview;
+
+  return (query) =>
+    queryClient.query({
+      queryKey: ["mentionable-users", owner, repository, query],
+      queryFn: () => commands.getMentionableUsers({ owner, repository, query }),
+      staleTime: MENTIONS_STALE_MS,
+    });
 }
 
 export function fileSourceQuery(request: FileSourceRequest) {

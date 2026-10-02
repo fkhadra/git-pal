@@ -10,6 +10,8 @@ import {
 } from "~/components/ui/dialog";
 import { Kbd } from "~/components/ui/kbd";
 
+import { useMentionSearch } from "./data-loader";
+
 interface Props {
   open: boolean;
   title: string;
@@ -27,6 +29,7 @@ export function EditCommentDialog({
 }: Props) {
   const [text, setText] = useState(defaultValue);
   const [wasOpen, setWasOpen] = useState(open);
+  const searchMentions = useMentionSearch();
 
   // start from the current comment each time the dialog opens
   if (open !== wasOpen) {
@@ -52,6 +55,7 @@ export function EditCommentDialog({
         <RichTextEditor
           autoFocus
           defaultValue={defaultValue}
+          searchMentions={searchMentions}
           className="max-h-[60vh] min-h-64 overflow-y-auto rounded-md border px-3 py-2"
           onChange={setText}
           onSubmit={save}

@@ -52,7 +52,11 @@ import type {
 import type { NewFeedback } from "./models/feedback";
 import type { ResponseData as FindRepositoriesResponse } from "./models/find-repositories";
 import type { PullRequest as PullRequestWithStatus } from "./models/get-pull-request";
-import type { FindRepositoriesRequest } from "./models/graphql";
+import type {
+  FindRepositoriesRequest,
+  MentionableUser,
+  MentionableUsersRequest,
+} from "./models/graphql";
 import type { Harness, Model, Skill } from "./models/harness";
 import type { ResponseData as HomepageResponse } from "./models/homepage";
 import type { Job } from "./models/jobs";
@@ -329,6 +333,10 @@ function getOwnedFiles(request: OwnedFilesRequest) {
   return invoke<string[] | null>("get_owned_files", { request });
 }
 
+function getMentionableUsers(request: MentionableUsersRequest) {
+  return invoke<MentionableUser[]>("get_mentionable_users", { request });
+}
+
 function isRepositoryCloned(owner: string, repository: string) {
   return invoke<boolean>("is_repository_cloned", { owner, repository });
 }
@@ -472,6 +480,7 @@ export default {
   takeRequestedReview,
   isRepositoryCloned,
   getOwnedFiles,
+  getMentionableUsers,
   showReview,
   listJobs,
   cancelReview,
