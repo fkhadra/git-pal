@@ -37,7 +37,7 @@ import {
 } from "~/components/ui/tooltip";
 import { AgentPanel, agentStore, useHarnessSync } from "~/features/agent";
 import { TemplateManager } from "~/features/templates/TemplateManager";
-import { useWindowReady } from "~/hooks";
+import { useShortcutHint, useWindowReady } from "~/hooks";
 import { treeItems } from "~/libs/path-tree";
 import type { CommentContext, PullRequestFile } from "~/models";
 import type { ReviewComment } from "~/models/code-review";
@@ -86,6 +86,7 @@ export function ReviewPage() {
   useAgentEvent();
   useKeybindSync();
   useHarnessSync();
+  useShortcutHint();
 
   const reviewsPanelRef = useRef<PanelImperativeHandle>(null);
   const agentPanelRef = useRef<PanelImperativeHandle>(null);
@@ -477,7 +478,6 @@ export function ReviewPage() {
                 </Button>
               </ShortcutTooltip>
               <HeaderDivider />
-              <RefreshPullRequestButton />
               {selectedReview && (
                 <ConversationSheet
                   review={selectedReview}
@@ -494,6 +494,7 @@ export function ReviewPage() {
                   initialStatus={savedReview.status}
                 />
               )}
+              <RefreshPullRequestButton />
               <HeaderDivider />
               <ReviewPrimaryAction
                 review={savedReview}
@@ -524,7 +525,7 @@ export function ReviewPage() {
         className={cn(
           "min-h-0 flex-1",
           isAnimating &&
-            "*:data-panel:transition-[flex-basis,flex-grow,flex-shrink] *:data-panel:duration-200 *:data-panel:ease-in-out",
+          "*:data-panel:transition-[flex-basis,flex-grow,flex-shrink] *:data-panel:duration-200 *:data-panel:ease-in-out",
         )}
         orientation="horizontal"
       >

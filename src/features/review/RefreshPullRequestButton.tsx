@@ -7,17 +7,14 @@ import { useIsReviewing } from "./data-loader";
 import { useKeybind } from "./shortcuts";
 import { useCodeReviewSnapshot } from "./store";
 import { useRefreshPullRequest } from "./useRefreshPullRequest";
+import { cn } from "cn";
 
 function RefreshIcon({ status }: { status: string }) {
-  if (status === "checking") {
-    return <RefreshCw className="size-4 text-success animate-spin" />;
-  }
-
   if (status === "no-changes") {
     return <Check className="size-4 text-success" />;
   }
 
-  return <RefreshCw className="size-4 text-success" />;
+  return <RefreshCw className={cn("size-4 text-success", status === "checking" && "animate-spin")} />;
 }
 
 export function RefreshPullRequestButton() {

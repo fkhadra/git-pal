@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 
 import commands from "~/commands";
 import { AgentAvatar } from "~/components/agent-avatar";
+import { Keybind } from "~/components/keybind";
 import { Spinner } from "~/components/spinner";
 import { Button } from "~/components/ui/button";
 import {
@@ -18,10 +19,13 @@ import {
   InputGroupInput,
 } from "~/components/ui/input-group";
 import { TemplatePicker } from "~/features/templates/TemplatePicker";
+import { useShortcutsHintVisible } from "~/hooks";
+import { shortcutSymbols } from "~/libs/keymap";
 import type { TemplateChoice } from "~/models/code-review";
 
 import { useReviewMutation } from "./data-loader";
 import { AUTO_TEMPLATE } from "./ReviewButton";
+import { useKeybind } from "./shortcuts";
 import { store } from "./store";
 import { parsePrUrl } from "./utils";
 
@@ -38,6 +42,8 @@ export function PrUrlInput({ inputRef }: Props) {
   const [isPickerOpen, setPickerOpen] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
   const { mutateAsync, isPending } = useReviewMutation();
+  const keybind = useKeybind();
+  const isShortcutHintVisible = useShortcutsHintVisible();
   const parsed = parsePrUrl(value);
   const isBusy = isPending || isViewing;
 
@@ -99,6 +105,15 @@ export function PrUrlInput({ inputRef }: Props) {
           onChange={(e) => setValue(e.target.value)}
           placeholder="Paste PR URL"
         />
+        {/* only the input the shortcut focuses, hidden once it has focus */}
+        {inputRef && isShortcutHintVisible && (
+          <InputGroupAddon
+            align="inline-end"
+            className="group-focus-within/input-group:hidden"
+          >
+            <Keybind keys={shortcutSymbols(keybind.pastePullRequest)} />
+          </InputGroupAddon>
+        )}
       </InputGroup>
 
       <DropdownMenu>
