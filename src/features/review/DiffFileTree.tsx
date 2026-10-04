@@ -183,17 +183,24 @@ export function DiffFileTree({
 
 function FileViewToggle({ value }: { value: FileView }) {
   const isTree = value === "tree";
+  const label = isTree ? "Show as list" : "Show as tree";
 
   return (
-    <Button
-      variant="ghost"
-      size="icon-xs"
-      title={isTree ? "Show as list" : "Show as tree"}
-      aria-label={isTree ? "Show as list" : "Show as tree"}
-      onClick={() => store.setFileView(isTree ? "list" : "tree")}
-    >
-      {isTree ? <List /> : <ListTree />}
-    </Button>
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            aria-label={label}
+            onClick={() => store.setFileView(isTree ? "list" : "tree")}
+          >
+            {isTree ? <List /> : <ListTree />}
+          </Button>
+        }
+      />
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 
