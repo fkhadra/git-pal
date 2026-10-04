@@ -7,7 +7,7 @@ import type { PaletteKeybind } from "~/models/settings";
 export type PaletteAction = keyof PaletteKeybind;
 
 export const PALETTE_SHORTCUT_LABELS: Record<PaletteAction, string> = {
-  primaryAction: "Open",
+  primaryAction: "Open or view pull request",
   secondaryAction: "Browse, or open pull request on GitHub",
   actions: "Show actions",
   review: "Review",

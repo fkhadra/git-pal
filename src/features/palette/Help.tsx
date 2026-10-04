@@ -50,31 +50,6 @@ function Item({
   );
 }
 
-function ReviewPalIntro() {
-  const keybind = usePaletteKeybind();
-
-  return (
-    <Section title="Review Pal">
-      <Typography.p>
-        Review Pal reviews pull requests with AI. On a pull request, press{" "}
-        <ShortcutKeys shortcut={keybind.review} className={INLINE_KEYS} /> to
-        review it, or{" "}
-        <ShortcutKeys
-          shortcut={keybind.reviewWithTemplate}
-          className={INLINE_KEYS}
-        />{" "}
-        to pick a template first. Pull requests under Review Requested and
-        Mentioned open in Review Pal without reviewing them,{" "}
-        <ShortcutKeys
-          shortcut={keybind.secondaryAction}
-          className={INLINE_KEYS}
-        />{" "}
-        opens them on GitHub.
-      </Typography.p>
-    </Section>
-  );
-}
-
 function Shortcuts() {
   const keybind = usePaletteKeybind();
   const actions = Object.keys(PALETTE_SHORTCUT_LABELS) as PaletteAction[];
@@ -94,9 +69,6 @@ function Shortcuts() {
 export function Help() {
   return (
     <div className="flex flex-col text-sm">
-      <ReviewPalIntro />
-      <Separator className="my-3" />
-
       <Shortcuts />
       <Separator className="my-3" />
 
