@@ -95,6 +95,20 @@ export function HomePage() {
           </Page>
         </CommandItem>
       </CommandGroup>
+      <CommandGroup heading="Open Pull Requests">
+        {data?.viewer.pullRequests.nodes?.filter(nil).map((v) => (
+          <CommandItem
+            value={v.id}
+            key={v.id}
+            keywords={[v.title, "pull request", "pr"]}
+            onSelect={() => {
+              viewPullRequest(v);
+            }}
+          >
+            <PullRequestItem pullRequest={v} hideAvatar />
+          </CommandItem>
+        ))}
+      </CommandGroup>
       <CommandGroup heading="Pages">
         <CommandItem
           value="dashboard"
@@ -118,20 +132,6 @@ export function HomePage() {
         >
           <Page icon={<CircleDot className="text-warning" />}>Issues</Page>
         </CommandItem>
-      </CommandGroup>
-      <CommandGroup heading="Open Pull Requests">
-        {data?.viewer.pullRequests.nodes?.filter(nil).map((v) => (
-          <CommandItem
-            value={v.id}
-            key={v.id}
-            keywords={[v.title, "pull request", "pr"]}
-            onSelect={() => {
-              viewPullRequest(v);
-            }}
-          >
-            <PullRequestItem pullRequest={v} hideAvatar />
-          </CommandItem>
-        ))}
       </CommandGroup>
       {!!userProfile.organizations.nodes?.length && (
         <CommandGroup heading="Organizations">
