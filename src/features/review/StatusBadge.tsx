@@ -1,36 +1,69 @@
-import { AlertCircle, Check, Send } from "lucide-react";
+import { cn } from "cn";
 
-import type { ReviewStatus } from "~/models/code-review";
+import type { GetSavedReviewRequest } from "~/models/code-review";
 
+import { useLatestHeadShaQuery } from "./data-loader";
+import { type ReviewProgress, type ReviewStatus, reviewStatus } from "./utils";
+
+// tinted like the palette's review decision
 const STATUS_CONFIG: Record<
   ReviewStatus,
-  { label: string; className: string; icon: React.ReactNode }
+  { label: string; className: string; dotClassName: string }
 > = {
-  Todo: {
+  todo: {
     label: "Todo",
-    className: "text-warning",
-    icon: <AlertCircle className="size-3" />,
+    className: "bg-warning/15 text-warning",
+    dotClassName: "bg-warning",
   },
-  Done: {
-    label: "Done",
-    className: "text-success ",
-    icon: <Check className="size-3" />,
+  inProgress: {
+    label: "In progress",
+    className: "bg-primary/15 text-primary",
+    dotClassName: "bg-primary",
   },
-  Submitted: {
+  submitted: {
     label: "Submitted",
-    className: "text-info ",
-    icon: <Send className="size-3" />,
+    className: "bg-info/15 text-info",
+    dotClassName: "bg-info",
   },
 };
 
-export function StatusBadge({ status }: { status: ReviewStatus }) {
+export function StatusBadge({
+  status,
+  className,
+}: {
+  status: ReviewStatus;
+  className?: string;
+}) {
   const config = STATUS_CONFIG[status];
+
   return (
     <span
-      className={`flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${config.className}`}
+      className={cn(
+        "flex min-w-fit shrink-0 items-center gap-1.5 rounded-md px-1.5 py-0.5 text-xs font-medium",
+        config.className,
+        className,
+      )}
     >
-      {config.icon}
+      <span className={cn("size-1.5 rounded-full", config.dotClassName)} />
       {config.label}
     </span>
+  );
+}
+
+/** Status of the open pull request, a new commit takes it back from submitted. */
+export function LiveStatusBadge({
+  review,
+  className,
+}: {
+  review: GetSavedReviewRequest & ReviewProgress;
+  className?: string;
+}) {
+  const { data: latestHeadSha } = useLatestHeadShaQuery(review);
+
+  return (
+    <StatusBadge
+      status={reviewStatus(review, latestHeadSha)}
+      className={className}
+    />
   );
 }

@@ -156,7 +156,6 @@ pub fn run() {
             commands::review::list_reviews,
             commands::review::get_review,
             commands::review::update_review_comments,
-            commands::review::update_review_status,
             commands::review::delete_review,
             commands::worktree::worktree_path,
             commands::worktree::is_repository_cloned,

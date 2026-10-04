@@ -66,7 +66,7 @@ import { ReviewActionsMenu } from "./ReviewActionsMenu";
 import { ReviewEmptyState } from "./ReviewEmptyState";
 import { CancelReviewButton, ReviewPrimaryAction } from "./ReviewJobActions";
 import { ReviewList } from "./ReviewList";
-import { ReviewStatusSelector } from "./ReviewStatusSelector";
+import { LiveStatusBadge } from "./StatusBadge";
 import { ReviewSummarySheet } from "./ReviewSummarySheet";
 import { ReviewUpdateBanner } from "./ReviewUpdateBanner";
 import { matchShortcut, useKeybind, useKeybindSync } from "./shortcuts";
@@ -74,7 +74,12 @@ import { ShortcutsDialog } from "./ShortcutsDialog";
 import { store, useCodeReviewSnapshot } from "./store";
 import { useAgentEvent } from "./useAgentEvent";
 import { useRefreshPullRequest } from "./useRefreshPullRequest";
-import { buildThreads, reviewCommentContext, threadContext } from "./utils";
+import {
+  buildThreads,
+  isPendingComment,
+  reviewCommentContext,
+  threadContext,
+} from "./utils";
 import { ViewedProgress } from "./ViewedProgress";
 
 const PANEL_ANIMATION_MS = 200;
@@ -447,6 +452,19 @@ export function ReviewPage() {
           )}
           {pr && (
             <>
+              {savedReview && (
+                <>
+                  <LiveStatusBadge
+                    review={{
+                      ...savedReview,
+                      noteCount: savedReview.comments.length,
+                      pendingCount:
+                        savedReview.comments.filter(isPendingComment).length,
+                    }}
+                  />
+                  <HeaderDivider />
+                </>
+              )}
               <ViewedProgress
                 viewed={viewedFiles.size}
                 total={allFiles.length}
@@ -487,12 +505,6 @@ export function ReviewPage() {
               )}
               {savedReview?.summary && (
                 <ReviewSummarySheet key={savedReview.id} review={savedReview} />
-              )}
-              {savedReview && (
-                <ReviewStatusSelector
-                  key={`${savedReview.id}-${savedReview.status}`}
-                  initialStatus={savedReview.status}
-                />
               )}
               <RefreshPullRequestButton />
               <HeaderDivider />

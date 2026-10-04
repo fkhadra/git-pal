@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   List,
   Loader2,
+  MessageSquare,
   Search,
   Settings2,
   Trash2,
@@ -57,9 +58,9 @@ import {
   useSavedReviewsQuery,
 } from "./data-loader";
 import { PrUrlInput } from "./PrUrlInput";
-import { StatusBadge } from "./StatusBadge";
+import { LiveStatusBadge, StatusBadge } from "./StatusBadge";
 import { store, useCodeReviewSnapshot } from "./store";
-import { isSameReview, reviewJobId } from "./utils";
+import { isSameReview, reviewJobId, reviewStatus } from "./utils";
 
 function commentLabel(count: number) {
   const noun = count === 1 ? "comment" : "comments";
@@ -84,6 +85,7 @@ function ReviewItem({
   const isReviewing = useIsReviewing(entry);
   const defaultHarness = useDefaultHarness();
   const harnessLabel = HARNESS_LABELS[entry.harness ?? defaultHarness];
+  const progress = { ...entry, noteCount: entry.commentCount };
 
   return (
     <div
@@ -92,7 +94,7 @@ function ReviewItem({
       onClick={() => store.selectReview(entry)}
       onKeyDown={(e) => e.key === "Enter" && store.selectReview(entry)}
       className={cn(
-        "group/item flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent/60",
+        "group/item flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent/60 overflow-hidden",
         isSelected && "bg-accent hover:bg-accent",
       )}
     >
@@ -108,24 +110,32 @@ function ReviewItem({
         )}
       />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="min-w-0 flex-1 truncate text-sm">
-            {entry.prTitle}
-          </span>
-          <StatusBadge status={entry.status} />
-        </div>
+        <div className="truncate text-sm">{entry.prTitle}</div>
         <div className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
           {entry.owner}/{entry.repository} #{entry.prNumber}
         </div>
         <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-          <span>
+          {isSelected ? (
+            <LiveStatusBadge review={progress} />
+          ) : (
+            <StatusBadge status={reviewStatus(progress)} />
+          )}
+          {/* <span>
             {entry.reviewed
               ? formatDistanceToNow(new Date(entry.reviewedAt), {
                   addSuffix: true,
                 })
               : "Not reviewed"}
-          </span>
-          {entry.reviewed && <span>{commentLabel(entry.commentCount)}</span>}
+          </span> */}
+          {entry.reviewed && (
+            <span
+              title={commentLabel(entry.commentCount)}
+              className="flex items-center gap-1"
+            >
+              <MessageSquare className="size-3" />
+              {entry.commentCount}
+            </span>
+          )}
           {entry.reviewed && entry.harness && (
             <Tooltip>
               <TooltipTrigger
