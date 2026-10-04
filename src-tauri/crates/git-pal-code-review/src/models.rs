@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
 use ts_rs::TS;
 
+pub const USER_SEVERITY: &str = "user";
+
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "code-review.ts")]
@@ -17,34 +19,14 @@ pub struct ReviewListEntry {
     /// False while the pull request was only viewed
     pub reviewed: bool,
     pub head_sha: String,
-    pub status: ReviewStatus,
+    pub submitted_head_sha: Option<String>,
     pub comment_count: usize,
     pub error_count: usize,
     pub warning_count: usize,
+    /// Notes posted with the next submitted review
+    pub pending_count: usize,
     pub harness: Option<Harness>,
     pub model: Option<String>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize, TS)]
-#[ts(export, export_to = "code-review.ts")]
-pub enum ReviewStatus {
-    #[default]
-    Todo,
-    Done,
-    Submitted,
-}
-
-impl TryFrom<String> for ReviewStatus {
-    type Error = String;
-
-    fn try_from(s: String) -> std::result::Result<Self, Self::Error> {
-        match s.as_str() {
-            "Todo" => Ok(Self::Todo),
-            "Done" => Ok(Self::Done),
-            "Submitted" => Ok(Self::Submitted),
-            other => Err(format!("unknown ReviewStatus: {other}")),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, TS)]
@@ -59,8 +41,8 @@ pub struct CodeReview {
     pub pr_title: String,
     pub branch: String,
     pub head_sha: String,
-    #[sqlx(try_from = "String")]
-    pub status: ReviewStatus,
+    /// Head commit the review was submitted at, cleared once the agent reviews again
+    pub submitted_head_sha: Option<String>,
     pub summary: String,
     #[sqlx(json)]
     pub comments: Vec<ReviewComment>,
@@ -111,16 +93,6 @@ pub struct UpdateReviewCommentsRequest {
     pub comments: Vec<ReviewComment>,
 }
 
-#[derive(Debug, Serialize, Deserialize, TS)]
-#[serde(rename_all = "camelCase")]
-#[ts(export, export_to = "code-review.ts")]
-pub struct UpdateReviewStatusRequest {
-    pub owner: String,
-    pub repository: String,
-    pub pr_number: i64,
-    pub status: ReviewStatus,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
 #[ts(export, export_to = "code-review.ts")]
@@ -139,6 +111,13 @@ pub struct ReviewComment {
     /// Already posted on GitHub
     #[serde(default)]
     pub posted: bool,
+}
+
+impl ReviewComment {
+    /// Posted with the next submitted review
+    pub fn is_pending(&self) -> bool {
+        !self.posted && (self.severity == USER_SEVERITY || self.publish)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]

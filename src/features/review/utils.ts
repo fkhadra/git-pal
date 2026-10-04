@@ -193,6 +193,31 @@ export function isSameReview(
 }
 
 /** Waiting to be posted with the next GitHub review. */
+export type ReviewStatus = "todo" | "inProgress" | "submitted";
+
+export interface ReviewProgress {
+  submittedHeadSha: string | null;
+  reviewed: boolean;
+  noteCount: number;
+  /** Notes not posted yet */
+  pendingCount: number;
+}
+
+/** Submitted until a new commit or note comes in, in progress once the agent ran or a note exists. */
+export function reviewStatus(
+  review: ReviewProgress,
+  latestHeadSha?: string,
+): ReviewStatus {
+  const { submittedHeadSha } = review;
+  const isOutdated = !!latestHeadSha && latestHeadSha !== submittedHeadSha;
+  if (submittedHeadSha && !isOutdated && review.pendingCount === 0) {
+    return "submitted";
+  }
+  if (review.reviewed || review.noteCount > 0) return "inProgress";
+
+  return "todo";
+}
+
 export function isPendingComment(comment: ReviewComment) {
   return !comment.posted && (comment.severity === "user" || comment.publish);
 }

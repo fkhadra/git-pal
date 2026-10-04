@@ -6,9 +6,7 @@ pub mod templates;
 use anyhow::Result;
 use sqlx::{Row, SqlitePool};
 
-use crate::models::{
-    CodeReview, ReviewComment, ReviewListEntry, ReviewStatus, SetFileViewedRequest, ViewedFile,
-};
+use crate::models::{CodeReview, ReviewComment, ReviewListEntry, SetFileViewedRequest, ViewedFile};
 
 impl CodeReview {
     pub fn to_list_entry(&self) -> ReviewListEntry {
@@ -23,6 +21,7 @@ impl CodeReview {
             .iter()
             .filter(|c| c.severity == "warning")
             .count();
+        let pending_count = self.comments.iter().filter(|c| c.is_pending()).count();
 
         ReviewListEntry {
             id: self.id,
@@ -32,23 +31,16 @@ impl CodeReview {
             pr_title: self.pr_title.clone(),
             branch: self.branch.clone(),
             head_sha: self.head_sha.clone(),
-            status: self.status.clone(),
+            submitted_head_sha: self.submitted_head_sha.clone(),
             reviewed_at: self.reviewed_at.clone(),
             reviewed: self.reviewed,
             comment_count,
             error_count,
             warning_count,
+            pending_count,
             harness: self.harness,
             model: self.model.clone(),
         }
-    }
-}
-
-fn status_to_str(s: &ReviewStatus) -> &'static str {
-    match s {
-        ReviewStatus::Todo => "Todo",
-        ReviewStatus::Done => "Done",
-        ReviewStatus::Submitted => "Submitted",
     }
 }
 
@@ -64,7 +56,7 @@ impl CodeReviewStore {
 
     pub async fn list_reviews(&self) -> Result<Vec<ReviewListEntry>> {
         let rows = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
              FROM code_reviews ORDER BY reviewed_at DESC",
         )
         .fetch_all(&self.pool)
@@ -80,7 +72,7 @@ impl CodeReviewStore {
         pr_number: i64,
     ) -> Result<Option<CodeReview>> {
         let row = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
              FROM code_reviews WHERE owner = ? AND repository = ? AND pr_number = ?",
         )
         .bind(owner)
@@ -96,13 +88,13 @@ impl CodeReviewStore {
         let comments_json = serde_json::to_string(&review.comments)?;
 
         let row = sqlx::query(
-            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, status, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed) \
+            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed) \
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
              ON CONFLICT(owner, repository, pr_number) DO UPDATE SET \
                 pr_title = excluded.pr_title, \
                 branch = excluded.branch, \
                 head_sha = excluded.head_sha, \
-                status = excluded.status, \
+                submitted_head_sha = excluded.submitted_head_sha, \
                 summary = excluded.summary, \
                 comments = excluded.comments, \
                 reviewed_at = excluded.reviewed_at, \
@@ -121,7 +113,7 @@ impl CodeReviewStore {
         .bind(&review.pr_title)
         .bind(&review.branch)
         .bind(&review.head_sha)
-        .bind(status_to_str(&review.status))
+        .bind(&review.submitted_head_sha)
         .bind(&review.summary)
         .bind(&comments_json)
         .bind(&review.reviewed_at)
@@ -199,17 +191,32 @@ impl CodeReviewStore {
         Ok(())
     }
 
-    pub async fn update_status(
+    /// Marks the pending notes as posted and the review as submitted at `head_sha`.
+    pub async fn mark_submitted(
         &self,
         owner: &str,
         repository: &str,
         pr_number: i64,
-        status: &ReviewStatus,
+        head_sha: &str,
     ) -> Result<()> {
+        let Some(review) = self.get_review(owner, repository, pr_number).await? else {
+            return Ok(());
+        };
+
+        let comments: Vec<ReviewComment> = review
+            .comments
+            .into_iter()
+            .map(|comment| ReviewComment {
+                posted: comment.posted || comment.is_pending(),
+                ..comment
+            })
+            .collect();
+
         sqlx::query(
-            "UPDATE code_reviews SET status = ? WHERE owner = ? AND repository = ? AND pr_number = ?",
+            "UPDATE code_reviews SET comments = ?, submitted_head_sha = ? WHERE owner = ? AND repository = ? AND pr_number = ?",
         )
-        .bind(status_to_str(status))
+        .bind(serde_json::to_string(&comments)?)
+        .bind(head_sha)
         .bind(owner)
         .bind(repository)
         .bind(pr_number)

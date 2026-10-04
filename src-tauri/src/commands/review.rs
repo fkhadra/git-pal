@@ -13,8 +13,8 @@ use git_pal_code_review::{
     git,
     models::{
         CodeReview, GetSavedReviewRequest, PullRequestReview, PullRequestSummary, ReviewComment,
-        ReviewListEntry, ReviewPullRequestRequest, ReviewStatus, SetFileViewedRequest,
-        UpdateReviewCommentsRequest, UpdateReviewStatusRequest, ViewedFile,
+        ReviewListEntry, ReviewPullRequestRequest, SetFileViewedRequest, USER_SEVERITY,
+        UpdateReviewCommentsRequest, ViewedFile,
     },
     review, templates,
 };
@@ -24,8 +24,6 @@ use git_pal_job_runner::{Job, JobKind, JobStatus};
 
 use super::Result;
 use super::github::discussion_summary;
-
-const USER_SEVERITY: &str = "user";
 
 /// Starts a review job in the background and returns its id.
 #[tauri::command]
@@ -98,7 +96,7 @@ pub async fn review_pull_request(
         .map(|t| t.content)
         .unwrap_or_else(|| review::BUILT_IN_INSTRUCTIONS.to_string());
 
-    // keep status and user notes while re-reviewing, an incremental review keeps everything.
+    // keep the submission and user notes while re-reviewing, an incremental review keeps everything.
     // The reviewed commit only moves once the review succeeds.
     let head_sha = pr.head_sha;
     let reviewed = existing.as_ref().is_some_and(|r| r.reviewed);
@@ -113,10 +111,7 @@ pub async fn review_pull_request(
             .as_ref()
             .map(|r| r.head_sha.clone())
             .unwrap_or_else(|| head_sha.clone()),
-        status: existing
-            .as_ref()
-            .map(|r| r.status.clone())
-            .unwrap_or_default(),
+        submitted_head_sha: existing.as_ref().and_then(|r| r.submitted_head_sha.clone()),
         summary: existing
             .as_ref()
             .filter(|_| incremental)
@@ -193,10 +188,8 @@ pub async fn review_pull_request(
                     .map_err(|e| e.to_string())?;
 
                 let mut comments = review.comments.clone();
-                let mut status = placeholder.status.clone();
                 if let Some(existing) = existing {
                     comments.extend(kept_comments(existing.comments, incremental));
-                    status = existing.status;
                 }
 
                 let summary = match &since {
@@ -204,8 +197,9 @@ pub async fn review_pull_request(
                     None => review.summary.clone(),
                 };
 
+                // new notes take the review back from submitted
                 let saved = CodeReview {
-                    status,
+                    submitted_head_sha: None,
                     comments,
                     summary,
                     head_sha,
@@ -371,24 +365,6 @@ pub async fn update_review_comments(
 }
 
 #[tauri::command]
-pub async fn update_review_status(
-    state: State<'_, AppState>,
-    request: UpdateReviewStatusRequest,
-) -> Result<()> {
-    state
-        .code_review_store
-        .update_status(
-            &request.owner,
-            &request.repository,
-            request.pr_number,
-            &request.status,
-        )
-        .await?;
-
-    Ok(())
-}
-
-#[tauri::command]
 pub async fn list_viewed_files(
     state: State<'_, AppState>,
     request: GetSavedReviewRequest,
@@ -409,18 +385,18 @@ pub async fn set_file_viewed(
     Ok(())
 }
 
-/// Posts the review on GitHub, then marks the saved review as submitted.
+/// Posts the review on GitHub, then marks the saved review and its notes as submitted.
 #[tauri::command]
 pub async fn submit_review(state: State<'_, AppState>, request: SubmitReviewRequest) -> Result<()> {
     state.github_client.submit_review(&request).await?;
 
     state
         .code_review_store
-        .update_status(
+        .mark_submitted(
             &request.owner,
             &request.repository,
             request.number,
-            &ReviewStatus::Submitted,
+            &request.commit_id,
         )
         .await?;
 
@@ -535,7 +511,7 @@ pub async fn view_pull_request(
                 pr_title: pr.title,
                 branch: pr.branch,
                 head_sha: pr.head_sha,
-                status: ReviewStatus::default(),
+                submitted_head_sha: None,
                 summary: String::new(),
                 comments: vec![],
                 reviewed_at: chrono::Utc::now().to_rfc3339(),

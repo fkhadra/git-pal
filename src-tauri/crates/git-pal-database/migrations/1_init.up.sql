@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS code_reviews (
     pr_title      TEXT    NOT NULL DEFAULT '',
     branch        TEXT    NOT NULL DEFAULT '',
     head_sha      TEXT    NOT NULL DEFAULT '',
-    status        TEXT    NOT NULL DEFAULT 'Todo',
+    -- head commit the review was submitted at, NULL until submitted
+    submitted_head_sha TEXT,
     summary       TEXT    NOT NULL DEFAULT '',
     comments      TEXT    NOT NULL DEFAULT '[]',
     reviewed_at   TEXT    NOT NULL,

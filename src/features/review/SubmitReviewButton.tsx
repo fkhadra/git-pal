@@ -71,7 +71,6 @@ export function SubmitReviewButton({
 
     try {
       await mutateAsync({ review, commitId, body, event });
-      toast.success("Review submitted");
       setBody("");
       setEvent("COMMENT");
       store.setSubmitOpen(false);

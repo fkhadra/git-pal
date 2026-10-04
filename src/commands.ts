@@ -42,7 +42,6 @@ import type {
   ReviewTemplateInput,
   SetFileViewedRequest,
   UpdateReviewCommentsRequest,
-  UpdateReviewStatusRequest,
   ViewedFile,
 } from "./models/code-review";
 import type {
@@ -256,10 +255,6 @@ function updateReviewComments(request: UpdateReviewCommentsRequest) {
   return invoke<void>("update_review_comments", { request });
 }
 
-function updateReviewStatus(request: UpdateReviewStatusRequest) {
-  return invoke<void>("update_review_status", { request });
-}
-
 function deleteReview(request: GetSavedReviewRequest) {
   return invoke<void>("delete_review", { request });
 }
@@ -464,7 +459,6 @@ export default {
   listReviews,
   getReview,
   updateReviewComments,
-  updateReviewStatus,
   deleteReview,
   worktreePath,
   listEditors,

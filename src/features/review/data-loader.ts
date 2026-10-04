@@ -19,7 +19,6 @@ import type {
   SetFileViewedRequest,
   ViewedFile,
   ReviewListEntry,
-  ReviewStatus,
 } from "~/models/code-review";
 
 import { useCodeReviewSnapshot } from "./store";
@@ -270,6 +269,8 @@ export function useSaveCommentsMutation() {
       });
 
       queryClient.invalidateQueries({ queryKey: ["saved-review"] });
+      // pending notes take the review back from submitted
+      queryClient.invalidateQueries({ queryKey: ["saved-reviews"] });
     },
   });
 }
@@ -303,18 +304,6 @@ export function useDeleteReviewMutation() {
 
   return useMutation({
     mutationFn: commands.deleteReview,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["saved-reviews"] });
-    },
-  });
-}
-
-export function useUpdateReviewStatusMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (params: GetSavedReviewRequest & { status: ReviewStatus }) =>
-      commands.updateReviewStatus(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-reviews"] });
     },
@@ -394,13 +383,6 @@ export function useSubmitReviewMutation() {
           line: c.line,
           startLine: c.startLine,
         })),
-      });
-
-      await commands.updateReviewComments({
-        ...key,
-        comments: review.comments.map((c) =>
-          isPendingComment(c) ? { ...c, posted: true } : c,
-        ),
       });
     },
     onSuccess: () => {
