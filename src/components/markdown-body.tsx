@@ -4,6 +4,7 @@ import rehypeRaw from "rehype-raw";
 import rehypeSanitize from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 
+import { CopyButton } from "./copy-button";
 import { ZoomableImage } from "./zoomable-image";
 
 // GitHub flavored
@@ -22,6 +23,9 @@ function isVideo(href?: string) {
 }
 const REHYPE_PLUGINS = [rehypeRaw, rehypeSanitize];
 
+const LANGUAGE_CLASS = /language-(\w+)/;
+const PLAIN_TEXT = "text";
+
 function CodeBlock({
   className,
   children,
@@ -29,24 +33,21 @@ function CodeBlock({
   className?: string;
   children: string;
 }) {
-  const match = /language-(\w+)/.exec(className ?? "");
-  const language = match ? match[1] : "";
+  const language = LANGUAGE_CLASS.exec(className ?? "")?.[1] ?? PLAIN_TEXT;
   const code = children.trimEnd();
-
-  if (!match) {
-    return (
-      <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-        {children}
-      </code>
-    );
-  }
 
   return (
     <Highlight theme={themes.oneDark} code={code} language={language}>
       {({ style, tokens, getLineProps, getTokenProps }) => (
         <div className="my-2 overflow-hidden rounded-lg border border-border">
-          <div className="flex items-center justify-between bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
+          <div className="flex items-center justify-between bg-muted/50 py-1 pr-1.5 pl-3 text-xs text-muted-foreground">
             <span>{language}</span>
+            <CopyButton
+              content={code}
+              message="Copy code"
+              size="icon-xs"
+              variant="ghost"
+            />
           </div>
           <pre
             className="overflow-x-auto p-3 text-xs leading-relaxed"
@@ -74,7 +75,10 @@ export function MarkdownBody({ content }: { content: string }) {
         rehypePlugins={REHYPE_PLUGINS}
         components={{
           code({ className, children, ...props }) {
-            const isBlock = /language-/.test(className ?? "");
+            // fenced blocks end with a newline, inline code never does
+            const isBlock =
+              LANGUAGE_CLASS.test(className ?? "") ||
+              String(children).includes("\n");
             if (isBlock) {
               return (
                 <CodeBlock className={className}>{String(children)}</CodeBlock>
