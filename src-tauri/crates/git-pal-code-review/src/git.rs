@@ -186,7 +186,7 @@ fn add_worktree(bare_dir: &Path, worktree_dir: &Path, branch: &str) -> Result<()
 }
 
 pub fn remove_worktree(bare_dir: &Path, worktree_dir: &Path) -> Result<()> {
-    let _ = Command::new("git")
+    let output = Command::new("git")
         .args([
             "-C",
             &bare_dir.to_string_lossy(),
@@ -196,6 +196,16 @@ pub fn remove_worktree(bare_dir: &Path, worktree_dir: &Path) -> Result<()> {
             &worktree_dir.to_string_lossy(),
         ])
         .output();
+
+    // the folder is still deleted below, git's record of it stays until pruned
+    match output {
+        Ok(output) if !output.status.success() => log::warn!(
+            "git worktree remove failed: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        ),
+        Err(e) => log::warn!("git worktree remove failed to run: {e}"),
+        Ok(_) => {}
+    }
 
     if worktree_dir.exists() {
         fs::remove_dir_all(worktree_dir)?;

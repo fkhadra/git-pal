@@ -4,9 +4,12 @@ pub mod review;
 pub mod templates;
 
 use anyhow::Result;
-use sqlx::{Row, SqlitePool};
+use sqlx::{QueryBuilder, Row, Sqlite, SqlitePool};
 
-use crate::models::{CodeReview, ReviewComment, ReviewListEntry, SetFileViewedRequest, ViewedFile};
+use crate::models::{
+    CodeReview, GetSavedReviewRequest, ReviewComment, ReviewListEntry, SetFileViewedRequest,
+    ViewedFile,
+};
 
 impl CodeReview {
     pub fn to_list_entry(&self) -> ReviewListEntry {
@@ -41,6 +44,14 @@ impl CodeReview {
             harness: self.harness,
             model: self.model.clone(),
         }
+    }
+}
+
+/// `?, ?, …`, one bound placeholder per id
+fn push_ids(query: &mut QueryBuilder<Sqlite>, ids: &[i64]) {
+    let mut list = query.separated(", ");
+    for id in ids {
+        list.push_bind(*id);
     }
 }
 
@@ -226,25 +237,39 @@ impl CodeReviewStore {
         Ok(())
     }
 
-    pub async fn delete_review(&self, owner: &str, repository: &str, pr_number: i64) -> Result<()> {
-        let mut tx = self.pool.begin().await?;
-
-        let queries = [
-            "DELETE FROM code_reviews WHERE owner = ? AND repository = ? AND pr_number = ?",
-            "DELETE FROM review_viewed_files WHERE owner = ? AND repository = ? AND pr_number = ?",
-        ];
-
-        for query in queries {
-            sqlx::query(query)
-                .bind(owner)
-                .bind(repository)
-                .bind(pr_number)
-                .execute(&mut *tx)
-                .await?;
+    /// Deletes the reviews and their viewed files, returns the pull requests of those that existed.
+    pub async fn delete_reviews(&self, ids: &[i64]) -> Result<Vec<GetSavedReviewRequest>> {
+        if ids.is_empty() {
+            return Ok(vec![]);
         }
 
+        let mut tx = self.pool.begin().await?;
+
+        let mut viewed_files = QueryBuilder::<Sqlite>::new(
+            "DELETE FROM review_viewed_files WHERE (owner, repository, pr_number) IN \
+             (SELECT owner, repository, pr_number FROM code_reviews WHERE id IN (",
+        );
+        push_ids(&mut viewed_files, ids);
+        viewed_files.push("))");
+        viewed_files.build().execute(&mut *tx).await?;
+
+        let mut reviews = QueryBuilder::<Sqlite>::new("DELETE FROM code_reviews WHERE id IN (");
+        push_ids(&mut reviews, ids);
+        reviews.push(") RETURNING owner, repository, pr_number");
+        let rows = reviews.build().fetch_all(&mut *tx).await?;
+
         tx.commit().await?;
-        Ok(())
+
+        let prs = rows
+            .iter()
+            .map(|row| GetSavedReviewRequest {
+                owner: row.get("owner"),
+                repository: row.get("repository"),
+                pr_number: row.get("pr_number"),
+            })
+            .collect();
+
+        Ok(prs)
     }
 
     pub async fn viewed_files(

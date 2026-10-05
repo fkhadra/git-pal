@@ -299,17 +299,6 @@ export function useSavedReviewsQuery() {
   });
 }
 
-export function useDeleteReviewMutation() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: commands.deleteReview,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["saved-reviews"] });
-    },
-  });
-}
-
 const viewedFilesKey = (review?: GetSavedReviewRequest | null) => [
   "viewed-files",
   review?.owner,
@@ -407,12 +396,7 @@ export function useDeleteReviewsMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    // one at a time, deleting a review also prunes its repository's worktrees
-    mutationFn: async (reviews: GetSavedReviewRequest[]) => {
-      for (const review of reviews) {
-        await commands.deleteReview(review);
-      }
-    },
+    mutationFn: commands.deleteReviews,
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["saved-reviews"] });
     },

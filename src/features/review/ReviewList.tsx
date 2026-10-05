@@ -51,7 +51,6 @@ import { templateManager } from "~/features/templates/store";
 import type { ReviewListEntry } from "~/models/code-review";
 
 import {
-  useDeleteReviewMutation,
   useDeleteReviewsMutation,
   useIsReviewing,
   useReviewingJobIds,
@@ -340,7 +339,7 @@ function BulkActions({
 
   const remove = async () => {
     try {
-      await deleteReviews(reviews);
+      await deleteReviews(reviews.map((review) => review.id));
       reviews.forEach(store.clearReview);
       onDeleted();
     } catch (error) {
@@ -411,7 +410,7 @@ function BulkActions({
 }
 
 function DeleteReviewButton({ entry }: { entry: ReviewListEntry }) {
-  const { mutateAsync: deleteReview, isPending } = useDeleteReviewMutation();
+  const { mutateAsync: deleteReviews, isPending } = useDeleteReviewsMutation();
 
   return (
     <AlertDialog>
@@ -453,11 +452,7 @@ function DeleteReviewButton({ entry }: { entry: ReviewListEntry }) {
             className="relative overflow-hidden"
             onClick={async () => {
               try {
-                await deleteReview({
-                  owner: entry.owner,
-                  repository: entry.repository,
-                  prNumber: entry.prNumber,
-                });
+                await deleteReviews([entry.id]);
                 store.clearReview(entry);
               } catch (error) {
                 toast.error(String(error));
