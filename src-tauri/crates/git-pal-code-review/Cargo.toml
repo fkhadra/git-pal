@@ -12,4 +12,5 @@ chrono = { workspace = true }
 ts-rs = { workspace = true }
 log = { workspace = true }
 regex = { workspace = true }
+git-pal-github = { path = "../git-pal-github" }
 git-pal-harness = { path = "../git-pal-harness" }

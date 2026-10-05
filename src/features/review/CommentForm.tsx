@@ -10,6 +10,7 @@ interface CommentFormProps {
   label: string;
   defaultValue?: string;
   submitLabel?: string;
+  onChange?: (comment: string) => void;
   onSubmit: (comment: string) => void;
   onCancel: () => void;
 }
@@ -18,11 +19,17 @@ export function CommentForm({
   label,
   defaultValue,
   submitLabel = "Comment",
+  onChange,
   onSubmit,
   onCancel,
 }: CommentFormProps) {
   const [value, setValue] = useState(defaultValue ?? "");
   const searchMentions = useMentionSearch();
+
+  function change(text: string) {
+    setValue(text);
+    onChange?.(text);
+  }
 
   function submit() {
     const text = value.trim();
@@ -54,7 +61,7 @@ export function CommentForm({
           searchMentions={searchMentions}
           placeholder="Write a comment..."
           className="min-h-14 rounded-md bg-muted/50 px-2 py-1.5 text-foreground"
-          onChange={setValue}
+          onChange={change}
           onSubmit={submit}
           onCancel={onCancel}
         />

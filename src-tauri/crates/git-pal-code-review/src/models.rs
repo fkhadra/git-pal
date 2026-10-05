@@ -1,3 +1,4 @@
+use git_pal_github::rest::ReviewEvent;
 use git_pal_harness::Harness;
 use serde::{Deserialize, Serialize};
 use sqlx::prelude::FromRow;
@@ -20,6 +21,7 @@ pub struct ReviewListEntry {
     pub reviewed: bool,
     pub head_sha: String,
     pub submitted_head_sha: Option<String>,
+    pub submitted_event: Option<ReviewEvent>,
     pub comment_count: usize,
     pub error_count: usize,
     pub warning_count: usize,
@@ -41,8 +43,9 @@ pub struct CodeReview {
     pub pr_title: String,
     pub branch: String,
     pub head_sha: String,
-    /// Head commit the review was submitted at, cleared once the agent reviews again
     pub submitted_head_sha: Option<String>,
+    #[sqlx(json(nullable))]
+    pub submitted_event: Option<ReviewEvent>,
     pub summary: String,
     #[sqlx(json)]
     pub comments: Vec<ReviewComment>,
