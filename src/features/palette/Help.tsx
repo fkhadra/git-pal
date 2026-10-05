@@ -11,8 +11,6 @@ import {
   usePaletteKeybind,
 } from "./shortcuts";
 
-const INLINE_KEYS = "inline-flex align-middle";
-
 function Section({
   title,
   children,
