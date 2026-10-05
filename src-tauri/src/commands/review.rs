@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Mutex};
 
 use anyhow::anyhow;
 use tauri::{AppHandle, Manager, State};
@@ -403,38 +403,39 @@ pub async fn submit_review(state: State<'_, AppState>, request: SubmitReviewRequ
     Ok(())
 }
 
-/// Deletes the review and its worktree.
-#[tauri::command]
-pub async fn delete_review(
-    state: State<'_, AppState>,
-    request: GetSavedReviewRequest,
-) -> Result<()> {
-    state
-        .code_review_store
-        .delete_review(&request.owner, &request.repository, request.pr_number)
-        .await?;
+static WORKTREE_REMOVAL: Mutex<()> = Mutex::new(());
 
-    state
-        .agent_store
-        .delete_for_pr(&PullRequestKey {
-            owner: request.owner.clone(),
-            repository: request.repository.clone(),
-            pr_number: request.pr_number,
-        })
-        .await?;
+#[tauri::command]
+pub async fn delete_reviews(state: State<'_, AppState>, ids: Vec<i64>) -> Result<()> {
+    let prs = state.code_review_store.delete_reviews(&ids).await?;
+
+    for pr in &prs {
+        state
+            .agent_store
+            .delete_for_pr(&PullRequestKey {
+                owner: pr.owner.clone(),
+                repository: pr.repository.clone(),
+                pr_number: pr.pr_number,
+            })
+            .await?;
+    }
 
     let repositories_dir = state.repositories_dir();
-    let bare_dir = git::bare_dir(&repositories_dir, &request.owner, &request.repository);
-    let worktree_dir = git::worktree_dir(
-        &repositories_dir,
-        &request.owner,
-        &request.repository,
-        request.pr_number,
-    );
+    tokio::task::spawn_blocking(move || {
+        let _removing = WORKTREE_REMOVAL
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
 
-    tokio::task::spawn_blocking(move || git::remove_worktree(&bare_dir, &worktree_dir))
-        .await
-        .map_err(|e| anyhow!("Task join error: {e}"))??;
+        for pr in prs {
+            let bare_dir = git::bare_dir(&repositories_dir, &pr.owner, &pr.repository);
+            let worktree_dir =
+                git::worktree_dir(&repositories_dir, &pr.owner, &pr.repository, pr.pr_number);
+
+            if let Err(e) = git::remove_worktree(&bare_dir, &worktree_dir) {
+                log::error!("Failed to remove {}: {e}", worktree_dir.display());
+            }
+        }
+    });
 
     Ok(())
 }

@@ -156,7 +156,7 @@ pub fn run() {
             commands::review::list_reviews,
             commands::review::get_review,
             commands::review::update_review_comments,
-            commands::review::delete_review,
+            commands::review::delete_reviews,
             commands::worktree::worktree_path,
             commands::worktree::is_repository_cloned,
             commands::worktree::list_editors,

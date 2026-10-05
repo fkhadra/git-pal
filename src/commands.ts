@@ -255,8 +255,8 @@ function updateReviewComments(request: UpdateReviewCommentsRequest) {
   return invoke<void>("update_review_comments", { request });
 }
 
-function deleteReview(request: GetSavedReviewRequest) {
-  return invoke<void>("delete_review", { request });
+function deleteReviews(ids: number[]) {
+  return invoke<void>("delete_reviews", { ids });
 }
 
 function worktreePath(request: GetSavedReviewRequest) {
@@ -459,7 +459,7 @@ export default {
   listReviews,
   getReview,
   updateReviewComments,
-  deleteReview,
+  deleteReviews,
   worktreePath,
   listEditors,
   openInEditor,
