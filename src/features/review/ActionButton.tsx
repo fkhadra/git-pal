@@ -1,4 +1,5 @@
 import { cn } from "cn";
+import { ChevronDown } from "lucide-react";
 
 import { Button } from "~/components/ui/button";
 import {
@@ -6,6 +7,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "~/components/ui/tooltip";
+
+import { store } from "./store";
 
 interface Props {
   tooltip: string;
@@ -64,5 +67,24 @@ export function StateIcon({
       </TooltipTrigger>
       <TooltipContent>{tooltip}</TooltipContent>
     </Tooltip>
+  );
+}
+
+export function CollapseButton({
+  id,
+  isCollapsed,
+}: {
+  id: string;
+  isCollapsed: boolean;
+}) {
+  return (
+    <ActionButton
+      tooltip={isCollapsed ? "Expand" : "Collapse"}
+      onClick={() => store.toggleCollapsed(id)}
+    >
+      <ChevronDown
+        className={cn("transition-transform", isCollapsed && "-rotate-90")}
+      />
+    </ActionButton>
   );
 }

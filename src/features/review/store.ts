@@ -21,6 +21,12 @@ function savedFileView(): FileView {
   return DEFAULT_FILE_VIEW;
 }
 
+export interface Selection {
+  hunkIndex: number;
+  anchor: number;
+  focus: number;
+}
+
 interface State {
   selectedFile: string | null;
   selectedReview: ReviewListEntry | null;
@@ -30,6 +36,9 @@ interface State {
   isOwnedOnly: boolean;
   refreshStatus: RefreshStatus;
   isSubmitOpen: boolean;
+  drafts: Record<string, string>;
+  selections: Record<string, Selection>;
+  collapsed: Record<string, boolean>;
 }
 
 const state = proxy<State>({
@@ -41,9 +50,19 @@ const state = proxy<State>({
   isOwnedOnly: false,
   refreshStatus: "idle",
   isSubmitOpen: false,
+  drafts: {},
+  selections: {},
+  collapsed: {},
 });
 
-// view picked by the user, restored once a narrow diff widens again
+export function fileScope(review: GetSavedReviewRequest, file: string) {
+  return `${review.owner}/${review.repository}#${review.prNumber}:${file}`;
+}
+
+export function fileDraftKey(scope: string) {
+  return `${scope}:file`;
+}
+
 let isNarrow = false;
 let preferredViewType: ViewType = state.viewType;
 
@@ -116,6 +135,29 @@ export const store = {
   },
   setSubmitOpen(open: boolean) {
     state.isSubmitOpen = open;
+  },
+  draft(key: string) {
+    return state.drafts[key];
+  },
+  openDraft(key: string) {
+    state.drafts[key] ??= "";
+  },
+  setDraft(key: string, text: string) {
+    state.drafts[key] = text;
+  },
+  clearDraft(key: string) {
+    delete state.drafts[key];
+  },
+  setSelection(scope: string, selection: Selection | null) {
+    if (selection) {
+      state.selections[scope] = selection;
+      return;
+    }
+
+    delete state.selections[scope];
+  },
+  toggleCollapsed(key: string) {
+    state.collapsed[key] = !state.collapsed[key];
   },
 };
 

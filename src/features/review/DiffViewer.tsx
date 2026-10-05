@@ -38,6 +38,12 @@ import { DiffExpander } from "./DiffExpander";
 import { GithubThreadWidget } from "./GithubThreadWidget";
 import { ReviewCommentWidget } from "./ReviewCommentWidget";
 import {
+  fileDraftKey,
+  type Selection,
+  store,
+  useCodeReviewSnapshot,
+} from "./store";
+import {
   getDiffType,
   getLanguageFromFilename,
   type InlineThread,
@@ -80,11 +86,8 @@ export interface NewComment {
   comment: string;
 }
 
-/** New-side lines picked in the gutter, GitHub requires ranges within one hunk. */
-interface Selection {
-  hunkIndex: number;
-  anchor: number;
-  focus: number;
+function noteKey({ line, startLine, severity, comment }: ReviewComment) {
+  return `${line}:${startLine}:${severity}:${comment}`;
 }
 
 interface DiffViewerProps {
@@ -96,10 +99,8 @@ interface DiffViewerProps {
   rawDiff: string;
   viewType: ViewType;
   comments: ReviewComment[];
-  /** Existing GitHub threads on this file, read-only */
   threads: InlineThread[];
-  isAddingFileComment?: boolean;
-  onCloseFileComment?: () => void;
+  draftScope: string;
   onAddComment?: (comment: NewComment) => void;
   onDeleteComment?: (comment: ReviewComment) => void;
   onUpdateComment?: (
@@ -129,14 +130,17 @@ export function DiffViewer({
   viewType,
   comments,
   threads,
-  isAddingFileComment,
-  onCloseFileComment,
+  draftScope,
   onAddComment,
   onDeleteComment,
   onUpdateComment,
   onAskAgent,
 }: DiffViewerProps) {
-  const [selection, setSelection] = useState<Selection | null>(null);
+  const snapshot = useCodeReviewSnapshot();
+  const selection = snapshot.selections[draftScope] ?? null;
+  const lineDraftKey = `${draftScope}:line`;
+  const fileKey = fileDraftKey(draftScope);
+  const isAddingFileComment = fileKey in snapshot.drafts;
   const [isDragging, setIsDragging] = useState(false);
 
   // a drag can end anywhere, not only over the gutter
@@ -147,6 +151,15 @@ export function DiffViewer({
     document.addEventListener("mouseup", stopDragging);
     return () => document.removeEventListener("mouseup", stopDragging);
   }, [isDragging]);
+
+  function setSelection(next: Selection | null) {
+    store.setSelection(draftScope, next);
+  }
+
+  function resetSelection(next: Selection | null) {
+    store.clearDraft(lineDraftKey);
+    setSelection(next);
+  }
 
   const { hunks, diffType } = useMemo(() => {
     try {
@@ -295,6 +308,7 @@ export function DiffViewer({
     return (
       <ReviewCommentWidget
         key={key}
+        id={`${draftScope}:${noteKey(comment)}`}
         comment={comment}
         onDelete={
           isUserComment && onDeleteComment
@@ -370,6 +384,8 @@ export function DiffViewer({
               ? `Comment on lines ${range.start}-${range.end}`
               : `Comment on line ${range.end}`
           }
+          defaultValue={store.draft(lineDraftKey)}
+          onChange={(text) => store.setDraft(lineDraftKey, text)}
           onSubmit={(text) => {
             onAddComment?.({
               file: file.filename,
@@ -377,9 +393,9 @@ export function DiffViewer({
               startLine: range.start < range.end ? range.start : null,
               comment: text,
             });
-            setSelection(null);
+            resetSelection(null);
           }}
-          onCancel={() => setSelection(null)}
+          onCancel={() => resetSelection(null)}
         />
       </>
     );
@@ -410,11 +426,11 @@ export function DiffViewer({
 
       const isSameLine = selection?.anchor === line && selection.focus === line;
       if (isSameLine) {
-        setSelection(null);
+        resetSelection(null);
         return;
       }
 
-      setSelection({ hunkIndex: entry.hunkIndex, anchor: line, focus: line });
+      resetSelection({ hunkIndex: entry.hunkIndex, anchor: line, focus: line });
       setIsDragging(true);
     },
     // GitHub only accepts ranges within one hunk
@@ -442,26 +458,28 @@ export function DiffViewer({
       {(fileComments.length > 0 ||
         unanchoredThreads.length > 0 ||
         isAddingFileComment) && (
-        <div className="border-b p-2">
-          {unanchoredThreads.map(renderThread)}
-          {fileComments.map((c, i) => renderComment(c, `file-${i}`))}
-          {isAddingFileComment && (
-            <CommentForm
-              label="Comment on file"
-              onSubmit={(text) => {
-                onAddComment?.({
-                  file: file.filename,
-                  line: null,
-                  startLine: null,
-                  comment: text,
-                });
-                onCloseFileComment?.();
-              }}
-              onCancel={() => onCloseFileComment?.()}
-            />
-          )}
-        </div>
-      )}
+          <div className="border-b p-2">
+            {unanchoredThreads.map(renderThread)}
+            {fileComments.map((c, i) => renderComment(c, `file-${i}`))}
+            {isAddingFileComment && (
+              <CommentForm
+                label="Comment on file"
+                defaultValue={store.draft(fileKey)}
+                onChange={(text) => store.setDraft(fileKey, text)}
+                onSubmit={(text) => {
+                  onAddComment?.({
+                    file: file.filename,
+                    line: null,
+                    startLine: null,
+                    comment: text,
+                  });
+                  store.clearDraft(fileKey);
+                }}
+                onCancel={() => store.clearDraft(fileKey)}
+              />
+            )}
+          </div>
+        )}
       {hunks.length > 0 && (
         <Diff
           viewType={viewType}

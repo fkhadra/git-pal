@@ -11,14 +11,14 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import { useState } from "react";
 
 import { MarkdownBody } from "~/components/markdown-body";
 import type { ReviewComment } from "~/models/code-review";
 
-import { ActionButton, StateIcon } from "./ActionButton";
+import { ActionButton, CollapseButton, StateIcon } from "./ActionButton";
 import { AskAgentButton } from "./AskAgentButton";
-import { EditCommentDialog } from "./EditCommentDialog";
+import { CommentForm } from "./CommentForm";
+import { store, useCodeReviewSnapshot } from "./store";
 import { isPendingComment } from "./utils";
 
 export const severityConfig = {
@@ -49,6 +49,7 @@ export const severityConfig = {
 } as const;
 
 interface ReviewCommentWidgetProps {
+  id: string;
   comment: ReviewComment;
   onDelete?: () => void;
   onTogglePublish?: () => void;
@@ -99,17 +100,36 @@ function PublishState({
 }
 
 export function ReviewCommentWidget({
+  id,
   comment,
   onDelete,
   onTogglePublish,
   onAskAgent,
   onEdit,
 }: ReviewCommentWidgetProps) {
-  const [isEditing, setIsEditing] = useState(false);
+  const snapshot = useCodeReviewSnapshot();
+  const editKey = `${id}:edit`;
+  const isCollapsed = !!snapshot.collapsed[id];
   const config =
     severityConfig[comment.severity as keyof typeof severityConfig] ??
     severityConfig.info;
   const Icon = config.icon;
+
+  if (onEdit && editKey in snapshot.drafts) {
+    return (
+      <CommentForm
+        label="Edit comment"
+        defaultValue={store.draft(editKey)}
+        submitLabel="Save"
+        onChange={(text) => store.setDraft(editKey, text)}
+        onSubmit={(text) => {
+          store.clearDraft(editKey);
+          onEdit(text);
+        }}
+        onCancel={() => store.clearDraft(editKey)}
+      />
+    );
+  }
 
   return (
     <div
@@ -124,21 +144,12 @@ export function ReviewCommentWidget({
         <span className="text-muted-foreground">{rangeLabel(comment)}</span>
         <span className="ml-auto" />
         {onEdit && (
-          <>
-            <ActionButton
-              tooltip="Edit Comment"
-              onClick={() => setIsEditing(true)}
-            >
-              <Pencil />
-            </ActionButton>
-            <EditCommentDialog
-              open={isEditing}
-              title="Edit Comment"
-              defaultValue={comment.comment}
-              onOpenChange={setIsEditing}
-              onSave={onEdit}
-            />
-          </>
+          <ActionButton
+            tooltip="Edit Comment"
+            onClick={() => store.setDraft(editKey, comment.comment)}
+          >
+            <Pencil />
+          </ActionButton>
         )}
         <PublishState comment={comment} onTogglePublish={onTogglePublish} />
         {onAskAgent && <AskAgentButton onClick={onAskAgent} />}
@@ -151,10 +162,13 @@ export function ReviewCommentWidget({
             <Trash2 />
           </ActionButton>
         )}
+        <CollapseButton id={id} isCollapsed={isCollapsed} />
       </div>
-      <div className="mt-1 pl-5.5 text-foreground/80">
-        <MarkdownBody content={comment.comment} />
-      </div>
+      {!isCollapsed && (
+        <div className="mt-1 pl-5.5 text-foreground/80">
+          <MarkdownBody content={comment.comment} />
+        </div>
+      )}
     </div>
   );
 }

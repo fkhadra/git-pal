@@ -5,8 +5,10 @@ import { ExternalLink, GitPullRequest } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import type { InlineComment } from "~/models/conversation";
 
+import { CollapseButton } from "./ActionButton";
 import { AskAgentButton } from "./AskAgentButton";
 import { EditableComment } from "./EditableComment";
+import { useCodeReviewSnapshot } from "./store";
 import { type InlineThread, isAnchored } from "./utils";
 
 function threadLabel(thread: InlineThread) {
@@ -46,6 +48,9 @@ interface Props {
 }
 
 export function GithubThreadWidget({ thread, onAskAgent }: Props) {
+  const collapseKey = `thread:${thread.root.id}`;
+  const isCollapsed = !!useCodeReviewSnapshot().collapsed[collapseKey];
+
   return (
     <div className="mx-3 my-2 flex flex-col gap-2 rounded-lg border border-l-2 border-l-info bg-card p-3 text-xs shadow-sm">
       <div className="flex items-center gap-2">
@@ -62,13 +67,18 @@ export function GithubThreadWidget({ thread, onAskAgent }: Props) {
         >
           <ExternalLink />
         </Button>
+        <CollapseButton id={collapseKey} isCollapsed={isCollapsed} />
       </div>
-      <CommentBody comment={thread.root} />
-      {thread.replies.map((reply) => (
-        <div key={reply.id} className="border-l-2 border-border pl-2">
-          <CommentBody comment={reply} />
-        </div>
-      ))}
+      {!isCollapsed && (
+        <>
+          <CommentBody comment={thread.root} />
+          {thread.replies.map((reply) => (
+            <div key={reply.id} className="border-l-2 border-border pl-2">
+              <CommentBody comment={reply} />
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 }

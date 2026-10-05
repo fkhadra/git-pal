@@ -4,6 +4,7 @@ pub mod review;
 pub mod templates;
 
 use anyhow::Result;
+use git_pal_github::rest::ReviewEvent;
 use sqlx::{QueryBuilder, Row, Sqlite, SqlitePool};
 
 use crate::models::{
@@ -35,6 +36,7 @@ impl CodeReview {
             branch: self.branch.clone(),
             head_sha: self.head_sha.clone(),
             submitted_head_sha: self.submitted_head_sha.clone(),
+            submitted_event: self.submitted_event.clone(),
             reviewed_at: self.reviewed_at.clone(),
             reviewed: self.reviewed,
             comment_count,
@@ -67,7 +69,7 @@ impl CodeReviewStore {
 
     pub async fn list_reviews(&self) -> Result<Vec<ReviewListEntry>> {
         let rows = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
              FROM code_reviews ORDER BY reviewed_at DESC",
         )
         .fetch_all(&self.pool)
@@ -83,7 +85,7 @@ impl CodeReviewStore {
         pr_number: i64,
     ) -> Result<Option<CodeReview>> {
         let row = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
              FROM code_reviews WHERE owner = ? AND repository = ? AND pr_number = ?",
         )
         .bind(owner)
@@ -99,13 +101,14 @@ impl CodeReviewStore {
         let comments_json = serde_json::to_string(&review.comments)?;
 
         let row = sqlx::query(
-            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed) \
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
+            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed) \
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
              ON CONFLICT(owner, repository, pr_number) DO UPDATE SET \
                 pr_title = excluded.pr_title, \
                 branch = excluded.branch, \
                 head_sha = excluded.head_sha, \
                 submitted_head_sha = excluded.submitted_head_sha, \
+                submitted_event = excluded.submitted_event, \
                 summary = excluded.summary, \
                 comments = excluded.comments, \
                 reviewed_at = excluded.reviewed_at, \
@@ -125,6 +128,13 @@ impl CodeReviewStore {
         .bind(&review.branch)
         .bind(&review.head_sha)
         .bind(&review.submitted_head_sha)
+        .bind(
+            review
+                .submitted_event
+                .as_ref()
+                .map(serde_json::to_string)
+                .transpose()?,
+        )
         .bind(&review.summary)
         .bind(&comments_json)
         .bind(&review.reviewed_at)
@@ -209,6 +219,7 @@ impl CodeReviewStore {
         repository: &str,
         pr_number: i64,
         head_sha: &str,
+        event: &ReviewEvent,
     ) -> Result<()> {
         let Some(review) = self.get_review(owner, repository, pr_number).await? else {
             return Ok(());
@@ -224,10 +235,11 @@ impl CodeReviewStore {
             .collect();
 
         sqlx::query(
-            "UPDATE code_reviews SET comments = ?, submitted_head_sha = ? WHERE owner = ? AND repository = ? AND pr_number = ?",
+            "UPDATE code_reviews SET comments = ?, submitted_head_sha = ?, submitted_event = ? WHERE owner = ? AND repository = ? AND pr_number = ?",
         )
         .bind(serde_json::to_string(&comments)?)
         .bind(head_sha)
+        .bind(serde_json::to_string(event)?)
         .bind(owner)
         .bind(repository)
         .bind(pr_number)

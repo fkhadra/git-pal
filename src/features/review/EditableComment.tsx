@@ -1,5 +1,4 @@
 import { Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
 import { toast } from "react-toastify";
 
 import { MarkdownBody } from "~/components/markdown-body";
@@ -23,7 +22,7 @@ import {
   useDeleteCommentMutation,
   useEditCommentMutation,
 } from "./data-loader";
-import { useCodeReviewSnapshot } from "./store";
+import { store, useCodeReviewSnapshot } from "./store";
 
 function DeleteButton({ onConfirm }: { onConfirm: () => void }) {
   return (
@@ -72,8 +71,10 @@ export function EditableComment({
   header,
 }: Props) {
   const { userProfile } = useAppContext();
-  const review = useCodeReviewSnapshot().selectedReview;
-  const [isEditing, setIsEditing] = useState(false);
+  const snapshot = useCodeReviewSnapshot();
+  const review = snapshot.selectedReview;
+  const draftKey = `github:${kind}:${id}`;
+  const isEditing = draftKey in snapshot.drafts;
   const { mutateAsync: editComment } = useEditCommentMutation();
   const { mutateAsync: deleteComment } = useDeleteCommentMutation();
 
@@ -93,7 +94,7 @@ export function EditableComment({
         id,
         body: text,
       });
-      setIsEditing(false);
+      store.clearDraft(draftKey);
     } catch (error) {
       toast.error(String(error));
     }
@@ -123,7 +124,7 @@ export function EditableComment({
             variant="ghost"
             size="icon-xs"
             title="Edit on GitHub"
-            onClick={() => setIsEditing(true)}
+            onClick={() => store.setDraft(draftKey, body)}
           >
             <Pencil />
           </Button>
@@ -133,10 +134,11 @@ export function EditableComment({
       {isEditing ? (
         <CommentForm
           label="Edit comment"
-          defaultValue={body}
+          defaultValue={store.draft(draftKey)}
           submitLabel="Save"
+          onChange={(text) => store.setDraft(draftKey, text)}
           onSubmit={save}
-          onCancel={() => setIsEditing(false)}
+          onCancel={() => store.clearDraft(draftKey)}
         />
       ) : (
         body.trim() && <MarkdownBody content={signedBody ?? body} />

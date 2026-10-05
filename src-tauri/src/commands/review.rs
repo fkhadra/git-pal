@@ -112,6 +112,7 @@ pub async fn review_pull_request(
             .map(|r| r.head_sha.clone())
             .unwrap_or_else(|| head_sha.clone()),
         submitted_head_sha: existing.as_ref().and_then(|r| r.submitted_head_sha.clone()),
+        submitted_event: existing.as_ref().and_then(|r| r.submitted_event.clone()),
         summary: existing
             .as_ref()
             .filter(|_| incremental)
@@ -200,6 +201,7 @@ pub async fn review_pull_request(
                 // new notes take the review back from submitted
                 let saved = CodeReview {
                     submitted_head_sha: None,
+                    submitted_event: None,
                     comments,
                     summary,
                     head_sha,
@@ -397,6 +399,7 @@ pub async fn submit_review(state: State<'_, AppState>, request: SubmitReviewRequ
             &request.repository,
             request.number,
             &request.commit_id,
+            &request.event,
         )
         .await?;
 
@@ -513,6 +516,7 @@ pub async fn view_pull_request(
                 branch: pr.branch,
                 head_sha: pr.head_sha,
                 submitted_head_sha: None,
+                submitted_event: None,
                 summary: String::new(),
                 comments: vec![],
                 reviewed_at: chrono::Utc::now().to_rfc3339(),

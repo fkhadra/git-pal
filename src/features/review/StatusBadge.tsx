@@ -20,8 +20,18 @@ const STATUS_CONFIG: Record<
     className: "bg-primary/15 text-primary",
     dotClassName: "bg-primary",
   },
-  submitted: {
-    label: "Submitted",
+  approved: {
+    label: "Approved",
+    className: "bg-success/15 text-success",
+    dotClassName: "bg-success",
+  },
+  changesRequested: {
+    label: "Change requested",
+    className: "bg-destructive/15 text-destructive",
+    dotClassName: "bg-destructive",
+  },
+  commented: {
+    label: "Feedback submitted",
     className: "bg-info/15 text-info",
     dotClassName: "bg-info",
   },

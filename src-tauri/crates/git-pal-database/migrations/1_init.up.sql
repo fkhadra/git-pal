@@ -8,6 +8,8 @@ CREATE TABLE IF NOT EXISTS code_reviews (
     head_sha      TEXT    NOT NULL DEFAULT '',
     -- head commit the review was submitted at, NULL until submitted
     submitted_head_sha TEXT,
+    -- "APPROVE", "REQUEST_CHANGES" or "COMMENT", NULL until submitted
+    submitted_event TEXT,
     summary       TEXT    NOT NULL DEFAULT '',
     comments      TEXT    NOT NULL DEFAULT '[]',
     reviewed_at   TEXT    NOT NULL,

@@ -71,7 +71,7 @@ import { ReviewSummarySheet } from "./ReviewSummarySheet";
 import { ReviewUpdateBanner } from "./ReviewUpdateBanner";
 import { matchShortcut, useKeybind, useKeybindSync } from "./shortcuts";
 import { ShortcutsDialog } from "./ShortcutsDialog";
-import { store, useCodeReviewSnapshot } from "./store";
+import { fileDraftKey, fileScope, store, useCodeReviewSnapshot } from "./store";
 import { useAgentEvent } from "./useAgentEvent";
 import { useRefreshPullRequest } from "./useRefreshPullRequest";
 import {
@@ -97,10 +97,8 @@ export function ReviewPage() {
   const agentPanelRef = useRef<PanelImperativeHandle>(null);
   const [showList, setShowList] = useState(true);
   const [showAgent, setShowAgent] = useState(false);
-  const [isAddingFileComment, setIsAddingFileComment] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  // bumped on each find shortcut, refocuses an already open find bar
   const [findKey, setFindKey] = useState<number | null>(null);
   const snapshot = useCodeReviewSnapshot();
   const keybind = useKeybind();
@@ -265,7 +263,6 @@ export function ReviewPage() {
   }
 
   function selectFile(filename: string) {
-    setIsAddingFileComment(false);
     store.selectFile(filename);
     diffViewerRef.current?.scrollTo(0, 0);
   }
@@ -644,7 +641,16 @@ export function ReviewPage() {
                                   variant="ghost"
                                   size="icon-xs"
                                   disabled={!savedReview}
-                                  onClick={() => setIsAddingFileComment(true)}
+                                  onClick={() =>
+                                    store.openDraft(
+                                      fileDraftKey(
+                                        fileScope(
+                                          selectedReview,
+                                          currentFile.filename,
+                                        ),
+                                      ),
+                                    )
+                                  }
                                 >
                                   <MessageSquarePlus />
                                 </Button>
@@ -669,10 +675,10 @@ export function ReviewPage() {
                             viewType={snapshot.viewType}
                             comments={commentsForCurrentFile || []}
                             threads={threadsForCurrentFile}
-                            isAddingFileComment={isAddingFileComment}
-                            onCloseFileComment={() =>
-                              setIsAddingFileComment(false)
-                            }
+                            draftScope={fileScope(
+                              selectedReview,
+                              currentFile.filename,
+                            )}
                             onAddComment={handleAddComment}
                             onDeleteComment={handleDeleteComment}
                             onUpdateComment={handleUpdateComment}

@@ -1,4 +1,4 @@
-import type { CommentContext } from "~/models";
+import type { CommentContext, ReviewEvent } from "~/models";
 import type {
   GetSavedReviewRequest,
   ReviewComment,
@@ -193,25 +193,41 @@ export function isSameReview(
 }
 
 /** Waiting to be posted with the next GitHub review. */
-export type ReviewStatus = "todo" | "inProgress" | "submitted";
+export type ReviewStatus =
+  | "todo"
+  | "inProgress"
+  | "approved"
+  | "changesRequested"
+  | "commented";
+
+const SUBMITTED_STATUS: Record<ReviewEvent, ReviewStatus> = {
+  APPROVE: "approved",
+  REQUEST_CHANGES: "changesRequested",
+  COMMENT: "commented",
+};
 
 export interface ReviewProgress {
   submittedHeadSha: string | null;
+  submittedEvent: ReviewEvent | null;
   reviewed: boolean;
   noteCount: number;
   /** Notes not posted yet */
   pendingCount: number;
 }
 
-/** Submitted until a new commit or note comes in, in progress once the agent ran or a note exists. */
 export function reviewStatus(
   review: ReviewProgress,
   latestHeadSha?: string,
 ): ReviewStatus {
-  const { submittedHeadSha } = review;
+  const { submittedHeadSha, submittedEvent } = review;
   const isOutdated = !!latestHeadSha && latestHeadSha !== submittedHeadSha;
-  if (submittedHeadSha && !isOutdated && review.pendingCount === 0) {
-    return "submitted";
+  if (
+    submittedHeadSha &&
+    submittedEvent &&
+    !isOutdated &&
+    review.pendingCount === 0
+  ) {
+    return SUBMITTED_STATUS[submittedEvent];
   }
   if (review.reviewed || review.noteCount > 0) return "inProgress";
 
@@ -227,7 +243,6 @@ export interface InlineThread {
   replies: InlineComment[];
 }
 
-/** Groups GitHub inline comments into threads, replies point at their root. */
 export function buildThreads(comments: readonly InlineComment[]) {
   return comments
     .filter((c) => c.inReplyToId == null)
