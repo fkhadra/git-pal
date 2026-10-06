@@ -6,20 +6,17 @@ mod window;
 use core::{AppState, Event, emit_event, handle_deeplink, start_updater};
 use std::env;
 
-use tauri::{Manager, image::Image, menu::MenuBuilder, tray::TrayIconBuilder};
+use tauri::{Manager, image::Image, tray::TrayIconBuilder};
 use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_log::{Target, TargetKind};
 
 use commands::review::refresh_review_badge;
 use git_pal_job_runner::JobKind;
-use window::{TRAY_ID, on_app_start, show_app, show_review, show_settings};
-
-// the menu bar tints a monochrome template, other platforms show colors
-#[cfg(target_os = "macos")]
-const TRAY_ICON: &str = "icons/tray-template.png";
-#[cfg(not(target_os = "macos"))]
-const TRAY_ICON: &str = "icons/tray.png";
+use window::{
+    RUNNING_MENU_ID, ReviewActivity, TRAY_ICON, TRAY_ID, WAITING_MENU_ID, on_app_start, show_app,
+    show_review, show_settings, tray_menu,
+};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -84,13 +81,7 @@ pub fn run() {
                 handle_deeplink(&app_handle, event.urls());
             });
 
-            let menu = MenuBuilder::new(app)
-                .text("show", "Show Git Pal")
-                .separator()
-                .text("reviews", "Reviews")
-                .text("settings", "Settings")
-                .text("quit", "Quit Git Pal")
-                .build()?;
+            let menu = tray_menu(app.handle(), &ReviewActivity::default())?;
 
             let resource_path = app
                 .path()
@@ -107,7 +98,7 @@ pub fn run() {
                             log::error!("Tray -> failed to show app. {}", err)
                         });
                     }
-                    "reviews" => {
+                    "reviews" | RUNNING_MENU_ID | WAITING_MENU_ID => {
                         show_review(app, None).unwrap_or_else(|err| {
                             log::error!("Tray -> failed to show reviews. {}", err)
                         });
