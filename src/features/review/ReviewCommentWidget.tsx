@@ -2,17 +2,19 @@ import { cn } from "cn";
 import {
   AlertCircle,
   AlertTriangle,
+  Check,
   CircleCheck,
   Clock,
   Info,
   MessageSquare,
-  MessageSquareX,
-  MessageSquarePlus,
   Pencil,
+  Plus,
   Trash2,
+  X,
 } from "lucide-react";
 
 import { MarkdownBody } from "~/components/markdown-body";
+import { Button } from "~/components/ui/button";
 import type { ReviewComment } from "~/models/code-review";
 
 import { ActionButton, CollapseButton, StateIcon } from "./ActionButton";
@@ -76,15 +78,32 @@ function PublishState({
     );
   }
 
-  if (onTogglePublish) {
+  if (onTogglePublish && comment.publish) {
     return (
-      <ActionButton
-        tooltip={comment.publish ? "Remove from review" : "Add to review"}
-        active={comment.publish}
+      <Button
+        size="xs"
+        className="group/publish h-6"
         onClick={onTogglePublish}
       >
-        {comment.publish ? <MessageSquareX /> : <MessageSquarePlus />}
-      </ActionButton>
+        <Check className="group-hover/publish:hidden" />
+        <X className="hidden group-hover/publish:block" />
+        <span className="group-hover/publish:hidden">In review</span>
+        <span className="hidden group-hover/publish:inline">Remove</span>
+      </Button>
+    );
+  }
+
+  if (onTogglePublish) {
+    return (
+      <Button
+        size="xs"
+        variant="outline"
+        className="h-6"
+        onClick={onTogglePublish}
+      >
+        <Plus />
+        Add to review
+      </Button>
     );
   }
 

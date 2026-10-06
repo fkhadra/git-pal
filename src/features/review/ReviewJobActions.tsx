@@ -19,7 +19,7 @@ import { useReviewMutation } from "./data-loader";
 import { AUTO_TEMPLATE, ReviewButton } from "./ReviewButton";
 import { SubmitReviewButton } from "./SubmitReviewButton";
 
-function useRestartReview(review: GetSavedReviewRequest) {
+export function useRestartReview(review: GetSavedReviewRequest) {
   const { mutateAsync, isPending } = useReviewMutation();
 
   const restart = async (template: TemplateChoice = AUTO_TEMPLATE) => {
