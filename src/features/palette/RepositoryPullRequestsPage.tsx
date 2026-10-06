@@ -1,8 +1,15 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useDeferredValue } from "react";
+import { GitPullRequestArrow } from "lucide-react";
+import { useDeferredValue, useEffect } from "react";
 
 import commands from "~/commands";
 import { CommandGroup, CommandItem } from "~/components/ui/command";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/components/ui/empty";
 
 import { PullRequestItem } from "./Github";
 import { state, useCurrentPage, useStateSnaphot } from "./state";
@@ -43,8 +50,37 @@ function useRepositoryPullRequestsQuery() {
   });
 }
 
+function NoAuthorResults() {
+  return (
+    <Empty>
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <GitPullRequestArrow />
+        </EmptyMedia>
+        <EmptyTitle>No open pull requests</EmptyTitle>
+      </EmptyHeader>
+    </Empty>
+  );
+}
+
 export function RepositoryPullRequestsPage() {
   const { data } = useRepositoryPullRequestsQuery();
+  const { authors } = useStateSnaphot();
+  const isEmptyAuthorFilter = authors.length > 0 && data.length === 0;
+
+  // replaces the generic "No results found"
+  useEffect(() => {
+    if (!isEmptyAuthorFilter) return;
+
+    state.disableEmptySearchResults = true;
+    return () => {
+      state.disableEmptySearchResults = false;
+    };
+  }, [isEmptyAuthorFilter]);
+
+  if (isEmptyAuthorFilter) {
+    return <NoAuthorResults />;
+  }
 
   return (
     <CommandGroup heading="Open Pull Requests">

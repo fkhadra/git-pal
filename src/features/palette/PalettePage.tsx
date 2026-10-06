@@ -1,4 +1,5 @@
 import { useCommandState } from "cmdk";
+import { SearchX } from "lucide-react";
 import { Suspense, useEffect, useRef } from "react";
 
 import commands from "~/commands";
@@ -9,6 +10,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "~/components/ui/empty";
 import { useFullHeightRef } from "~/libs/useFullHeight";
 
 import { CommandInput } from "./CommandInput";
@@ -109,15 +116,15 @@ function EmptySearchResults() {
     return null;
 
   return (
-    <CommandEmpty>
-      <span
-        role="img"
-        aria-label="dunno what you are looking for"
-        className="mr-1"
-      >
-        🤷‍♂️
-      </span>
-      No results found.
+    <CommandEmpty className="h-auto">
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <SearchX />
+          </EmptyMedia>
+          <EmptyTitle>No results found</EmptyTitle>
+        </EmptyHeader>
+      </Empty>
     </CommandEmpty>
   );
 }
