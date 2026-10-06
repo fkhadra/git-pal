@@ -199,25 +199,28 @@ export function ConversationSheet({
   const count = reviews.length + comments.length;
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="relative"
-            disabled={!conversation}
-            onClick={() => setOpen(true)}
-          >
-            <MessagesSquare className="text-info" />
-            {count > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-info text-[10px] text-background">
-                {count}
-              </span>
-            )}
-          </Button>
-        }
-      />
+    <>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="relative"
+              disabled={!conversation}
+              onClick={() => setOpen(true)}
+            >
+              <MessagesSquare className="text-info" />
+              {count > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-info text-[10px] text-background">
+                  {count}
+                </span>
+              )}
+            </Button>
+          }
+        />
+        <TooltipContent>Conversation</TooltipContent>
+      </Tooltip>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className={WIDE_SHEET_CLASS}>
           <SheetHeader>
@@ -242,7 +245,6 @@ export function ConversationSheet({
           </div>
         </SheetContent>
       </Sheet>
-      <TooltipContent>Conversation</TooltipContent>
-    </Tooltip>
+    </>
   );
 }

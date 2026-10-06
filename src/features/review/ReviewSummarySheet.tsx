@@ -41,22 +41,25 @@ export function ReviewSummarySheet({ review }: { review: CodeReview }) {
   };
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="relative"
-            onClick={openSheet}
-          >
-            <ScrollText className="text-primary" />
-            {isUnread && (
-              <span className="absolute top-1 right-1 size-2 rounded-full bg-brand-alt" />
-            )}
-          </Button>
-        }
-      />
+    <>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="relative"
+              onClick={openSheet}
+            >
+              <ScrollText className="text-primary" />
+              {isUnread && (
+                <span className="absolute top-1 right-1 size-2 rounded-full bg-brand-alt" />
+              )}
+            </Button>
+          }
+        />
+        <TooltipContent>Review summary</TooltipContent>
+      </Tooltip>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="right" className={WIDE_SHEET_CLASS}>
           <SheetHeader>
@@ -79,7 +82,6 @@ export function ReviewSummarySheet({ review }: { review: CodeReview }) {
           </div>
         </SheetContent>
       </Sheet>
-      <TooltipContent>Review summary</TooltipContent>
-    </Tooltip>
+    </>
   );
 }
