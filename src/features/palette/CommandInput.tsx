@@ -6,12 +6,7 @@ import { MentionList } from "~/components/rich-text-mention";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { UpdateAppButton } from "~/components/update-app-button";
 
-import {
-  type PageTo,
-  state,
-  useGHSearchActive,
-  useStateSnaphot,
-} from "./state";
+import { type PageTo, state, useStateSnaphot } from "./state";
 import { authorPartial, useAuthorSuggestions } from "./useAuthorSuggestions";
 import { useKeybinds } from "./useKeybinds";
 
@@ -19,8 +14,15 @@ import { useKeybinds } from "./useKeybinds";
 const QUERY_PAGES: PageTo[] = ["org", "repository-pull-requests"];
 const REMOVE_CHIP_KEY = "Backspace";
 
+function placeholder(page: PageTo) {
+  if (page === "search") return "Search code";
+  if (page === "repository-pull-requests")
+    return "Search, @ to filter by author";
+
+  return "Search";
+}
+
 export function CommandInput() {
-  const isGhSearchActive = useGHSearchActive();
   const { filter, setFilter, handleKeyboard } = useKeybinds();
   const snapshot = useStateSnaphot();
   const h = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -46,7 +48,6 @@ export function CommandInput() {
             <AvatarImage src={author.avatarUrl} alt="" />
             <AvatarFallback>{author.login[0].toUpperCase()}</AvatarFallback>
           </Avatar>
-          <span className="text-muted-foreground">{author.qualifier}:</span>
           <span>{author.login}</span>
           <button
             type="button"
@@ -63,7 +64,7 @@ export function CommandInput() {
       <Command.Input
         autoFocus
         data-search
-        placeholder={isGhSearchActive ? "Search code" : "Search"}
+        placeholder={placeholder(snapshot.currentPage.to)}
         value={filter}
         onKeyDown={(e) => {
           if (suggestions.handleKey(e)) return;

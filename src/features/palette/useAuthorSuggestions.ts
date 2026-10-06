@@ -8,24 +8,26 @@ import type { MentionableUser } from "~/models/graphql";
 import { type AuthorChip, state, useStateSnaphot } from "./state";
 
 const USERS_STALE_MS = minutesToMilliseconds(5);
-// `author:` qualifier, or its `from:` alias, being typed at the end of the search
-const TRAILING_AUTHOR = /(^|\s)(author|from):([\w-]*)$/;
+// `@login` being typed at the end of the search
+const TRAILING_AUTHOR = /(^|\s)@([\w-]*)$/;
 // GitHub only knows `author:`
-const FROM_ALIAS = /(^|\s)from:/g;
+const AUTHOR_MENTION = /(^|\s)@([\w-]+)/g;
 
-/** Login typed after a trailing `author:` or `from:`, null without one. */
+/** Login typed after a trailing `@`, null without one. */
 export function authorPartial(search: string) {
-  return TRAILING_AUTHOR.exec(search)?.[3] ?? null;
+  return TRAILING_AUTHOR.exec(search)?.[2] ?? null;
 }
 
-/** Search sent to GitHub, chips and aliases as `author:` qualifiers. */
+/** Search sent to GitHub, chips and typed `@login` as `author:` qualifiers. */
 export function githubQuery(authors: readonly AuthorChip[], text: string) {
   const qualifiers = authors.map((a) => `author:${a.login}`);
 
-  return [...qualifiers, text.replace(FROM_ALIAS, "$1author:")].join(" ");
+  return [...qualifiers, text.replace(AUTHOR_MENTION, "$1author:$2")].join(
+    " ",
+  );
 }
 
-/** Suggests repository users while an `author:` qualifier is typed, picked with Enter or Tab. */
+/** Suggests repository users while an `@login` is typed, picked with Enter or Tab. */
 export function useAuthorSuggestions(onPick: () => void) {
   const snapshot = useStateSnaphot();
   const page = snapshot.currentPage;
@@ -60,15 +62,10 @@ export function useAuthorSuggestions(onPick: () => void) {
     const match = TRAILING_AUTHOR.exec(state.filter);
     if (!match) return;
 
-    const [, space, qualifier] = match;
-    const search = state.filter.slice(0, match.index + space.length);
+    const search = state.filter.slice(0, match.index + match[1].length);
 
     state.setFilter(search);
-    state.addAuthor({
-      qualifier,
-      login: user.login,
-      avatarUrl: user.avatarUrl,
-    });
+    state.addAuthor({ login: user.login, avatarUrl: user.avatarUrl });
     state.authorSearch = null;
     state.query = search;
     onPick();
