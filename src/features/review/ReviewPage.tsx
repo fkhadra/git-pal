@@ -63,6 +63,7 @@ import { PullRequestAuthor } from "./PullRequestAuthor";
 import { PullRequestStatusBadge } from "./PullRequestStatusBadge";
 import { RefreshPullRequestButton } from "./RefreshPullRequestButton";
 import { ReviewActionsMenu } from "./ReviewActionsMenu";
+import { ReviewDetailsButton } from "./ReviewDetailsButton";
 import { ReviewEmptyState } from "./ReviewEmptyState";
 import { CancelReviewButton, ReviewPrimaryAction } from "./ReviewJobActions";
 import { ReviewList } from "./ReviewList";
@@ -459,6 +460,16 @@ export function ReviewPage() {
                         savedReview.comments.filter(isPendingComment).length,
                     }}
                   />
+                  {savedReview.reviewed &&
+                    savedReview.harness &&
+                    !isReviewing && (
+                      <ReviewDetailsButton
+                        harness={savedReview.harness}
+                        model={savedReview.model}
+                        template={savedReview.template}
+                        reviewedAt={savedReview.reviewedAt}
+                      />
+                    )}
                   <HeaderDivider />
                 </>
               )}
@@ -525,7 +536,13 @@ export function ReviewPage() {
               <AgentAvatar size={18} paused={showAgent} />
             </Button>
           </ShortcutTooltip>
-          {selectedReview && <ReviewActionsMenu review={selectedReview} />}
+          {selectedReview && (
+            <ReviewActionsMenu
+              review={selectedReview}
+              savedReview={savedReview}
+              isReviewing={isReviewing}
+            />
+          )}
         </div>
       </div>
 
@@ -618,7 +635,7 @@ export function ReviewPage() {
                   <div ref={observeDiffWidth} className="h-full overflow-auto">
                     {currentFile && selectedReview && pr && (
                       <>
-                        <div className="sticky top-0 z-10 flex h-9 items-center gap-2 border-b bg-background/90 px-4 text-xs backdrop-blur">
+                        <div className="sticky top-0 z-10 flex h-9 items-center gap-2 border-b bg-background/90 px-4 text-xs">
                           <span className="font-mono font-medium">
                             {currentFile.filename}
                           </span>
