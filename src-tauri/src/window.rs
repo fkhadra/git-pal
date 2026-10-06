@@ -12,6 +12,7 @@ const MAIN_WINDOW_LABEL: &str = "Main";
 const SETTINGS_WINDOW_LABEL: &str = "Settings";
 const SETUP_WINDOW_LABEL: &str = "Setup";
 const REVIEW_WINDOW_LABEL: &str = "Review";
+pub const TRAY_ID: &str = "main";
 
 #[cfg(target_os = "macos")]
 const DOCK_WINDOWS: [&str; 2] = [REVIEW_WINDOW_LABEL, SETTINGS_WINDOW_LABEL];
@@ -76,6 +77,25 @@ pub fn show_settings(app: &AppHandle) -> Result {
                 resizable: false,
             },
         ),
+    }
+}
+
+pub fn show_review_badge(app: &AppHandle, count: usize) {
+    let label = (count > 0).then(|| count.to_string());
+
+    // Windows has no tray title
+    if let Some(tray) = app.tray_by_id(TRAY_ID)
+        && let Err(err) = tray.set_title(label.as_deref())
+    {
+        log::warn!("Unable to set the tray title: {}", err);
+    }
+
+    // app wide, any window sets it. Windows has no badge
+    #[cfg(target_os = "macos")]
+    if let Some(window) = app.get_webview_window(REVIEW_WINDOW_LABEL)
+        && let Err(err) = window.set_badge_count(label.map(|_| count as i64))
+    {
+        log::warn!("Unable to set the Dock badge: {}", err);
     }
 }
 
@@ -347,6 +367,13 @@ fn sync_activation_policy(app: &AppHandle, closing: Option<&str>) {
 
     if let Err(err) = app.set_activation_policy(policy) {
         log::warn!("Unable to set the activation policy: {}", err);
+    }
+
+    // the Dock icon appears without the badge set while hidden
+    if is_open {
+        use crate::commands;
+
+        commands::review::refresh_review_badge(app);
     }
 }
 
