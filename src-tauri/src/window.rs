@@ -13,6 +13,9 @@ const SETTINGS_WINDOW_LABEL: &str = "Settings";
 const SETUP_WINDOW_LABEL: &str = "Setup";
 const REVIEW_WINDOW_LABEL: &str = "Review";
 
+#[cfg(target_os = "macos")]
+const DOCK_WINDOWS: [&str; 2] = [REVIEW_WINDOW_LABEL, SETTINGS_WINDOW_LABEL];
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("unable to focus window '{label:}'. {err:}")]
@@ -203,9 +206,7 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
     })?;
 
     #[cfg(target_os = "macos")]
-    handle
-        .set_activation_policy(tauri::ActivationPolicy::Accessory)
-        .expect("Failed to set activation policy");
+    sync_activation_policy(handle, None);
 
     register_global_shortcut(handle)?;
     handle_window_events(window);
@@ -306,6 +307,19 @@ fn create_window(handle: &AppHandle, config: WindowConfig) -> Result {
                 err: e.to_string(),
             })?;
 
+    #[cfg(target_os = "macos")]
+    if DOCK_WINDOWS.contains(&config.label) {
+        sync_activation_policy(handle, None);
+
+        let app = handle.clone();
+        let label = config.label.to_string();
+        window.on_window_event(move |e| {
+            if let WindowEvent::Destroyed = e {
+                sync_activation_policy(&app, Some(&label));
+            }
+        });
+    }
+
     let appearance = window.theme().unwrap_or(tauri::Theme::Dark);
 
     if let Err(err) = window.set_background_color(Some(background_color(&theme, appearance))) {
@@ -317,6 +331,23 @@ fn create_window(handle: &AppHandle, config: WindowConfig) -> Result {
     }
 
     Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn sync_activation_policy(app: &AppHandle, closing: Option<&str>) {
+    let is_open = DOCK_WINDOWS
+        .iter()
+        .any(|label| Some(*label) != closing && app.get_webview_window(label).is_some());
+    
+    let policy = if is_open {
+        tauri::ActivationPolicy::Regular
+    } else {
+        tauri::ActivationPolicy::Accessory
+    };
+
+    if let Err(err) = app.set_activation_policy(policy) {
+        log::warn!("Unable to set the activation policy: {}", err);
+    }
 }
 
 fn register_global_shortcut(app_handle: &AppHandle) -> Result {
