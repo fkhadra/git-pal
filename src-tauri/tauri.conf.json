@@ -40,7 +40,8 @@
     "active": true,
     "targets": "all",
     "resources": [
-      "icons/tray.png"
+      "icons/tray.png",
+      "icons/tray-template.png"
     ],
     "icon": [
       "icons/32x32.png",
