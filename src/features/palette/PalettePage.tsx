@@ -1,6 +1,7 @@
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useCommandState } from "cmdk";
 import { SearchX } from "lucide-react";
-import { Suspense, useEffect, useRef } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import commands from "~/commands";
 import { Command, CommandEmpty, CommandList } from "~/components/ui/command";
@@ -61,6 +62,7 @@ export function PalettePage() {
   const currentPage = useCurrentPage();
   const Page = pages[currentPage.to];
   const timeoutId = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [resetKey, setResetKey] = useState(0);
 
   usePreloadPullRequestsQueries();
   usePaletteKeybindSync();
@@ -77,9 +79,26 @@ export function PalettePage() {
     };
   }, []);
 
+  // hiding blurs the window too, the palette reopens from home
+  useEffect(() => {
+    const unlisten = getCurrentWindow().onFocusChanged(({ payload }) => {
+      if (payload) return;
+
+      state.resetPalette();
+      state.toggleHelp(false);
+      state.toggleActions(false);
+      setResetKey((key) => key + 1);
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
+
   return (
     <div className="h-screen rounded-(--body-radius) border border-foreground/15 deep-purple:bg-linear-to-tl deep-purple:from-brand-alt/10 deep-purple:to-brand/10">
       <Command
+        key={resetKey}
         loop
         className="relative h-full overflow-hidden rounded-none! bg-transparent p-0 text-inherit"
         shouldFilter={!isServerSearch}
