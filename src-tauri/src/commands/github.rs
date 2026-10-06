@@ -8,7 +8,7 @@ use git_pal_github::{
     conversation::{DeleteCommentRequest, EditCommentRequest, PullRequestConversation},
     graphql::{
         FindPullRequestResult, FindPullRequestsFilter, FindRepositoriesRequest,
-        FindRepositoriesResult, Homepage,
+        FindRepositoriesResult, FindRepositoryPullRequestsRequest, Homepage,
     },
     mentions::{MentionableUser, MentionableUsersRequest},
     query::search_pull_request::SearchPullRequestSearchNodes::PullRequest,
@@ -64,6 +64,17 @@ pub async fn find_pull_requests(
     }
 
     Ok(response)
+}
+
+#[tauri::command]
+pub async fn find_repository_pull_requests(
+    state: State<'_, AppState>,
+    params: FindRepositoryPullRequestsRequest,
+) -> Result<FindPullRequestResult> {
+    Ok(state
+        .github_client
+        .find_repository_pull_requests(params)
+        .await?)
 }
 
 #[tauri::command]

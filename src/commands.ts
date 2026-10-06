@@ -9,6 +9,7 @@ import type {
   FileSourceRequest,
   FileRequest,
   FindPullRequestsFilter,
+  FindRepositoryPullRequestsRequest,
   FindWorkflowsRequest,
   OwnedFilesRequest,
   GetPullRequestRequest,
@@ -87,6 +88,15 @@ function findPullRequests(filter: FindPullRequestsFilter) {
     "find_pull_requests",
     {
       filter,
+    },
+  );
+}
+
+function findRepositoryPullRequests(params: FindRepositoryPullRequestsRequest) {
+  return invoke<GraphQLResponse<SearchPullRequestsResponse>>(
+    "find_repository_pull_requests",
+    {
+      params,
     },
   );
 }
@@ -422,6 +432,7 @@ export default {
   isAuthenticated,
   findPullRequests,
   findRepositories,
+  findRepositoryPullRequests,
   checkScopeEntry,
   isAutoStartEnabled,
   enableAutoStart,

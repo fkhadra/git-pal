@@ -19,7 +19,7 @@ const MentionSuggestionPluginKey = new PluginKey("mentionSuggestion");
 
 export type SearchUsers = (query: string) => Promise<MentionableUser[]>;
 
-function MentionList({
+export function MentionList({
   items,
   selected,
   onSelect,
@@ -27,7 +27,7 @@ function MentionList({
   if (items.length === 0) return null;
 
   return (
-    <div className="flex w-64 flex-col rounded-lg bg-popover p-1 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10">
+    <div className="flex w-92 flex-col rounded-lg bg-popover p-1 text-sm text-popover-foreground shadow-md ring-1 ring-foreground/10">
       {items.map((user, index) => (
         <button
           key={user.login}

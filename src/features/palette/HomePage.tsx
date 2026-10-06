@@ -19,7 +19,7 @@ import { nil } from "~/libs/utils";
 import { useAppContext } from "../shared";
 import GithubLogo from "./github.svg";
 import { state } from "./state";
-import { openUrl, viewPullRequest } from "./utils";
+import { browseRepository, openUrl, viewPullRequest } from "./utils";
 
 function useHomePageQuery() {
   return useSuspenseQuery({
@@ -158,7 +158,7 @@ export function HomePage() {
             key={v.id}
             keywords={[v.name, "repository", v.owner.login]}
             onSelect={() => {
-              openUrl(v.url);
+              browseRepository(v);
             }}
           >
             <RepositoryItem repository={v} />

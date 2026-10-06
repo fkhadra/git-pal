@@ -21,6 +21,7 @@ import {
   usePreloadPullRequestsQueries,
 } from "./PullRequestsPage";
 import { RepositoryPage } from "./RepositoryPage";
+import { RepositoryPullRequestsPage } from "./RepositoryPullRequestsPage";
 import { ReviewTemplatePage } from "./ReviewTemplatePage";
 import { SearchPage } from "./SearchPage";
 import { usePaletteKeybindSync } from "./shortcuts";
@@ -32,6 +33,7 @@ import {
   useCurrentPage,
   useDisableEmptySearchResults,
   useGHSearchActive,
+  useServerSearch,
   useSyncStateSnapshot,
 } from "./state";
 
@@ -40,13 +42,14 @@ const pages = createPageMapper({
   org: OrgPage,
   "pull-requests": PullRequestsPage,
   repository: RepositoryPage,
+  "repository-pull-requests": RepositoryPullRequestsPage,
   "review-template": ReviewTemplatePage,
   search: SearchPage,
 });
 
 export function PalettePage() {
   const listBox = useFullHeightRef<HTMLDivElement>({ bottomPadding: 52 });
-  const isGhSearchActive = useGHSearchActive();
+  const isServerSearch = useServerSearch();
   const snapshot = useSyncStateSnapshot();
   const currentPage = useCurrentPage();
   const Page = pages[currentPage.to];
@@ -72,7 +75,7 @@ export function PalettePage() {
       <Command
         loop
         className="relative h-full overflow-hidden rounded-none! bg-transparent p-0 text-inherit"
-        shouldFilter={!isGhSearchActive}
+        shouldFilter={!isServerSearch}
         value={snapshot.selectedValue}
         onValueChange={state.setSelectedValue}
       >

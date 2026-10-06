@@ -8,7 +8,7 @@ export type PaletteAction = keyof PaletteKeybind;
 
 export const PALETTE_SHORTCUT_LABELS: Record<PaletteAction, string> = {
   primaryAction: "Open or view pull request",
-  secondaryAction: "Browse, or open pull request on GitHub",
+  secondaryAction: "Browse organization, or open on GitHub",
   actions: "Show actions",
   review: "Review",
   reviewWithTemplate: "Review with template",

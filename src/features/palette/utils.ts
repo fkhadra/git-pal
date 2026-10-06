@@ -2,7 +2,7 @@ import { openUrl as open } from "@tauri-apps/plugin-opener";
 import { toast } from "react-toastify";
 
 import commands from "~/commands";
-import type { PullRequest } from "~/models";
+import type { PullRequest, Repository } from "~/models";
 import type {
   GetSavedReviewRequest,
   TemplateChoice,
@@ -43,6 +43,13 @@ export async function viewPullRequest(pr: PullRequest) {
   } catch (error) {
     toast.error(String(error));
   }
+}
+
+export function browseRepository(repo: Repository) {
+  state.goTo(
+    { to: "repository", params: { id: repo.id } },
+    `${repo.owner.login}/${repo.name}`,
+  );
 }
 
 export function openUrl(url: string) {

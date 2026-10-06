@@ -19,6 +19,8 @@ const GRAPHQL_API_URL: &str = "https://api.github.com/graphql";
 /// GitHub's largest search page.
 const MAX_SEARCH_PAGE_SIZE: u32 = 100;
 
+const REPOSITORY_PULL_REQUEST_COUNT: i64 = 20;
+
 #[derive(Debug, Clone, Serialize, Deserialize, TS, PartialEq, Eq)]
 #[ts(export, export_to = "graphql.ts")]
 #[serde(rename_all = "camelCase")]
@@ -57,6 +59,14 @@ pub type PullRequest = query::get_pull_request::PullRequest;
 #[ts(export, export_to = "graphql.ts")]
 pub struct FindRepositoriesRequest {
     pub owner: String,
+    pub query: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, TS)]
+#[ts(export, export_to = "graphql.ts")]
+pub struct FindRepositoryPullRequestsRequest {
+    pub owner: String,
+    pub repository: String,
     pub query: String,
 }
 
@@ -161,6 +171,22 @@ impl Client {
         }
 
         Ok(res)
+    }
+
+    /// Open pull requests of a repository matching `query`, all of them when empty.
+    pub async fn find_repository_pull_requests(
+        &self,
+        params: FindRepositoryPullRequestsRequest,
+    ) -> Result<FindPullRequestResult> {
+        let q = query::SearchPullRequest::build_query(query::search_pull_request::Variables {
+            count: REPOSITORY_PULL_REQUEST_COUNT,
+            query: format!(
+                "is:open is:pr repo:{}/{} {}",
+                params.owner, params.repository, params.query
+            ),
+        });
+
+        self.send_graphql(&q).await
     }
 
     /// Pull request with its checks, review decision and mergeability.

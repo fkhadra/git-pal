@@ -7,7 +7,7 @@ import type { Repository } from "~/models";
 
 import { RepositoryItem } from "./Github";
 import { state, useCurrentPage, useStateSnaphot } from "./state";
-import { openUrl } from "./utils";
+import { browseRepository } from "./utils";
 
 function useOrgPageQuery() {
   const page = useCurrentPage("org");
@@ -47,7 +47,7 @@ export function OrgPage() {
             key={v.id}
             keywords={[v.name]}
             onSelect={() => {
-              openUrl(v.url);
+              browseRepository(v);
             }}
           >
             <RepositoryItem repository={v} hideOwner />
