@@ -9,7 +9,6 @@ import type {
 } from "~/models";
 
 export interface AuthorChip {
-  qualifier: string;
   login: string;
   avatarUrl: string;
 }
