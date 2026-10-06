@@ -8,7 +8,7 @@ use tauri::{AppHandle, Manager, State};
 
 use crate::{
     core::{AppState, notification},
-    window::{self},
+    window::{self, ReviewActivity},
 };
 
 use git_pal_agent::models::PullRequestKey;
@@ -462,11 +462,8 @@ pub async fn delete_reviews(
 // serializes the counts, a stale one can't land last
 static BADGE_REFRESH: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
-fn is_in_progress(review: &ReviewListEntry, is_running: bool) -> bool {
-    if is_running {
-        return true;
-    }
-
+/// In progress without a running agent, mirrors the frontend `reviewStatus`.
+fn is_waiting(review: &ReviewListEntry) -> bool {
     let is_submitted = review.submitted_head_sha.is_some()
         && review.submitted_event.is_some()
         && review.pending_count == 0;
@@ -477,7 +474,7 @@ fn is_in_progress(review: &ReviewListEntry, is_running: bool) -> bool {
     review.reviewed || review.comment_count > 0
 }
 
-/// Recounts the in progress reviews, running ones included, for the tray and the Dock.
+/// Recounts the running reviews and those waiting on the user, for the tray and the Dock.
 pub(crate) fn refresh_review_badge(app: &AppHandle) {
     let app = app.clone();
 
@@ -503,15 +500,20 @@ pub(crate) fn refresh_review_badge(app: &AppHandle) {
             .map(|job| job.job_id)
             .collect();
 
-        let count = reviews
-            .iter()
-            .filter(|r| {
-                let job_id = review_job_id(&r.owner, &r.repository, r.pr_number);
-                is_in_progress(r, running.contains(&job_id))
-            })
-            .count();
+        let mut activity = ReviewActivity::default();
+        for review in &reviews {
+            let job_id = review_job_id(&review.owner, &review.repository, review.pr_number);
+            if running.contains(&job_id) {
+                activity.running += 1;
+                continue;
+            }
 
-        window::show_review_badge(&app, count);
+            if is_waiting(review) {
+                activity.waiting += 1;
+            }
+        }
+
+        window::show_review_activity(&app, &activity);
     });
 }
 

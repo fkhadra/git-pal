@@ -1,21 +1,44 @@
 use std::{fmt::Debug, str::FromStr};
+#[cfg(target_os = "macos")]
+use std::{sync::Mutex, time::Duration};
 
 use git_pal_settings::Theme;
-use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindow, WindowEvent, window::Color};
+use tauri::{
+    AppHandle, Manager, WebviewUrl, WebviewWindow, WindowEvent, Wry,
+    menu::{Menu, MenuBuilder},
+    window::Color,
+};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
 use git_pal_code_review::models::GetSavedReviewRequest;
 
 use crate::core::{AppState, Event, emit_event};
 
+#[cfg(target_os = "macos")]
+pub use macos::*;
+
 const MAIN_WINDOW_LABEL: &str = "Main";
 const SETTINGS_WINDOW_LABEL: &str = "Settings";
 const SETUP_WINDOW_LABEL: &str = "Setup";
 const REVIEW_WINDOW_LABEL: &str = "Review";
 pub const TRAY_ID: &str = "main";
+pub const RUNNING_MENU_ID: &str = "running";
+pub const WAITING_MENU_ID: &str = "waiting";
+
+#[cfg(not(target_os = "macos"))]
+pub const TRAY_ICON: &str = "icons/tray.png";
 
 #[cfg(target_os = "macos")]
-const DOCK_WINDOWS: [&str; 2] = [REVIEW_WINDOW_LABEL, SETTINGS_WINDOW_LABEL];
+mod macos {
+    use super::*;
+
+    pub const TRAY_ICON: &str = "icons/tray-template.png";
+    pub const SPINNER_FRAMES: [&str; 10] = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
+    pub const SPINNER_INTERVAL: Duration = Duration::from_millis(80);
+    pub static TRAY_SPINNER: Mutex<Option<tauri::async_runtime::JoinHandle<()>>> = Mutex::new(None);
+    pub static TRAY_COUNT: Mutex<Option<String>> = Mutex::new(None);
+    pub const DOCK_WINDOWS: [&str; 2] = [REVIEW_WINDOW_LABEL, SETTINGS_WINDOW_LABEL];
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -80,23 +103,117 @@ pub fn show_settings(app: &AppHandle) -> Result {
     }
 }
 
-pub fn show_review_badge(app: &AppHandle, count: usize) {
-    let label = (count > 0).then(|| count.to_string());
+#[derive(Default)]
+pub struct ReviewActivity {
+    pub running: usize,
+    /// In progress without a running agent
+    pub waiting: usize,
+}
 
-    // Windows has no tray title
-    if let Some(tray) = app.tray_by_id(TRAY_ID)
-        && let Err(err) = tray.set_title(label.as_deref())
-    {
-        log::warn!("Unable to set the tray title: {}", err);
+fn plural(count: usize) -> &'static str {
+    if count == 1 { "" } else { "s" }
+}
+
+/// Status lines on top while reviews run or wait, they open the reviews.
+pub fn tray_menu(app: &AppHandle, activity: &ReviewActivity) -> tauri::Result<Menu<Wry>> {
+    let mut builder = MenuBuilder::new(app);
+
+    if activity.running > 0 {
+        let label = format!(
+            "{} agent review{} running",
+            activity.running,
+            plural(activity.running)
+        );
+        builder = builder.text(RUNNING_MENU_ID, label);
+    }
+
+    if activity.waiting > 0 {
+        let label = format!(
+            "{} review{} waiting on you",
+            activity.waiting,
+            plural(activity.waiting)
+        );
+        builder = builder.text(WAITING_MENU_ID, label);
+    }
+
+    if activity.running > 0 || activity.waiting > 0 {
+        builder = builder.separator();
+    }
+
+    builder
+        .text("show", "Show Git Pal")
+        .separator()
+        .text("reviews", "Reviews")
+        .text("settings", "Settings")
+        .text("quit", "Quit Git Pal")
+        .build()
+}
+
+/// Waiting reviews as the tray title and the Dock badge, a running agent marks the tray icon.
+pub fn show_review_activity(app: &AppHandle, activity: &ReviewActivity) {
+    let label = (activity.waiting > 0).then(|| activity.waiting.to_string());
+
+    if let Some(tray) = app.tray_by_id(TRAY_ID) {
+        if let Err(err) = tray_menu(app, activity).and_then(|menu| tray.set_menu(Some(menu))) {
+            log::warn!("Unable to set the tray menu: {}", err);
+        }
+
+        #[cfg(target_os = "macos")]
+        spin_tray(tray, activity.running > 0, label.clone());
+
+        // Windows has no tray title
+        #[cfg(not(target_os = "macos"))]
+        if let Err(err) = tray.set_title(label.as_deref()) {
+            log::warn!("Unable to set the tray title: {}", err);
+        }
     }
 
     // app wide, any window sets it. Windows has no badge
     #[cfg(target_os = "macos")]
     if let Some(window) = app.get_webview_window(REVIEW_WINDOW_LABEL)
-        && let Err(err) = window.set_badge_count(label.map(|_| count as i64))
+        && let Err(err) = window.set_badge_count(label.map(|_| activity.waiting as i64))
     {
         log::warn!("Unable to set the Dock badge: {}", err);
     }
+}
+
+#[cfg(target_os = "macos")]
+fn spin_tray(tray: tauri::tray::TrayIcon, is_running: bool, count: Option<String>) {
+    *TRAY_COUNT.lock().unwrap() = count.clone();
+    let mut spinner = TRAY_SPINNER.lock().unwrap();
+
+    if !is_running {
+        if let Some(handle) = spinner.take() {
+            handle.abort();
+        }
+
+        if let Err(err) = tray.set_title(count.as_deref()) {
+            log::warn!("Unable to set the tray title: {}", err);
+        }
+        return;
+    }
+
+    if spinner.is_some() {
+        return;
+    }
+
+    *spinner = Some(tauri::async_runtime::spawn(async move {
+        let mut interval = tokio::time::interval(SPINNER_INTERVAL);
+
+        for frame in SPINNER_FRAMES.iter().cycle() {
+            interval.tick().await;
+
+            let title = match TRAY_COUNT.lock().unwrap().as_deref() {
+                Some(count) => format!("{frame} {count}"),
+                None => frame.to_string(),
+            };
+
+            if let Err(err) = tray.set_title(Some(title)) {
+                log::warn!("Unable to spin the tray title: {}", err);
+                return;
+            }
+        }
+    }));
 }
 
 pub fn is_review_focused(app: &AppHandle) -> bool {
@@ -234,17 +351,6 @@ pub fn create_main_window(handle: &AppHandle) -> Result {
     Ok(())
 }
 
-#[cfg(debug_assertions)]
-fn handle_window_events(window: WebviewWindow) {
-    window.on_window_event(move |e| match e {
-        WindowEvent::CloseRequested { api, .. } => {
-            api.prevent_close();
-        }
-        _ => {}
-    });
-}
-
-#[cfg(not(debug_assertions))]
 fn handle_window_events(window: WebviewWindow) {
     let cw = window.clone();
     window.on_window_event(move |e| match e {
