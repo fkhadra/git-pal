@@ -3,6 +3,7 @@ import { Search, X } from "lucide-react";
 import { useRef } from "react";
 
 import { MentionList } from "~/components/rich-text-mention";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { UpdateAppButton } from "~/components/update-app-button";
 
 import {
@@ -41,7 +42,10 @@ export function CommandInput() {
           key={author.login}
           className="flex items-center gap-1 rounded-md border border-kbd-border bg-kbd pr-1 pl-1.5 text-sm text-kbd-foreground"
         >
-          <img src={author.avatarUrl} alt="" className="size-4 rounded-full" />
+          <Avatar size="sm" className="size-4">
+            <AvatarImage src={author.avatarUrl} alt="" />
+            <AvatarFallback>{author.login[0].toUpperCase()}</AvatarFallback>
+          </Avatar>
           <span className="text-muted-foreground">{author.qualifier}:</span>
           <span>{author.login}</span>
           <button

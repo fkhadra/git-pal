@@ -109,6 +109,20 @@ export function HomePage() {
           </CommandItem>
         ))}
       </CommandGroup>
+      <CommandGroup heading="Repositories">
+        {data?.viewer.topRepositories?.nodes?.filter(nil).map((v) => (
+          <CommandItem
+            value={v.id}
+            key={v.id}
+            keywords={[v.name, "repository", v.owner.login]}
+            onSelect={() => {
+              browseRepository(v);
+            }}
+          >
+            <RepositoryItem repository={v} />
+          </CommandItem>
+        ))}
+      </CommandGroup>
       <CommandGroup heading="Pages">
         <CommandItem
           value="dashboard"
@@ -151,20 +165,6 @@ export function HomePage() {
           })}
         </CommandGroup>
       )}
-      <CommandGroup heading="Repositories">
-        {data?.viewer.topRepositories?.nodes?.filter(nil).map((v) => (
-          <CommandItem
-            value={v.id}
-            key={v.id}
-            keywords={[v.name, "repository", v.owner.login]}
-            onSelect={() => {
-              browseRepository(v);
-            }}
-          >
-            <RepositoryItem repository={v} />
-          </CommandItem>
-        ))}
-      </CommandGroup>
     </>
   );
 }
