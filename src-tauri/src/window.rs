@@ -338,7 +338,7 @@ fn sync_activation_policy(app: &AppHandle, closing: Option<&str>) {
     let is_open = DOCK_WINDOWS
         .iter()
         .any(|label| Some(*label) != closing && app.get_webview_window(label).is_some());
-    
+
     let policy = if is_open {
         tauri::ActivationPolicy::Regular
     } else {

@@ -13,6 +13,12 @@ use tauri_plugin_log::{Target, TargetKind};
 
 use window::{on_app_start, show_app, show_review, show_settings};
 
+// the menu bar tints a monochrome template, other platforms show colors
+#[cfg(target_os = "macos")]
+const TRAY_ICON: &str = "icons/tray-template.png";
+#[cfg(not(target_os = "macos"))]
+const TRAY_ICON: &str = "icons/tray.png";
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app_state = AppState::new();
@@ -81,11 +87,12 @@ pub fn run() {
 
             let resource_path = app
                 .path()
-                .resolve("icons/tray.png", tauri::path::BaseDirectory::Resource)?;
+                .resolve(TRAY_ICON, tauri::path::BaseDirectory::Resource)?;
 
             let i = Image::from_path(resource_path).expect("valid tray icon path");
             let _ = TrayIconBuilder::new()
                 .icon(i)
+                .icon_as_template(cfg!(target_os = "macos"))
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
