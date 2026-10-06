@@ -8,6 +8,12 @@ import type {
   Repository,
 } from "~/models";
 
+export interface AuthorChip {
+  qualifier: string;
+  login: string;
+  avatarUrl: string;
+}
+
 type PaletteItemValue =
   | { kind: "pr"; data: PullRequest }
   | { kind: "repo"; data: Repository }
@@ -58,6 +64,13 @@ type Page =
       };
     }
   | {
+      to: "repository-pull-requests";
+      params: {
+        owner: string;
+        repository: string;
+      };
+    }
+  | {
       to: "search";
       params: {
         owner: string;
@@ -77,7 +90,10 @@ export function createPageMapper(map: Record<PageTo, React.FC>) {
   return map;
 }
 
-type PageTo = Page["to"];
+export type PageTo = Page["to"];
+
+// pages searching on GitHub, cmdk must not filter their results
+const SERVER_SEARCH_PAGES: PageTo[] = ["search", "repository-pull-requests"];
 type CurrentPage<T> = Extract<Page, { to: T }>;
 
 export function useCurrentPage<T extends PageTo>(
@@ -90,6 +106,11 @@ export function useCurrentPage<T extends PageTo>(
 export function useGHSearchActive() {
   const snap = useSnapshot(state);
   return snap.currentPage.to === "search";
+}
+
+export function useServerSearch() {
+  const snap = useSnapshot(state);
+  return SERVER_SEARCH_PAGES.includes(snap.currentPage.to);
 }
 
 export function useDisableEmptySearchResults() {
@@ -117,6 +138,8 @@ export const state = proxy({
   disableEmptySearchResults: false,
   path: "",
   query: "",
+  authorSearch: null as string | null,
+  authors: [] as AuthorChip[],
   displayHelp: false,
   displayActions: false,
   clearPath() {
@@ -127,6 +150,8 @@ export const state = proxy({
   },
   clearFilter() {
     state.filter = "";
+    state.query = "";
+    state.authorSearch = null;
   },
   setSelectedValue(value: string) {
     state.selectedValue = value;
@@ -138,6 +163,8 @@ export const state = proxy({
     state.pages = [{ to: "home" }];
     state.path = "";
     state.query = "";
+    state.authorSearch = null;
+    state.authors = [];
     state.filter = "";
     state.disableEmptySearchResults = false;
     state.selectedValue = "";
@@ -145,6 +172,9 @@ export const state = proxy({
   goTo(page: Page, path?: string) {
     state.pages.push(page);
     state.filter = "";
+    state.query = "";
+    state.authorSearch = null;
+    state.authors = [];
     state.disableEmptySearchResults = false;
     if (path) {
       state.path = path;
@@ -153,12 +183,23 @@ export const state = proxy({
   goBack() {
     if (state.pages.length > 1) {
       state.pages.pop();
+      state.query = "";
+      state.authorSearch = null;
+      state.authors = [];
       state.disableEmptySearchResults = false;
 
       if (state.pages.length === 1) {
         state.path = "";
       }
     }
+  },
+  addAuthor(chip: AuthorChip) {
+    if (state.authors.some((a) => a.login === chip.login)) return;
+
+    state.authors.push(chip);
+  },
+  removeAuthor(login: string) {
+    state.authors = state.authors.filter((a) => a.login !== login);
   },
   setItem(key: string, value: PaletteItemValue) {
     paletteItems.set(key, createPaletteItem(value));

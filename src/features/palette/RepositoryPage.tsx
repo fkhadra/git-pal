@@ -19,6 +19,8 @@ import { Container } from "./Layout";
 import { state, useCurrentPage } from "./state";
 import { openUrl } from "./utils";
 
+export const REPOSITORY_PULL_REQUESTS = "page-repository-pull-requests";
+
 function useRepositoryQuery() {
   const page = useCurrentPage("repository");
 
@@ -75,9 +77,15 @@ export function RepositoryPage() {
         </Container>
       </CommandItem>
       <CommandItem
-        value={`${repository.id}-pull-requests`}
+        value={REPOSITORY_PULL_REQUESTS}
         onSelect={() => {
-          openUrl(`${repository.url}/pulls`);
+          state.goTo({
+            to: "repository-pull-requests",
+            params: {
+              owner: repository.owner.login,
+              repository: repository.name,
+            },
+          });
         }}
       >
         <Container>

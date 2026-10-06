@@ -1,5 +1,6 @@
 import type { PullRequest } from "~/models";
 
+import { REPOSITORY_PULL_REQUESTS } from "./RepositoryPage";
 import type { PaletteAction } from "./shortcuts";
 import { state, usePaletteItem } from "./state";
 import { openUrl, reviewPullRequest } from "./utils";
@@ -53,13 +54,15 @@ function pullRequestActions(pr: PullRequest): ItemAction[] {
 }
 
 export function useItemActions() {
-  const { selectedItem, parentItem, isPage } = usePaletteItem();
+  const { selectedItem, selectedItemValue, parentItem, isPage } =
+    usePaletteItem();
 
-  const isReviewable = selectedItem?.kind === "pr";
+  const isViewable =
+    selectedItem?.kind === "pr" || selectedItem?.kind === "repo";
   const actions: ItemAction[] = [
     {
       id: "primaryAction",
-      label: isPage || isReviewable ? "View" : "Open",
+      label: isPage || isViewable ? "View" : "Open",
       run: selectHighlighted,
     },
   ];
@@ -72,12 +75,20 @@ export function useItemActions() {
     const repo = selectedItem.data;
     actions.push({
       id: "secondaryAction",
-      label: "Browse repository",
-      run: () =>
-        state.goTo(
-          { to: "repository", params: { id: repo.id } },
-          `${repo.owner.login}/${repo.name}`,
-        ),
+      label: "Open on GitHub",
+      run: () => openUrl(repo.url),
+    });
+  }
+
+  if (
+    selectedItemValue === REPOSITORY_PULL_REQUESTS &&
+    parentItem?.kind === "repo"
+  ) {
+    const repo = parentItem.data;
+    actions.push({
+      id: "secondaryAction",
+      label: "Open on GitHub",
+      run: () => openUrl(`${repo.url}/pulls`),
     });
   }
 
