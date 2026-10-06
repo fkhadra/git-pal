@@ -1,4 +1,7 @@
-use std::{collections::HashMap, sync::Mutex};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Mutex,
+};
 
 use anyhow::anyhow;
 use tauri::{AppHandle, Manager, State};
@@ -350,6 +353,7 @@ pub async fn get_review(
 
 #[tauri::command]
 pub async fn update_review_comments(
+    app: AppHandle,
     state: State<'_, AppState>,
     request: UpdateReviewCommentsRequest,
 ) -> Result<()> {
@@ -362,6 +366,8 @@ pub async fn update_review_comments(
             &request.comments,
         )
         .await?;
+
+    refresh_review_badge(&app);
 
     Ok(())
 }
@@ -387,9 +393,12 @@ pub async fn set_file_viewed(
     Ok(())
 }
 
-/// Posts the review on GitHub, then marks the saved review and its notes as submitted.
 #[tauri::command]
-pub async fn submit_review(state: State<'_, AppState>, request: SubmitReviewRequest) -> Result<()> {
+pub async fn submit_review(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    request: SubmitReviewRequest,
+) -> Result<()> {
     state.github_client.submit_review(&request).await?;
 
     state
@@ -403,14 +412,21 @@ pub async fn submit_review(state: State<'_, AppState>, request: SubmitReviewRequ
         )
         .await?;
 
+    refresh_review_badge(&app);
+
     Ok(())
 }
 
 static WORKTREE_REMOVAL: Mutex<()> = Mutex::new(());
 
 #[tauri::command]
-pub async fn delete_reviews(state: State<'_, AppState>, ids: Vec<i64>) -> Result<()> {
+pub async fn delete_reviews(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    ids: Vec<i64>,
+) -> Result<()> {
     let prs = state.code_review_store.delete_reviews(&ids).await?;
+    refresh_review_badge(&app);
 
     for pr in &prs {
         state
@@ -441,6 +457,62 @@ pub async fn delete_reviews(state: State<'_, AppState>, ids: Vec<i64>) -> Result
     });
 
     Ok(())
+}
+
+// serializes the counts, a stale one can't land last
+static BADGE_REFRESH: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+
+fn is_in_progress(review: &ReviewListEntry, is_running: bool) -> bool {
+    if is_running {
+        return true;
+    }
+
+    let is_submitted = review.submitted_head_sha.is_some()
+        && review.submitted_event.is_some()
+        && review.pending_count == 0;
+    if is_submitted {
+        return false;
+    }
+
+    review.reviewed || review.comment_count > 0
+}
+
+/// Recounts the in progress reviews, running ones included, for the tray and the Dock.
+pub(crate) fn refresh_review_badge(app: &AppHandle) {
+    let app = app.clone();
+
+    tauri::async_runtime::spawn(async move {
+        let _refreshing = BADGE_REFRESH.lock().await;
+        let state = app.state::<AppState>();
+
+        let reviews = match state.code_review_store.list_reviews().await {
+            Ok(reviews) => reviews,
+            Err(err) => {
+                log::warn!("Unable to count the reviews in progress: {err}");
+                return;
+            }
+        };
+
+        // a finished job stays listed until the runner forgets it
+        let running: HashSet<String> = state
+            .job_runner
+            .tasks()
+            .into_iter()
+            .filter(|job| job.kind == JobKind::Review)
+            .filter(|job| matches!(job.status, JobStatus::Queued | JobStatus::Running))
+            .map(|job| job.job_id)
+            .collect();
+
+        let count = reviews
+            .iter()
+            .filter(|r| {
+                let job_id = review_job_id(&r.owner, &r.repository, r.pr_number);
+                is_in_progress(r, running.contains(&job_id))
+            })
+            .count();
+
+        window::show_review_badge(&app, count);
+    });
 }
 
 #[tauri::command]

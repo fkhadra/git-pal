@@ -210,6 +210,7 @@ export interface ReviewProgress {
   submittedHeadSha: string | null;
   submittedEvent: ReviewEvent | null;
   reviewed: boolean;
+  isReviewing: boolean;
   noteCount: number;
   /** Notes not posted yet */
   pendingCount: number;
@@ -219,6 +220,8 @@ export function reviewStatus(
   review: ReviewProgress,
   latestHeadSha?: string,
 ): ReviewStatus {
+  if (review.isReviewing) return "inProgress";
+
   const { submittedHeadSha, submittedEvent } = review;
   const isOutdated = !!latestHeadSha && latestHeadSha !== submittedHeadSha;
   if (

@@ -83,7 +83,7 @@ function ReviewItem({
   const isReviewing = useIsReviewing(entry);
   const defaultHarness = useDefaultHarness();
   const harnessLabel = HARNESS_LABELS[entry.harness ?? defaultHarness];
-  const progress = { ...entry, noteCount: entry.commentCount };
+  const progress = { ...entry, noteCount: entry.commentCount, isReviewing };
 
   return (
     <div

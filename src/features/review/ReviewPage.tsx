@@ -458,6 +458,7 @@ export function ReviewPage() {
                       noteCount: savedReview.comments.length,
                       pendingCount:
                         savedReview.comments.filter(isPendingComment).length,
+                      isReviewing,
                     }}
                   />
                   {savedReview.reviewed &&

@@ -11,7 +11,9 @@ use tauri_plugin_autostart::MacosLauncher;
 use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_log::{Target, TargetKind};
 
-use window::{on_app_start, show_app, show_review, show_settings};
+use commands::review::refresh_review_badge;
+use git_pal_job_runner::JobKind;
+use window::{TRAY_ID, on_app_start, show_app, show_review, show_settings};
 
 // the menu bar tints a monochrome template, other platforms show colors
 #[cfg(target_os = "macos")]
@@ -59,9 +61,14 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let emitter_handle = app.handle().clone();
-            app.state::<AppState>()
-                .job_runner
-                .set_emitter(move |job| emit_event(&emitter_handle, Event::JobMessage(job)));
+            app.state::<AppState>().job_runner.set_emitter(move |job| {
+                // spawned, the runner holds its lock while emitting
+                if job.kind == JobKind::Review {
+                    refresh_review_badge(&emitter_handle);
+                }
+
+                emit_event(&emitter_handle, Event::JobMessage(job));
+            });
 
             on_app_start(app.handle())?;
 
@@ -90,7 +97,7 @@ pub fn run() {
                 .resolve(TRAY_ICON, tauri::path::BaseDirectory::Resource)?;
 
             let i = Image::from_path(resource_path).expect("valid tray icon path");
-            let _ = TrayIconBuilder::new()
+            let _ = TrayIconBuilder::with_id(TRAY_ID)
                 .icon(i)
                 .icon_as_template(cfg!(target_os = "macos"))
                 .menu(&menu)
@@ -118,6 +125,8 @@ pub fn run() {
                     }
                 })
                 .build(app)?;
+
+            refresh_review_badge(app.handle());
 
             Ok(())
         })
