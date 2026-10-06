@@ -3,13 +3,25 @@ import {
   Columns2,
   Copy,
   Ellipsis,
+  LayoutTemplate,
+  RotateCcw,
   Rows2,
   SquareArrowOutUpRight,
 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 import commands from "~/commands";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "~/components/ui/alert-dialog";
 import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
@@ -22,19 +34,46 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { TemplatePicker } from "~/features/templates/TemplatePicker";
 import { parseShortcut } from "~/libs/keymap";
-import type { GetSavedReviewRequest } from "~/models/code-review";
+import type {
+  CodeReview,
+  GetSavedReviewRequest,
+  TemplateChoice,
+} from "~/models/code-review";
 
+import { AUTO_TEMPLATE } from "./ReviewButton";
+import { useRestartReview } from "./ReviewJobActions";
 import { useKeybind } from "./shortcuts";
 import { store, useCodeReviewSnapshot } from "./store";
 
 const EDITOR_KEY = "review:editor";
 
+// a full review keeps the user notes only
+function replacedCount(review?: CodeReview) {
+  return (
+    review?.comments.filter((c) => c.severity !== "user" && !c.posted).length ??
+    0
+  );
+}
+
 export function ReviewActionsMenu({
   review,
+  savedReview,
+  isReviewing,
 }: {
   review: GetSavedReviewRequest;
+  savedReview?: CodeReview;
+  isReviewing: boolean;
 }) {
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const [isPickerOpen, setPickerOpen] = useState(false);
+  const [pendingTemplate, setPendingTemplate] = useState<TemplateChoice | null>(
+    null,
+  );
+  const { restart } = useRestartReview(review);
+  const canReviewAgain = !!savedReview?.reviewed && !isReviewing;
+  const replaced = replacedCount(savedReview);
   const [lastEditor, setLastEditor] = useState(() =>
     localStorage.getItem(EDITOR_KEY),
   );
@@ -61,6 +100,20 @@ export function ReviewActionsMenu({
       .catch((error) => toast.error(String(error)));
   };
 
+  const reviewAgain = (template: TemplateChoice) => {
+    if (replaced > 0) {
+      setPendingTemplate(template);
+      return;
+    }
+
+    restart(template);
+  };
+
+  const confirmReviewAgain = () => {
+    if (pendingTemplate) restart(pendingTemplate);
+    setPendingTemplate(null);
+  };
+
   const copyPath = async () => {
     const path = commands
       .worktreePath(request)
@@ -77,51 +130,108 @@ export function ReviewActionsMenu({
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger
-        render={
-          <Button variant="ghost" size="icon-sm" title="More actions">
-            <Ellipsis className="size-4" />
-          </Button>
-        }
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              ref={menuButtonRef}
+              variant="ghost"
+              size="icon-sm"
+              title="More actions"
+            >
+              <Ellipsis className="size-4" />
+            </Button>
+          }
+        />
+        <DropdownMenuContent
+          align="end"
+          className="w-60"
+          finalFocus={!isPickerOpen}
+        >
+          {canReviewAgain && (
+            <>
+              <DropdownMenuItem onClick={() => reviewAgain(AUTO_TEMPLATE)}>
+                <RotateCcw />
+                Review again
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setPickerOpen(true)}>
+                <LayoutTemplate />
+                Review again with template
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          <DropdownMenuItem onClick={store.toggleViewType}>
+            {snapshot.viewType === "unified" ? <Columns2 /> : <Rows2 />}
+            {snapshot.viewType === "unified" ? "Split view" : "Unified view"}
+            <DropdownMenuShortcut>
+              {symbols(keybind.toggleViewType)}
+            </DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {defaultEditor && (
+            <>
+              <DropdownMenuItem onClick={() => openWith(defaultEditor)}>
+                <SquareArrowOutUpRight />
+                Open in {defaultEditor}
+              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger inset>Open with</DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {editors?.map((editor) => (
+                    <DropdownMenuItem
+                      key={editor}
+                      onClick={() => openWith(editor)}
+                    >
+                      {editor}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          <DropdownMenuItem onClick={copyPath}>
+            <Copy />
+            Copy path
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <TemplatePicker
+        owner={review.owner}
+        repository={review.repository}
+        prNumber={review.prNumber}
+        open={isPickerOpen}
+        onOpenChange={setPickerOpen}
+        anchor={menuButtonRef}
+        onSelect={reviewAgain}
       />
-      <DropdownMenuContent align="end" className="w-52">
-        <DropdownMenuItem onClick={store.toggleViewType}>
-          {snapshot.viewType === "unified" ? <Columns2 /> : <Rows2 />}
-          {snapshot.viewType === "unified" ? "Split view" : "Unified view"}
-          <DropdownMenuShortcut>
-            {symbols(keybind.toggleViewType)}
-          </DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        {defaultEditor && (
-          <>
-            <DropdownMenuItem onClick={() => openWith(defaultEditor)}>
-              <SquareArrowOutUpRight />
-              Open in {defaultEditor}
-            </DropdownMenuItem>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger inset>Open with</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                {editors?.map((editor) => (
-                  <DropdownMenuItem
-                    key={editor}
-                    onClick={() => openWith(editor)}
-                  >
-                    {editor}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
-            <DropdownMenuSeparator />
-          </>
-        )}
-        <DropdownMenuItem onClick={copyPath}>
-          <Copy />
-          Copy path
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+
+      <AlertDialog
+        open={!!pendingTemplate}
+        onOpenChange={(open) => {
+          if (!open) setPendingTemplate(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Review again</AlertDialogTitle>
+            <AlertDialogDescription>
+              {replaced} AI comment{replaced === 1 ? "" : "s"} not posted yet
+              will be replaced. Your notes are kept.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmReviewAgain}>
+              Review again
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
