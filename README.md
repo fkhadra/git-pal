@@ -62,13 +62,25 @@ Seamless OAuth authentication with support for GitHub Enterprise via personal ac
 
 ## Installation
 
-Download the latest [installer](https://gitpal.pushpull.sh/), open it, and drag Git Pal into your Applications folder.
+Download the installer for your platform from the [latest release](https://github.com/fkhadra/git-pal/releases/latest). Git Pal updates itself afterwards.
 
-| Platform | Status |
-|----------|--------|
-| macOS | ✅ |
-| Windows | ✅ |
-| Linux | Coming soon |
+### macOS
+
+Download the `.dmg`: `aarch64` for Apple Silicon, `x64` for Intel. Open it and drag Git Pal into your Applications folder.
+
+### Windows
+
+Download the `-setup.exe` (or the `.msi`) and run it.
+
+### Linux
+
+Download the package for your distribution:
+
+- **Debian / Ubuntu**: `sudo apt install ./Git.Pal_*_amd64.deb`
+- **Fedora / RHEL**: `sudo dnf install ./Git.Pal-*.x86_64.rpm`
+- **Other**: make the `.AppImage` executable with `chmod +x` and run it
+
+Git Pal stores your token through the Secret Service API, so a keyring such as GNOME Keyring or KWallet must be running.
 
 ## Development
 

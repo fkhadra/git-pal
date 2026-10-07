@@ -250,7 +250,7 @@ export function ReviewList({ prUrlRef }: Props) {
       ) : (
         <div className="flex items-center gap-2 px-4 pt-3 pb-1">
           <List className="size-3.5 text-muted-foreground" />
-          <span className="flex-1 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          <span className="flex-1 text-xs font-medium text-muted-foreground">
             Reviews
           </span>
         </div>

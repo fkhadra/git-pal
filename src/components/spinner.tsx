@@ -15,7 +15,8 @@ export const Spinner: React.FC<SpinnerProps> = ({
       fill="none"
       viewBox="0 0 16 16"
       className={cn(
-        "size-6 animate-spin fill-current stroke-current",
+        // own layer, WebKit stops the animation when the parent repaints
+        "size-6 animate-spin fill-current stroke-current will-change-transform",
         className,
       )}
       xmlns="http://www.w3.org/2000/svg"

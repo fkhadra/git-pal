@@ -271,7 +271,7 @@ function Reviews({
       </div>
       <div className="flex items-center gap-2 px-4 pt-3 pb-1">
         <List className="size-3.5 text-muted-foreground" />
-        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+        <span className="text-xs font-medium text-muted-foreground">
           Reviews
         </span>
       </div>
