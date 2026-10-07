@@ -11,7 +11,7 @@ use git_pal_job_runner::{Job, JobRunner};
 use git_pal_settings::{SettingManager, SettingValue, Settings, Theme};
 use serde::Serialize;
 use tauri::{AppHandle, Emitter, Manager};
-use tauri_plugin_updater::UpdaterExt;
+use tauri_plugin_updater::{Update, UpdaterExt};
 use tokio::sync::oneshot;
 use ts_rs::TS;
 use url::Url;
@@ -40,6 +40,23 @@ pub struct AppUpdate {
     pub date: Option<String>,
 }
 
+/// Downloaded in the background, installed when the user asks
+pub struct PendingUpdate {
+    pub update: Update,
+    pub bytes: Vec<u8>,
+}
+
+impl From<&Update> for AppUpdate {
+    fn from(update: &Update) -> Self {
+        AppUpdate {
+            body: update.body.clone(),
+            current_version: update.current_version.clone(),
+            version: update.version.clone(),
+            date: update.date.map(|v| v.to_string()),
+        }
+    }
+}
+
 pub struct AppState {
     pub github_client: github::Client,
     pub oauth_client: oauth::Client,
@@ -53,6 +70,7 @@ pub struct AppState {
     pub agent_store: AgentStore,
     pub agent_runs: Mutex<HashMap<i64, oneshot::Sender<()>>>,
     pub requested_review: Mutex<Option<GetSavedReviewRequest>>,
+    pub pending_update: Mutex<Option<PendingUpdate>>,
     app_dir: PathBuf,
 }
 
@@ -84,6 +102,7 @@ impl AppState {
             agent_store: AgentStore::new(db),
             agent_runs: Mutex::new(HashMap::new()),
             requested_review: Mutex::new(None),
+            pending_update: Mutex::new(None),
         }
     }
 
@@ -276,32 +295,40 @@ pub fn start_updater(app_handle: AppHandle) {
 }
 
 pub async fn check_for_update(app_handle: AppHandle) -> tauri_plugin_updater::Result<()> {
-    if let Some(update) = app_handle.updater()?.check().await? {
-        let mut downloaded = 0;
+    let Some(update) = app_handle.updater()?.check().await? else {
+        return Ok(());
+    };
 
-        update
-            .download_and_install(
-                |chunk_length, content_length| {
-                    downloaded += chunk_length;
-                    log::info!("downloaded {downloaded} from {content_length:?}");
-                },
-                || {
-                    log::info!("download finished");
-                },
-            )
-            .await?;
-        log::info!("update installed");
+    let state = app_handle.state::<AppState>();
+    let is_downloaded = state
+        .pending_update
+        .lock()
+        .unwrap()
+        .as_ref()
+        .is_some_and(|pending| pending.update.version == update.version);
 
-        emit_event(
-            &app_handle,
-            Event::UpdateInstalled(AppUpdate {
-                body: update.body,
-                current_version: update.current_version,
-                version: update.version,
-                date: update.date.map(|v| v.to_string()),
-            }),
-        );
+    if is_downloaded {
+        return Ok(());
     }
+
+    let mut downloaded = 0;
+    let bytes = update
+        .download(
+            |chunk_length, content_length| {
+                downloaded += chunk_length;
+                log::info!("downloaded {downloaded} from {content_length:?}");
+            },
+            || {
+                log::info!("download finished");
+            },
+        )
+        .await?;
+
+    let app_update = AppUpdate::from(&update);
+
+    *state.pending_update.lock().unwrap() = Some(PendingUpdate { update, bytes });
+    emit_event(&app_handle, Event::UpdateDownloaded(app_update));
+
     Ok(())
 }
 
@@ -319,7 +346,7 @@ pub enum Event {
     AuthMessage(AuthPayload),
     ThemeChanged(Theme),
     SettingChanged(SettingValue),
-    UpdateInstalled(AppUpdate),
+    UpdateDownloaded(AppUpdate),
     JobMessage(Job),
     ReviewSelected(GetSavedReviewRequest),
 }
@@ -329,7 +356,7 @@ pub fn emit_event(handle: &AppHandle, event: Event) {
         Event::AuthMessage(_) => "AuthMessage",
         Event::ThemeChanged(_) => "ThemeChanged",
         Event::SettingChanged(_) => "SettingChanged",
-        Event::UpdateInstalled(_) => "UpdateInstalled",
+        Event::UpdateDownloaded(_) => "UpdateDownloaded",
         Event::JobMessage(_) => "JobMessage",
         Event::ReviewSelected(_) => "ReviewSelected",
     };

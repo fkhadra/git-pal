@@ -11,6 +11,10 @@ export function UpdateAppButton() {
   const [appUpdate, setAppUpdate] = useState<AppUpdate>();
 
   useEffect(() => {
+    commands.pendingUpdate().then((update) => {
+      if (update) setAppUpdate(update);
+    });
+
     const listener = commands.onAppUpdated((event) => {
       if (event.payload) {
         setAppUpdate(event.payload);
@@ -30,7 +34,7 @@ function ButtonWrapper() {
     function handleRestart(event: KeyboardEvent) {
       if ((event.metaKey || event.ctrlKey) && event.key === "u") {
         event.preventDefault();
-        commands.restartApp();
+        commands.installUpdate();
       }
     }
 
@@ -51,9 +55,9 @@ function ButtonWrapper() {
         size="sm"
         variant="outline"
         className={`relative after:absolute after:-inset-0.5 after:-z-10 after:animate-pulse after:rounded-lg after:bg-linear-to-r after:from-brand after:to-brand-alt after:blur-sm`}
-        onClick={commands.restartApp}
+        onClick={commands.installUpdate}
       >
-        Restart to Update
+        Update
         <KbdGroup>
           <Kbd>{ModifierSymbol.cmd}</Kbd>
           <Kbd>U</Kbd>

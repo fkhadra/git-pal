@@ -6,4 +6,4 @@ import type { AppUpdate } from "./updater";
 
 export type AuthPayload = { msg: string | null, ok: boolean, };
 
-export type Event = { "authMessage": AuthPayload } | { "themeChanged": Theme } | { "settingChanged": SettingValue } | { "updateInstalled": AppUpdate } | { "jobMessage": Job } | { "reviewSelected": GetSavedReviewRequest };
+export type Event = { "authMessage": AuthPayload } | { "themeChanged": Theme } | { "settingChanged": SettingValue } | { "updateDownloaded": AppUpdate } | { "jobMessage": Job } | { "reviewSelected": GetSavedReviewRequest };
