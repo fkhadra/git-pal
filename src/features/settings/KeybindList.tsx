@@ -9,6 +9,7 @@ interface Props<A extends string> {
   defaults?: Record<A, string>;
   allowBareKeys?: boolean;
   onSave: (keybind: Record<A, string>) => void;
+  children?: React.ReactNode;
 }
 
 export function KeybindList<A extends string>({
@@ -18,6 +19,7 @@ export function KeybindList<A extends string>({
   defaults,
   allowBareKeys,
   onSave,
+  children,
 }: Props<A>) {
   const [error, setError] = useState<string>();
   const actions = Object.keys(labels) as A[];
@@ -37,6 +39,7 @@ export function KeybindList<A extends string>({
   return (
     <div className="mt-4 flex flex-col gap-2">
       <span className="text-sm font-medium">{title}</span>
+      {children}
       {actions.map((action) => (
         <div key={action} className="flex items-center gap-2 text-sm">
           <span className="flex-1 text-muted-foreground">{labels[action]}</span>

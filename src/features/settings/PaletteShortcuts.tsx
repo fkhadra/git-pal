@@ -6,6 +6,7 @@ import {
 } from "~/features/palette/shortcuts";
 
 import { useDefaultSettings } from "./data-loader";
+import { GlobalShortcut } from "./GlobalShortcut";
 import { KeybindList } from "./KeybindList";
 
 export function PaletteShortcuts() {
@@ -23,6 +24,8 @@ export function PaletteShortcuts() {
       defaults={defaults}
       allowBareKeys
       onSave={(next) => commands.updateSetting({ paletteKeybind: next })}
-    />
+    >
+      <GlobalShortcut />
+    </KeybindList>
   );
 }
