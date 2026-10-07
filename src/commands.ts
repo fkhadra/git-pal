@@ -131,6 +131,10 @@ function showCurrentWindow() {
   return invoke<void>("show_window");
 }
 
+function showPalette() {
+  return invoke<void>("show_palette");
+}
+
 function startAuthFlow() {
   return invoke<void>("start_oauth_flow");
 }
@@ -442,6 +446,7 @@ export default {
   enableAutoStart,
   disableAutoStart,
   showCurrentWindow,
+  showPalette,
   startAuthFlow,
   onAuthMessage,
   onAppUpdated,

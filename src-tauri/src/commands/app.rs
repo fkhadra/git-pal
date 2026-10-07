@@ -37,6 +37,12 @@ pub fn disable_autostart(
 }
 
 #[tauri::command]
+pub fn show_palette(app_handle: tauri::AppHandle) -> Result<()> {
+    show_app(&app_handle)?;
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn show_window(w: tauri::Window) -> Result<()> {
     let ww = w
         .get_webview_window(w.label())

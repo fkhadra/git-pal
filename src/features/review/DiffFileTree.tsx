@@ -106,8 +106,8 @@ export function DiffFileTree({
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      <div className="flex h-9 shrink-0 items-center gap-2 border-b px-4 text-xs font-medium tracking-wide text-muted-foreground">
-        <span className="uppercase">Files changed ({fileCount})</span>
+      <div className="flex h-9 shrink-0 items-center gap-2 border-b px-4 text-xs font-medium text-muted-foreground">
+        <span>Files changed ({fileCount})</span>
         <FileViewToggle value={fileView} />
         <span className="ml-auto font-mono text-success">+{additions}</span>
         <span className="font-mono text-destructive">-{deletions}</span>

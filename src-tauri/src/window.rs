@@ -77,6 +77,11 @@ pub fn show_app(app: &AppHandle) -> Result {
         if !app.state::<AppState>().github_client.is_token_set() {
             return show_window(&setup_window);
         }
+
+        // setup is done, the palette takes over
+        if let Err(err) = setup_window.close() {
+            log::error!("Failed to close setup window: {}", err);
+        }
     }
 
     match app.get_webview_window(MAIN_WINDOW_LABEL) {
@@ -265,8 +270,8 @@ pub fn on_app_start(handle: &AppHandle) -> Result {
                     current_view: "setup",
                     url: "setup",
                     label: SETUP_WINDOW_LABEL,
-                    width: 800.0,
-                    height: 600.0,
+                    width: 960.0,
+                    height: 780.0,
                     resizable: false,
                 },
             )?

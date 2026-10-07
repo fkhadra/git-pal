@@ -1,8 +1,6 @@
 import { useCallback, useState } from "react";
 
 import commands from "~/commands";
-import { Keybind } from "~/components/keybind";
-import { Typography } from "~/components/typography";
 import { Button } from "~/components/ui/button";
 import {
   Dialog,
@@ -10,11 +8,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
-import { Vortex } from "~/components/vortex";
 import { useWindowReady } from "~/hooks";
+import appIcon from "~/icon.png";
 
-import { Beams } from "./Beams";
 import { PATForm } from "./PATForm";
+import { SetupComplete } from "./SetupComplete";
+import { SetupDemo } from "./SetupDemo";
+
+// fractal noise, breaks up the flat background
+const GRAIN =
+  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")";
 
 export function SetupPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -36,53 +39,54 @@ export function SetupPage() {
   return (
     <main
       data-with-decoration
-      className="relative grid h-dvh place-items-center"
+      className="relative grid h-dvh place-items-center overflow-hidden bg-background"
     >
-      <Vortex
-        rangeY={800}
-        particleCount={500}
-        className="flex h-full w-full flex-col items-center justify-center px-2 py-4 md:px-10"
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay"
+        style={{ backgroundImage: GRAIN }}
       />
-      <div className="absolute z-10 flex min-w-[75%] flex-col items-center justify-center rounded-md border bg-background/60 p-8 backdrop-blur-md">
-        <Typography.h1>
-          Welcome to{" "}
-          <span className="bg-linear-to-r from-brand to-brand-alt bg-clip-text text-transparent">
-            Git Pal
-          </span>
-        </Typography.h1>
-        <Typography.h4 className="mt-2 italic">
-          GitHub in your flow, not in your way
-        </Typography.h4>
-        <Beams />
+
+      <div className="relative z-10 flex w-full animate-in flex-col items-center gap-6 px-8 duration-500 fade-in slide-in-from-bottom-2">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <img
+            src={appIcon}
+            alt=""
+            className="size-16 rounded-2xl ring-1 ring-white/10"
+          />
+          <h1 className="text-4xl font-semibold tracking-tight">Git Pal</h1>
+          <p className="text-muted-foreground">
+            GitHub in your flow, not in your way
+          </p>
+        </div>
+
         {isAuthenticated ? (
-          <Typography.h4 className="mt-4 flex gap-2">
-            <div>
-              <span aria-hidden="true">🎉</span> You’re in!
-            </div>
-            <Keybind label="Press" keys={["⌘", "G"]} />
-            <span className="-ml-1">anytime to bring up Git Pal.</span>
-          </Typography.h4>
+          <SetupComplete />
         ) : (
-          <div className="flex flex-col content-center justify-center">
-            <Button
-              className="mt-2 bg-linear-to-r from-brand-alt to-brand font-bold"
-              onClick={() => {
-                commands.startAuthFlow();
-              }}
-            >
-              Login with GitHub
-            </Button>
-            <p className="mt-2 text-sm">
-              Using GitHub Enterprise?{" "}
-              <button
-                type="button"
-                onClick={() => togglePATDialog(true)}
-                className="cursor-pointer font-semibold underline hover:text-primary"
+          <>
+            <SetupDemo />
+            <div className="mt-4 flex flex-col items-center gap-3">
+              <Button
+                size="lg"
+                className="h-10 w-64 bg-foreground px-6 font-medium text-background hover:bg-foreground/90"
+                onClick={() => {
+                  commands.startAuthFlow();
+                }}
               >
-                Configure via PAT
-              </button>
-            </p>
-          </div>
+                Continue with GitHub
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                GitHub Enterprise?{" "}
+                <button
+                  type="button"
+                  onClick={() => togglePATDialog(true)}
+                  className="cursor-pointer text-foreground underline-offset-4 hover:underline"
+                >
+                  Use a token
+                </button>
+              </p>
+            </div>
+          </>
         )}
         <Dialog modal open={openPATDialog} onOpenChange={togglePATDialog}>
           <DialogContent showCloseButton={false}>
