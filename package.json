@@ -52,7 +52,6 @@
     "rehype-raw": "^7.0.0",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
-    "simplex-noise": "^4.0.3",
     "tailwindcss": "^4.3.3",
     "thinking-orbs": "^0.3.2",
     "valtio": "^2.3.2"

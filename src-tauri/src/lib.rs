@@ -134,6 +134,7 @@ pub fn run() {
             commands::app::enable_autostart,
             commands::app::disable_autostart,
             commands::app::show_window,
+            commands::app::show_palette,
             commands::auth::start_oauth_flow,
             commands::workflows::extract_workflow_variables,
             commands::workflows::find_workflows,
