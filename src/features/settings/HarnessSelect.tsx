@@ -22,12 +22,16 @@ import {
   ComboboxTrigger,
 } from "~/components/ui/combobox";
 import {
+  useDefaultModelQuery,
   useHarnessModelQuery,
   useModelsQuery,
 } from "~/features/agent/data-loader";
 import type { Harness, Model } from "~/models/harness";
 import { InputGroupAddon } from "~/components/ui/input-group";
 import { Search } from "lucide-react";
+import { cn } from "cn";
+
+import { CONTROL_WIDTH, SettingRow } from "./SettingRow";
 
 const HARNESSES = Object.keys(HARNESS_LABELS) as Harness[];
 
@@ -41,12 +45,9 @@ export function HarnessSelect() {
 
   return (
     <>
-      <div className="mb-4 flex items-center gap-2 text-sm">
-        <span className="flex-1 text-muted-foreground">
-          Harness used by reviews and new conversations
-        </span>
+      <SettingRow label="Harness">
         <Select value={harness} onValueChange={(v) => save(v as Harness)}>
-          <SelectTrigger size="sm" className="w-44">
+          <SelectTrigger size="sm" className={CONTROL_WIDTH}>
             <SelectValue>
               <HarnessName harness={harness} />
             </SelectValue>
@@ -59,7 +60,7 @@ export function HarnessSelect() {
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </SettingRow>
       <ModelSelect harness={harness} />
     </>
   );
@@ -73,9 +74,13 @@ function ModelSelect({ harness }: { harness: Harness }) {
   const queryClient = useQueryClient();
   const { data: models = [], isFetching } = useModelsQuery(harness);
   const { data: model } = useHarnessModelQuery(harness);
+  const { data: defaultModel } = useDefaultModelQuery(harness);
   const selected = models.find((m) => m.id === model) ?? null;
   const isLoading = isFetching && models.length === 0;
   const disabled = isLoading || models.length === 0
+
+  const modelLabel = (m: Model) =>
+    m.id === defaultModel ? `${m.label} (default)` : m.label;
 
   const save = async (next: string) => {
     const picked = { ...globalThis.settings.models, [harness]: next };
@@ -86,10 +91,7 @@ function ModelSelect({ harness }: { harness: Harness }) {
   };
 
   return (
-    <div className="mb-4 flex items-center gap-2 text-sm">
-      <span className="flex-1 text-muted-foreground">
-        Model used by reviews and new conversations
-      </span>
+    <SettingRow label="Model">
       <Combobox
         items={models}
         value={selected}
@@ -104,7 +106,7 @@ function ModelSelect({ harness }: { harness: Harness }) {
               size="sm"
               disabled={disabled}
               aria-disabled={disabled}
-              className="w-56 justify-between font-normal"
+              className={cn(CONTROL_WIDTH, "justify-between font-normal")}
 
             />
           }
@@ -114,7 +116,9 @@ function ModelSelect({ harness }: { harness: Harness }) {
             <span className="truncate">
               {isLoading
                 ? LOADING_LABEL
-                : (selected?.label ?? DEFAULT_MODEL_LABEL)}
+                : selected
+                  ? modelLabel(selected)
+                  : DEFAULT_MODEL_LABEL}
             </span>
           </span>
         </ComboboxTrigger>
@@ -128,12 +132,12 @@ function ModelSelect({ harness }: { harness: Harness }) {
           <ComboboxList>
             {(m: Model) => (
               <ComboboxItem key={m.id} value={m}>
-                {m.label}
+                {modelLabel(m)}
               </ComboboxItem>
             )}
           </ComboboxList>
         </ComboboxContent>
       </Combobox>
-    </div>
+    </SettingRow>
   );
 }

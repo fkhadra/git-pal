@@ -62,6 +62,13 @@ export function useHarnessModelQuery(harness?: Harness) {
   });
 }
 
+export function useDefaultModelQuery(harness: Harness) {
+  return useQuery({
+    queryKey: ["default-model", harness],
+    queryFn: () => commands.defaultModel(harness),
+  });
+}
+
 export function useMessagesQuery(conversationId: number | null) {
   return useQuery({
     queryKey: messagesKey(conversationId),

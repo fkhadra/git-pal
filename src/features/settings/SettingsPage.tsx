@@ -1,11 +1,11 @@
 import { cn } from "cn";
 import {
-  Activity,
   FolderGit2,
   Info,
   Keyboard,
   LockKeyhole,
   MessageCircle,
+  Palette,
   Settings,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -14,9 +14,9 @@ import { useState } from "react";
 import { useWindowReady } from "~/hooks";
 
 import { AboutSection } from "./AboutSection";
+import { AppearanceSection } from "./AppearanceSection";
 import { FeedbackSection } from "./FeedbackSection";
 import { GeneralSection } from "./GeneralSection";
-import { MonitoringSection } from "./MonitoringSection";
 import { RepositoriesSection } from "./RepositoriesSection";
 import { SecuritySection } from "./SecuritySection";
 import { ShortcutsSection } from "./ShortcutsSection";
@@ -62,7 +62,7 @@ export function SettingsPage() {
             bounce: 0,
             duration: 0.2,
           }}
-          className="flex h-dvh flex-col gap-7 overflow-y-auto px-4 py-2"
+          className="flex h-dvh flex-col gap-4 overflow-y-auto p-4"
         >
           {currentSection && <currentSection.component />}
         </motion.div>
@@ -81,6 +81,14 @@ const sections = [
     component: GeneralSection,
   },
   {
+    label: "Appearance",
+    icon: Palette,
+    href: "#appearance",
+    bg: "bg-pink-300",
+    color: "text-pink-700",
+    component: AppearanceSection,
+  },
+  {
     label: "Shortcuts",
     icon: Keyboard,
     href: "#shortcuts",
@@ -89,17 +97,9 @@ const sections = [
     component: ShortcutsSection,
   },
   {
-    label: "Monitoring",
-    icon: Activity,
-    href: "#monitoring",
-    bg: "bg-green-300",
-    color: "text-green-700",
-    component: MonitoringSection,
-  },
-  {
-    label: "Repositories",
+    label: "Scope",
     icon: FolderGit2,
-    href: "#repositories",
+    href: "#scope",
     bg: "bg-orange-300",
     color: "text-orange-700",
     component: RepositoriesSection,

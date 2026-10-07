@@ -191,6 +191,16 @@ pub async fn harness_model(
 }
 
 #[tauri::command]
+pub async fn default_model(harness: Harness) -> Result<Option<String>> {
+    // off the main thread, some harnesses list their models over the network
+    let model = tokio::task::spawn_blocking(move || harness.adapter().default_model())
+        .await
+        .map_err(anyhow::Error::from)?;
+
+    Ok(model)
+}
+
+#[tauri::command]
 pub async fn list_models(
     state: State<'_, AppState>,
     harness: Option<Harness>,

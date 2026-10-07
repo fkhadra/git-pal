@@ -96,7 +96,7 @@ pub fn show_settings(app: &AppHandle) -> Result {
                 url: "settings",
                 label: SETTINGS_WINDOW_LABEL,
                 width: 715.0,
-                height: 600.0,
+                height: 720.0,
                 resizable: false,
             },
         ),
