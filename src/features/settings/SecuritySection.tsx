@@ -69,7 +69,7 @@ export function SecuritySection() {
     <Section
       title="Authentication"
       icon={KeyRound}
-      className="flex h-full flex-col"
+      description="Your token is stored in your system's secure credential store."
     >
       <FormControl>
         <Label>GitHub Token</Label>
@@ -107,7 +107,7 @@ export function SecuritySection() {
         </DialogContent>
       </Dialog>
 
-      <div className="mt-auto flex flex-col gap-2">
+      <div className="mt-4 flex flex-col gap-2">
         <Separator />
         <AlertDialog>
           <AlertDialogTrigger

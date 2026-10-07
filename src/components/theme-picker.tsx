@@ -1,4 +1,5 @@
 import { cn } from "cn";
+import { Check } from "lucide-react";
 import { useState } from "react";
 
 import commands from "~/commands";
@@ -49,10 +50,15 @@ export function ThemePicker() {
           <label
             key={value}
             className={cn(
-              "flex cursor-pointer flex-col gap-1.5 rounded-lg border-2 border-transparent p-1 text-center text-xs text-muted-foreground hover:border-border",
-              value === selectedTheme && "border-primary text-foreground",
+              "relative flex cursor-pointer flex-col gap-1.5 rounded-lg border-2 border-transparent p-1 text-center text-xs hover:border-border",
+              value === selectedTheme && "border-primary hover:border-primary",
             )}
           >
+            {value === selectedTheme && (
+              <span className="absolute top-0 right-0 flex size-4 translate-x-1/3 -translate-y-1/3 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                <Check className="size-3" />
+              </span>
+            )}
             <input
               type="radio"
               className="sr-only"

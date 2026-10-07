@@ -1,13 +1,17 @@
 import { useState } from "react";
 
 import commands from "~/commands";
-import { FormControl, Label } from "~/components/form";
 import { Switch } from "~/components/ui/switch";
+
+import { SettingRow } from "./SettingRow";
 
 export function AutoStart({ autoStartEnabled }: { autoStartEnabled: boolean }) {
   const [isEnabled, setIsEnabled] = useState(autoStartEnabled);
   return (
-    <FormControl className="flex-row items-center">
+    <SettingRow
+      label="Launch on login"
+      description="Start Git Pal when you log in."
+    >
       <Switch
         checked={isEnabled}
         onCheckedChange={async (checked) => {
@@ -21,7 +25,6 @@ export function AutoStart({ autoStartEnabled }: { autoStartEnabled: boolean }) {
           }
         }}
       />
-      <Label className="font-normal">Launch on login</Label>
-    </FormControl>
+    </SettingRow>
   );
 }

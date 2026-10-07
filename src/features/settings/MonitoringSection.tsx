@@ -1,13 +1,14 @@
-import { Clock } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useState } from "react";
 
 import commands from "~/commands";
-import { FormControl, Input, Label } from "~/components/form";
+import { Input } from "~/components/form";
 import { Switch } from "~/components/ui/switch";
 import { useAppContext } from "~/features/shared";
 import { digitsOnly } from "~/libs/utils";
 
 import { Section } from "./Section";
+import { CONTROL_WIDTH, SettingRow } from "./SettingRow";
 
 const MIN_INTERVAL_S = 5;
 const MAX_INTERVAL_S = 300;
@@ -23,8 +24,11 @@ export function MonitoringSection() {
   );
 
   return (
-    <Section icon={Clock} title="Pull Request Monitoring">
-      <FormControl className="flex-row items-center">
+    <Section icon={Bell} title="Notifications">
+      <SettingRow
+        label="Review requests"
+        description="Notify me when my review is requested."
+      >
         <Switch
           checked={monitorPullRequests}
           onCheckedChange={async (checked) => {
@@ -32,13 +36,13 @@ export function MonitoringSection() {
             await commands.updateSetting({ monitorPullRequests: checked });
           }}
         />
-        <Label className="font-normal">
-          Notify me when my review is requested
-        </Label>
-      </FormControl>
-      <FormControl>
-        <Label>Check interval (seconds)</Label>
+      </SettingRow>
+      <SettingRow
+        label="Check interval"
+        description={`Seconds between checks, ${MIN_INTERVAL_S} to ${MAX_INTERVAL_S}.`}
+      >
         <Input
+          wrapperClassName={CONTROL_WIDTH}
           inputMode="numeric"
           disabled={!monitorPullRequests}
           value={monitorInterval}
@@ -52,7 +56,7 @@ export function MonitoringSection() {
             await commands.updateSetting({ monitorInterval: val });
           }}
         />
-      </FormControl>
+      </SettingRow>
     </Section>
   );
 }

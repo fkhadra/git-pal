@@ -169,7 +169,7 @@ export function RepositoriesSection() {
   };
 
   return (
-    <Section icon={FolderGit2} title="Repositories">
+    <Section icon={FolderGit2} title="Search scope">
       <p className="mb-4 text-xs text-muted-foreground">
         Applies to Review Requested, Mentioned, notifications and repository
         lists. Your own pull requests always show. Entries are checked on GitHub
