@@ -144,7 +144,7 @@ function onAuthMessage(cb: (event: Event<AuthenticatedPayload>) => void) {
 }
 
 function onAppUpdated(cb: (event: Event<AppUpdate>) => void) {
-  return listen<AppUpdate>("UpdateInstalled", cb);
+  return listen<AppUpdate>("UpdateDownloaded", cb);
 }
 
 function onThemeChanged(cb: (event: Event<ThemeChangedPayload>) => void) {
@@ -199,6 +199,14 @@ function getToken() {
 
 function restartApp() {
   return invoke<void>("restart_app");
+}
+
+function installUpdate() {
+  return invoke<void>("install_update");
+}
+
+function pendingUpdate() {
+  return invoke<AppUpdate | null>("pending_update");
 }
 
 function deleteToken() {
@@ -463,6 +471,8 @@ export default {
   replaceGlobalShortcut,
   getToken,
   restartApp,
+  installUpdate,
+  pendingUpdate,
   deleteToken,
   notificationAskPermission,
   submitFeedback,

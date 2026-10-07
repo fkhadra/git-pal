@@ -158,3 +158,24 @@ pub async fn check_for_update(app_handle: tauri::AppHandle) -> Result<Option<App
 pub fn restart_app(app_handle: tauri::AppHandle) {
     app_handle.restart()
 }
+
+/// The downloaded update waiting to be installed, if any
+#[tauri::command]
+pub fn pending_update(state: State<'_, AppState>) -> Option<AppUpdate> {
+    let pending = state.pending_update.lock().unwrap();
+
+    pending
+        .as_ref()
+        .map(|pending| AppUpdate::from(&pending.update))
+}
+
+#[tauri::command]
+pub fn install_update(app_handle: tauri::AppHandle, state: State<'_, AppState>) -> Result<()> {
+    let pending = state.pending_update.lock().unwrap().take();
+    let Some(pending) = pending else {
+        return Err(anyhow!("No update downloaded").into());
+    };
+
+    pending.update.install(&pending.bytes)?;
+    app_handle.restart()
+}
