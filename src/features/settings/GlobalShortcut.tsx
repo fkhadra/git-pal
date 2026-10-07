@@ -21,7 +21,7 @@ export function GlobalShortcut() {
   };
 
   return (
-    <div className="mt-4 flex flex-col gap-1">
+    <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2 text-sm">
         <span className="flex-1 text-muted-foreground">Show Git Pal</span>
         <ShortcutRecorder
