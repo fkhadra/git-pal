@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "app-v*"
+      - "v*"
   workflow_dispatch:
 
 permissions: {}
@@ -78,7 +78,7 @@ jobs:
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
-          tagName: app-v__VERSION__
+          tagName: v__VERSION__
           releaseName: Git Pal v__VERSION__
           releaseBody: See the assets to download and install this version.
           # published once every platform is uploaded
@@ -101,4 +101,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           version=$(jq -r .version src-tauri/tauri.conf.json)
-          gh release edit "app-v$version" --draft=false
+          gh release edit "v$version" --draft=false
