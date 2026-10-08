@@ -22,13 +22,13 @@
 
 ### Command palette
 
-Press <kbd>⌘</kbd> <kbd>G</kbd> from any app. Review requests, mentions, your open pull requests and repositories are one search away.
+Press <kbd>⌘</kbd> <kbd>G</kbd> (<kbd>Ctrl</kbd> <kbd>G</kbd> on Linux, <kbd>Ctrl</kbd> <kbd>Win</kbd> <kbd>G</kbd> on Windows) from any app. Review requests, mentions, your open pull requests and repositories are one search away.
 
 <p align="center">
   <img src="download-page/assets/palette-mentioned.png" alt="Pull requests mentioning you" width="700" />
 </p>
 
-Browse a repository's pull requests and filter them by author with `@`. Every item has its actions a shortcut away: view, review, open on GitHub, code search.
+Browse a repository's pull requests and type `@` to filter by author. Every action is a shortcut away: view, review, open on GitHub or search the code.
 
 <p align="center">
   <img src="download-page/assets/palette-author-filter.png" alt="Filtering pull requests by author" width="700" />
@@ -36,16 +36,18 @@ Browse a repository's pull requests and filter them by author with `@`. Every it
 
 ### AI code review
 
-Have Claude Code, Codex, Cursor, Antigravity or OpenCode review a pull request in the background. Git Pal checks the pull request out in its own worktree, the agent can only read code. Its comments land in the diff: keep, edit or drop them, add your own notes, then submit.
+Let Claude Code, Codex, Cursor, Antigravity or OpenCode review a pull request while you keep working. Git Pal checks it out in a separate worktree, and the agent can only read the code.
+
+When it's done, its comments show up right in the diff. Keep, edit or drop them, add your own notes, then submit.
 
 <p align="center">
   <img src="download-page/assets/review-window.png" alt="The review window" width="700" />
 </p>
 
-- **Templates**: per repository review instructions and agent skills, picked automatically
+- **Templates**: review instructions and agent skills per repository, picked automatically
 - **Incremental reviews**: review only the commits pushed since the last review
 - **GitHub threads**: existing discussions show inline, with the conversation and the agent's summary a click away
-- **Open in your editor**: VS Code, Cursor, Zed, JetBrains IDEs and more
+- **Open in your editor**: jump into the worktree from your IDE or terminal to tweak code or run the build
 
 <p align="center">
   <img src="download-page/assets/review-submit.png" alt="Submitting a review" width="700" />
@@ -53,7 +55,7 @@ Have Claude Code, Codex, Cursor, Antigravity or OpenCode review a pull request i
 
 ### Agent chat
 
-Ask about the changes, the risks or a comment. The agent sees the file you're on, add more with `@`.
+Ask about the changes, the risks or a specific comment. The agent already sees the file you're on, and you can add more with `@`.
 
 <p align="center">
   <img src="download-page/assets/review-agent-chat.png" alt="Chatting with the agent about a pull request" width="700" />
@@ -61,7 +63,7 @@ Ask about the changes, the risks or a comment. The agent sees the file you're on
 
 ### Make it yours
 
-Themes, an agent avatar, every keyboard shortcut, and the repositories Git Pal covers.
+Pick a theme and an avatar for your agent, remap any shortcut, and choose which repositories Git Pal watches.
 
 <p align="center">
   <img src="download-page/assets/settings-appearance.png" alt="Appearance settings" width="500" />
@@ -109,6 +111,9 @@ Reviews run a coding agent installed on your machine. Install one and make sure 
 - Tauri v2 [system dependencies](https://v2.tauri.app/start/prerequisites/)
 - `GIT_PAL_CLIENT_SECRET`: the GitHub OAuth app's client secret, read at compile time
 
+> [!NOTE]
+> `GIT_PAL_CLIENT_SECRET` is only needed to build a release. During development it can be empty, but it must be set (`export GIT_PAL_CLIENT_SECRET=`). Without it, sign in with a personal access token: click **Use a token** on the welcome window.
+
 ### Getting started
 
 ```bash
@@ -120,9 +125,18 @@ pnpm tauri dev
 
 # Build for production
 pnpm tauri build
+```
 
-# Regenerate the TypeScript models from the Rust types
-cd src-tauri && cargo codegen ts
+### Code generation
+
+TypeScript models are generated from the Rust types. Regenerate them after changing a shared type:
+
+```bash
+# TypeScript models only
+mise run codegen:ts
+
+# GraphQL queries, then TypeScript models
+mise run codegen:gql
 ```
 
 ## FAQ
@@ -131,7 +145,7 @@ cd src-tauri && cargo codegen ts
 Git Pal stores the OAuth token in the system keychain. macOS requires your password to authorize keychain access on first use.
 
 **Does it support GitHub Enterprise?**
-Not yet. Git Pal talks to `github.com`, self-hosted GitHub Enterprise Server isn't supported.
+Not yet. Git Pal only talks to `github.com` for now.
 
 **Is my data secure?**
 All data stays on your machine. Settings and reviews are stored locally at `~/.config/git-pal`, tokens live in the system keychain, and there is no telemetry. Agents run locally and can only read the pull request's code.
