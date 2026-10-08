@@ -1,9 +1,10 @@
 [package]
 name = "git-pal"
-version = "0.0.1"
+version.workspace = true
 description = "Git Pal - Git in your flow not in your way"
-authors = ["Fadi Khadra"]
-edition = "2024"
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -77,6 +78,12 @@ regex = "1.11"
 [workspace]
 resolver = "3"
 members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2024"
+authors = ["Fadi Khadra"]
+license = "MIT OR Apache-2.0"
 
 [profile.dev]
 incremental = true
