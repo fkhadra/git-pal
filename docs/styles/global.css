@@ -1,0 +1,61 @@
+/* no preflight, it would restyle the docs theme */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "../../src/theme.css";
+
+@source "../../src/components";
+@source "../../src/features/palette";
+@source "../../src/features/review";
+@source "../../src/features/setup";
+@source "../components";
+
+/* Tailwind's preflight, only where app components render */
+@layer base {
+  .app-scope,
+  .app-scope *,
+  .app-scope ::before,
+  .app-scope ::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    /* longhands, the shorthand would reset the theme's border color */
+    border-width: 0;
+    border-style: solid;
+  }
+
+  .app-scope {
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app-scope :is(button, input, textarea, kbd, code) {
+    font: inherit;
+    color: inherit;
+    background-color: transparent;
+  }
+
+  .app-scope :is(img, svg) {
+    display: block;
+    max-width: 100%;
+  }
+}
+
+/* key caps in the guide pages */
+@layer components {
+  .rp-doc kbd {
+    display: inline-block;
+    min-width: 1.6em;
+    padding: 0.05em 0.4em;
+    border: 1px solid var(--rp-c-divider, #8884);
+    border-bottom-width: 2px;
+    border-radius: 0.35em;
+    font-family: var(--font-sans);
+    font-size: 0.85em;
+    line-height: 1.5;
+    text-align: center;
+  }
+}
