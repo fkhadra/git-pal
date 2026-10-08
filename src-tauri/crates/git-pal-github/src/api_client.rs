@@ -16,6 +16,10 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 const USER_AGENT: &str = "hey-github-wanna-hire-me?";
 
+/// Error GitHub returns past its diff limits (files or lines)
+const TOO_LARGE_CODE: &str = "too_large";
+const DIFF_FIELD: &str = "diff";
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
     #[error("token is missing")]
@@ -24,6 +28,8 @@ pub enum Error {
     ResourceNotFound,
     #[error("invalid request:  {0}")]
     BadRequest(String),
+    #[error("diff too large for GitHub")]
+    DiffTooLarge,
     #[error("no data")]
     MissingData,
     #[error("missing user")]
@@ -43,6 +49,12 @@ struct ErrorResponse {
 }
 
 impl ErrorResponse {
+    fn is_diff_too_large(&self) -> bool {
+        self.errors
+            .iter()
+            .any(|e| e["code"] == TOO_LARGE_CODE && e["field"] == DIFF_FIELD)
+    }
+
     fn describe(self) -> String {
         if self.errors.is_empty() {
             return self.message;
@@ -153,9 +165,12 @@ impl Client {
         }
 
         if !res.status().is_success() {
-            return Err(Error::BadRequest(
-                res.json::<ErrorResponse>().await?.describe(),
-            ));
+            let error = res.json::<ErrorResponse>().await?;
+            if error.is_diff_too_large() {
+                return Err(Error::DiffTooLarge);
+            }
+
+            return Err(Error::BadRequest(error.describe()));
         }
 
         let metadata = Metadata::extract(res.headers());
