@@ -6,6 +6,7 @@ use crate::core::AppState;
 use git_pal_github::{
     codeowners::OwnedFilesRequest,
     conversation::{DeleteCommentRequest, EditCommentRequest, PullRequestConversation},
+    github,
     graphql::{
         FindPullRequestResult, FindPullRequestsFilter, FindRepositoriesRequest,
         FindRepositoriesResult, FindRepositoryPullRequestsRequest, Homepage,
@@ -166,8 +167,12 @@ pub async fn get_pull_request_diff(
     let client = &state.github_client;
     let pr = client.get_pull_request(&request).await?;
 
+    // the file count is known upfront, the line limit only once GitHub refuses
     if !pr.is_diff_too_large {
-        return Ok(client.get_pull_request_diff(&request).await?);
+        match client.get_pull_request_diff(&request).await {
+            Err(github::Error::DiffTooLarge) => {}
+            result => return Ok(result?),
+        }
     }
 
     // too large for GitHub, the local clone has no limit
