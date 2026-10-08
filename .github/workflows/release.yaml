@@ -49,6 +49,17 @@ jobs:
         if: matrix.target
         run: rustup target add ${{ matrix.target }}
 
+      # keeps the runner's absolute paths out of panic and log locations
+      - name: Remap source paths
+        shell: bash
+        run: |
+          cargo_home="${CARGO_HOME:-$HOME/.cargo}"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            cargo_home="$(cygpath -w "$cargo_home")"
+          fi
+
+          echo "RUSTFLAGS=--remap-path-prefix=$cargo_home=cargo --remap-path-prefix=$GITHUB_WORKSPACE=." >> "$GITHUB_ENV"
+
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
