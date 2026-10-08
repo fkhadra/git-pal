@@ -2110,7 +2110,6 @@ dependencies = [
  "git-pal-agent",
  "git-pal-code-review",
  "git-pal-database",
- "git-pal-feedback",
  "git-pal-github",
  "git-pal-harness",
  "git-pal-job-runner",
@@ -2180,17 +2179,6 @@ version = "0.0.1"
 dependencies = [
  "anyhow",
  "sqlx",
-]
-
-[[package]]
-name = "git-pal-feedback"
-version = "0.0.1"
-dependencies = [
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "thiserror 2.0.18",
- "ts-rs",
 ]
 
 [[package]]

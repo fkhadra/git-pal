@@ -53,7 +53,6 @@ user-notify = "0.4.2"
 git-pal-github = { path = "./crates/git-pal-github"}
 git-pal-settings = { path = "./crates/git-pal-settings"}
 git-pal-job-runner = { path = "./crates/git-pal-job-runner"}
-git-pal-feedback = { path = "./crates/git-pal-feedback"}
 git-pal-database = { path = "./crates/git-pal-database"}
 git-pal-code-review = { path = "./crates/git-pal-code-review"}
 git-pal-agent = { path = "./crates/git-pal-agent"}

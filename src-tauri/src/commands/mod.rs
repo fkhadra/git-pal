@@ -34,8 +34,6 @@ pub enum CommandError {
     Notification(#[from] user_notify::Error),
     #[error(transparent)]
     Anyhow(#[from] anyhow::Error),
-    #[error("json error")]
-    JsonError(serde_json::Value),
 }
 
 impl serde::Serialize for CommandError {
@@ -43,10 +41,6 @@ impl serde::Serialize for CommandError {
     where
         S: serde::Serializer,
     {
-        if let CommandError::JsonError(err) = self {
-            return err.serialize(serializer);
-        }
-
         serializer.serialize_str(&self.to_string())
     }
 }

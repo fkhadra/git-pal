@@ -12,8 +12,6 @@ use crate::{
     window::{self, show_app},
 };
 
-use git_pal_feedback::NewFeedback;
-
 use super::monitoring::{start_monitoring, stop_monitor_job};
 use super::{CommandError, Result};
 
@@ -83,19 +81,6 @@ pub fn default_settings() -> git_pal_settings::Settings {
 #[tauri::command]
 pub async fn get_settings(state: State<'_, AppState>) -> Result<git_pal_settings::Settings> {
     Ok(state.get_settings())
-}
-
-#[tauri::command]
-pub async fn submit_feedback(data: NewFeedback) -> Result<()> {
-    if let Err(err) = git_pal_feedback::submit_feedback(data).await {
-        let error = match err {
-            git_pal_feedback::Error::InvalidRequest(e) => CommandError::JsonError(e),
-            git_pal_feedback::Error::Request(e) => anyhow!(e).into(),
-        };
-
-        return Err(error);
-    }
-    Ok(())
 }
 
 // TODO: Refactor

@@ -134,7 +134,6 @@ impl Codegen {
 
         for pkg in [
             "git-pal-settings",
-            "git-pal-feedback",
             "git-pal-code-review",
             "git-pal-github",
             "git-pal-job-runner",

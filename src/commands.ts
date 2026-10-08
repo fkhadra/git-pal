@@ -50,7 +50,6 @@ import type {
   EditCommentRequest,
   PullRequestConversation,
 } from "./models/conversation";
-import type { NewFeedback } from "./models/feedback";
 import type { ResponseData as FindRepositoriesResponse } from "./models/find-repositories";
 import type { PullRequest as PullRequestWithStatus } from "./models/get-pull-request";
 import type {
@@ -215,10 +214,6 @@ function deleteToken() {
 
 function notificationAskPermission() {
   return invoke<void>("notification_ask_permissions");
-}
-
-function submitFeedback(data: NewFeedback) {
-  return invoke<void>("submit_feedback", { data });
 }
 
 function reviewPullRequest(request: ReviewPullRequestRequest) {
@@ -475,7 +470,6 @@ export default {
   pendingUpdate,
   deleteToken,
   notificationAskPermission,
-  submitFeedback,
   reviewPullRequest,
   getPullRequest,
   getPullRequestDiff,

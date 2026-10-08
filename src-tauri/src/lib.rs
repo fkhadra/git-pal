@@ -151,7 +151,6 @@ pub fn run() {
             commands::app::install_update,
             commands::app::pending_update,
             commands::monitoring::notification_ask_permissions,
-            commands::app::submit_feedback,
             commands::review::review_pull_request,
             commands::github::get_pull_request,
             commands::github::get_pull_request_diff,

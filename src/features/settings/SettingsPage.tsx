@@ -4,7 +4,6 @@ import {
   Info,
   Keyboard,
   LockKeyhole,
-  MessageCircle,
   Palette,
   Settings,
 } from "lucide-react";
@@ -15,7 +14,6 @@ import { useWindowReady } from "~/hooks";
 
 import { AboutSection } from "./AboutSection";
 import { AppearanceSection } from "./AppearanceSection";
-import { FeedbackSection } from "./FeedbackSection";
 import { GeneralSection } from "./GeneralSection";
 import { RepositoriesSection } from "./RepositoriesSection";
 import { SecuritySection } from "./SecuritySection";
@@ -111,14 +109,6 @@ const sections = [
     bg: "bg-yellow-300",
     color: "text-yellow-700",
     component: SecuritySection,
-  },
-  {
-    label: "Feedback",
-    icon: MessageCircle,
-    href: "#feedback",
-    bg: "bg-info",
-    color: "text-white",
-    component: FeedbackSection,
   },
   {
     label: "About",
