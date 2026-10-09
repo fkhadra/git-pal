@@ -102,3 +102,41 @@ jobs:
         run: |
           version=$(jq -r .version src-tauri/tauri.conf.json)
           gh release edit "v$version" --draft=false
+
+  homebrew:
+    needs: publish
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: fkhadra/homebrew-tap
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          path: homebrew-tap
+
+      - name: Update cask
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(jq -r .version src-tauri/tauri.conf.json)
+          gh release download "v$version" --pattern '*.dmg' --dir dmg
+
+          arm=$(sha256sum "dmg/Git.Pal_${version}_aarch64.dmg" | cut -d ' ' -f 1)
+          intel=$(sha256sum "dmg/Git.Pal_${version}_x64.dmg" | cut -d ' ' -f 1)
+
+          cd homebrew-tap
+          sed -i -E \
+            -e "s/^(  version )\".*\"/\1\"$version\"/" \
+            -e "s/(arm: +)\"[0-9a-f]{64}\"/\1\"$arm\"/" \
+            -e "s/(intel: +)\"[0-9a-f]{64}\"/\1\"$intel\"/" \
+            Casks/git-pal.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "git-pal $version"
+          git push
