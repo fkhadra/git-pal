@@ -1,8 +1,12 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::Mutex;
 
 use anyhow::{Result, anyhow, bail};
+
+/// Reviews and the agent share a worktree, concurrent preparation would race.
+static PREPARE_LOCK: Mutex<()> = Mutex::new(());
 
 pub fn prepare_worktree(
     repositories_dir: &Path,
@@ -10,6 +14,8 @@ pub fn prepare_worktree(
     repo: &str,
     pr_number: i64,
 ) -> Result<PathBuf> {
+    let _guard = PREPARE_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+
     let bare_dir = ensure_bare_repo(repositories_dir, owner, repo)?;
     let pr_ref = fetch_pull_request(&bare_dir, pr_number)?;
     let worktree_dir = worktree_dir(repositories_dir, owner, repo, pr_number);

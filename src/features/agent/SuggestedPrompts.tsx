@@ -9,10 +9,8 @@ const PROMPTS = [
 ];
 
 export function SuggestedPrompts({
-  disabled,
   onSelect,
 }: {
-  disabled?: boolean;
   onSelect: (prompt: string) => void;
 }) {
   return (
@@ -25,7 +23,6 @@ export function SuggestedPrompts({
           key={prompt}
           variant="outline"
           size="sm"
-          disabled={disabled}
           onClick={() => onSelect(prompt)}
         >
           <SendHorizontal />

@@ -183,7 +183,6 @@ interface ChatInputProps {
   comments: readonly CommentContext[];
   currentFile?: string;
   prTitle?: string;
-  disabled?: boolean;
   onSend: (prompt: string) => void;
 }
 
@@ -234,7 +233,6 @@ export function ChatInput({
   comments,
   currentFile,
   prTitle,
-  disabled,
   onSend,
 }: ChatInputProps) {
   const snapshot = useAgentSnapshot();
@@ -248,7 +246,7 @@ export function ChatInput({
     !snapshot.context.some((c) => c.type === "file" && c.path === currentFile);
 
   function send() {
-    if (disabled || isRunning || !value.trim()) return;
+    if (isRunning || !value.trim()) return;
 
     onSend(value);
     setValue("");
@@ -320,14 +318,9 @@ export function ChatInput({
         ref={textareaRef}
         value={value}
         rows={3}
-        disabled={disabled}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        placeholder={
-          disabled
-            ? "Wait for the review to finish..."
-            : "Ask anything or type @ to add context"
-        }
+        placeholder="Ask anything or type @ to add context"
         className="w-full resize-none bg-transparent text-sm outline-none placeholder:text-muted-foreground"
       />
 
@@ -358,7 +351,7 @@ export function ChatInput({
             size="icon-xs"
             className="ml-auto"
             title="Send"
-            disabled={disabled || !value.trim()}
+            disabled={!value.trim()}
             onClick={send}
           >
             <SendHorizontal />

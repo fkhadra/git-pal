@@ -737,7 +737,6 @@ export function ReviewPage() {
                 files={filenames}
                 comments={agentComments}
                 currentFile={currentFile?.filename}
-                disabled={isReviewing}
                 onClose={toggleAgentPanel}
               />
             </div>

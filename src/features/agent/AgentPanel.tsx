@@ -24,7 +24,6 @@ interface AgentPanelProps {
   /** Review comments and GitHub threads the user can reference */
   comments: readonly CommentContext[];
   currentFile?: string;
-  disabled?: boolean;
   onClose: () => void;
 }
 
@@ -34,7 +33,6 @@ export function AgentPanel({
   files,
   comments,
   currentFile,
-  disabled,
   onClose,
 }: AgentPanelProps) {
   const snapshot = useAgentSnapshot();
@@ -116,7 +114,7 @@ export function AgentPanel({
                 <p className="p-3 text-center text-xs text-muted-foreground">
                   The agent uses AI. Check for mistakes.
                 </p>
-                <SuggestedPrompts disabled={disabled} onSelect={send} />
+                <SuggestedPrompts onSelect={send} />
               </div>
             ) : (
               <MessageList
@@ -137,7 +135,6 @@ export function AgentPanel({
             comments={comments}
             currentFile={currentFile}
             prTitle={prTitle}
-            disabled={disabled}
             onSend={send}
           />
         </>
