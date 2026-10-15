@@ -69,6 +69,8 @@ pub(crate) fn user_skills(dir: &Path) -> Vec<Skill> {
 pub(crate) fn read_skills(dir: &Path, plugin: Option<&str>) -> Vec<Skill> {
     WalkBuilder::new(dir)
         .hidden(false)
+        // skills are often symlinked in from a dotfiles or skills repo
+        .follow_links(true)
         .build()
         .flatten()
         .filter(|entry| entry.file_type().is_some_and(|t| t.is_file()))
@@ -199,5 +201,19 @@ mod tests {
         let names: Vec<_> = list(&home).into_iter().map(|s| s.name).collect();
 
         assert_eq!(names, ["nested", "own", "pow:tdd", "unnamed"]);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn follows_symlinked_skills() {
+        let home = temp_dir("symlink-home");
+        let source = temp_dir("symlink-source");
+        write_skill(&source, "linked", "---\nname: linked\n---\n");
+        fs::create_dir_all(home.join("skills")).unwrap();
+        std::os::unix::fs::symlink(source.join("linked"), home.join("skills/linked")).unwrap();
+
+        let names: Vec<_> = list(&home).into_iter().map(|s| s.name).collect();
+
+        assert_eq!(names, ["linked"]);
     }
 }
