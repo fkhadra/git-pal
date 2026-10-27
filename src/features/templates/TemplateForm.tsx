@@ -47,33 +47,20 @@ interface SwitchFieldProps {
   name: "autoReview" | "autoApprove" | "requireGreenCi";
   label: string;
   hint: string;
-  disabled?: boolean;
 }
 
-function SwitchField({
-  control,
-  name,
-  label,
-  hint,
-  disabled,
-}: SwitchFieldProps) {
+function SwitchField({ control, name, label, hint }: SwitchFieldProps) {
   return (
-    <label className="flex cursor-pointer items-center gap-2">
+    <label className="col-span-3 grid cursor-pointer grid-cols-subgrid items-center">
       <Controller
         control={control}
         name={name}
         render={({ field }) => (
-          <Switch
-            checked={field.value}
-            onCheckedChange={field.onChange}
-            disabled={disabled}
-          />
+          <Switch checked={field.value} onCheckedChange={field.onChange} />
         )}
       />
-      <span className="flex flex-col">
-        <span className="text-sm">{label}</span>
-        <span className="text-xs text-muted-foreground">{hint}</span>
-      </span>
+      <span className="text-sm">{label}</span>
+      <span className="text-xs text-muted-foreground">{hint}</span>
     </label>
   );
 }
@@ -127,7 +114,10 @@ export function TemplateForm({
   });
 
   return (
-    <form className="flex h-full min-h-0 flex-col gap-4" onSubmit={onSubmit}>
+    <form
+      className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto"
+      onSubmit={onSubmit}
+    >
       <Field label="Name">
         <Input
           placeholder="Frontend review"
@@ -139,10 +129,9 @@ export function TemplateForm({
       <Field
         label="Instructions"
         hint="The output format and the existing PR discussion are appended automatically."
-        className="min-h-0 flex-1"
       >
         <Textarea
-          className="min-h-0 flex-1 resize-none"
+          className="min-h-48 resize-y"
           placeholder="What the review should focus on"
           {...register("content", {
             required: "Instructions are required",
@@ -157,7 +146,7 @@ export function TemplateForm({
       >
         <Textarea
           rows={3}
-          className="resize-none"
+          className="resize-y"
           placeholder="e.g. Database migrations are always high risk"
           {...register("riskGuidelines")}
         />
@@ -208,32 +197,33 @@ export function TemplateForm({
       </Field>
 
       <Field label="Automation">
-        <div className="grid grid-cols-3 items-center gap-4">
+        <div className="grid grid-cols-[auto_auto_1fr] gap-x-3 gap-y-3">
           <SwitchField
             control={control}
             name="autoReview"
             label="Auto-review"
-            hint="When requested as code owner"
+            hint="Review requests made to you as code owner"
           />
           <SwitchField
             control={control}
             name="autoApprove"
             label="Auto-approve"
-            hint="Minimal risk, no errors or warnings"
+            hint="Approve minimal risk reviews without errors or warnings"
           />
-          <SwitchField
-            control={control}
-            name="requireGreenCi"
-            label="Require green CI"
-            hint="Before auto-approving"
-            disabled={!autoApprove}
-          />
+          {autoApprove && (
+            <SwitchField
+              control={control}
+              name="requireGreenCi"
+              label="Require green CI"
+              hint="Approve only once CI checks pass"
+            />
+          )}
         </div>
       </Field>
 
       <ErrorMessage error={formState.errors.root?.message} />
 
-      <div className="flex items-center gap-2">
+      <div className="sticky bottom-0 flex items-center gap-2 border-t bg-popover pt-4">
         {onDelete && (
           <Button
             type="button"
