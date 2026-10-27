@@ -17,7 +17,7 @@ use git_pal_code_review::{
     models::{
         AutoApproval, CodeReview, GetSavedReviewRequest, PullRequestReview, PullRequestSummary,
         ReviewComment, ReviewListEntry, ReviewPullRequestRequest, SetFileViewedRequest,
-        USER_SEVERITY, UpdateReviewCommentsRequest, ViewedFile,
+        TemplateChoice, USER_SEVERITY, UpdateReviewCommentsRequest, ViewedFile,
     },
     review, templates,
 };
@@ -374,6 +374,65 @@ fn ci_blocker(pr: &PullRequest) -> Option<&'static str> {
         StatusState::PENDING | StatusState::EXPECTED => Some("CI checks are pending"),
         _ => Some("CI checks failed"),
     }
+}
+
+/// Reviews a code owner request when its template allows it, unless the pull request is already listed.
+pub(crate) async fn auto_review(
+    app: &AppHandle,
+    request: GetSavedReviewRequest,
+) -> anyhow::Result<()> {
+    let state: State<'_, AppState> = app.state();
+    let store = &state.code_review_store;
+    let GetSavedReviewRequest {
+        owner,
+        repository,
+        pr_number,
+    } = request;
+
+    if store
+        .get_review(&owner, &repository, pr_number)
+        .await?
+        .is_some()
+    {
+        return Ok(());
+    }
+
+    let template = store
+        .resolve_template(
+            &TemplateChoice::Auto,
+            None,
+            &format!("{owner}/{repository}"),
+        )
+        .await?;
+    let Some(template) = template.filter(|t| t.auto_review) else {
+        return Ok(());
+    };
+
+    let pr = GetPullRequestRequest {
+        owner: owner.clone(),
+        repository: repository.clone(),
+        number: pr_number,
+    };
+    if !state.github_client.requested_as_code_owner(&pr).await? {
+        return Ok(());
+    }
+
+    review_pull_request(
+        app.clone(),
+        ReviewPullRequestRequest {
+            owner,
+            repository,
+            template: TemplateChoice::Template { id: template.id },
+            pr_number,
+            incremental: false,
+        },
+    )
+    .await
+    .map_err(|e| anyhow!(e.to_string()))?;
+
+    refresh_review_badge(app);
+
+    Ok(())
 }
 
 async fn notify_review(app: &AppHandle, message: &str, metadata: HashMap<String, String>) {

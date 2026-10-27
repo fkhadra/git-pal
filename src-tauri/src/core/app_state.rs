@@ -150,7 +150,8 @@ impl AppState {
         self.app_dir.join("repositories")
     }
 
-    pub async fn handle_pr_monitor(&self) {
+    /// Notifies the new review requests and returns them.
+    pub async fn handle_pr_monitor(&self) -> Vec<GetSavedReviewRequest> {
         let response = self
             .github_client
             .find_pull_requests(
@@ -189,6 +190,15 @@ impl AppState {
                     }
                 }
 
+                let requests = queue
+                    .iter()
+                    .map(|pr| GetSavedReviewRequest {
+                        owner: pr.repository.owner.login.clone(),
+                        repository: pr.repository.name.clone(),
+                        pr_number: pr.number,
+                    })
+                    .collect();
+
                 for pr in queue {
                     self.notification_manager
                         .push_notification(
@@ -204,9 +214,12 @@ impl AppState {
                         )
                         .await;
                 }
+
+                requests
             }
             Err(err) => {
                 log::error!("Error fetching review requested pull requests: {}", err);
+                vec![]
             }
         }
     }

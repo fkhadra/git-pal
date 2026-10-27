@@ -4,7 +4,7 @@ use tauri::{Manager, State};
 
 use crate::core::AppState;
 
-use super::{CommandError, Result};
+use super::{CommandError, Result, review};
 
 const MONITOR_JOB: &str = "monitor_pr";
 
@@ -45,7 +45,12 @@ pub(super) fn start_monitoring(app_handle: &tauri::AppHandle) {
             async move {
                 log::debug!("Monitoring tick");
                 let state: State<'_, AppState> = handle.state();
-                state.handle_pr_monitor().await;
+
+                for request in state.handle_pr_monitor().await {
+                    if let Err(e) = review::auto_review(&handle, request).await {
+                        log::error!("Auto review failed: {e}");
+                    }
+                }
             }
         });
 }
