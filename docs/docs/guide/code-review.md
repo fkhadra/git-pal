@@ -33,11 +33,39 @@ Click **Manage templates…** at the bottom of the reviews list to create one:
 | --- | --- |
 | Name | Shown in the template picker |
 | Instructions | What to look for. The output format and the discussion are added for you |
+| Risk guidelines | Rules for the [risk](#risk) of merging, e.g. "migrations are always high" |
 | Skills | Installed agent skills the review must use |
 | When to use | A regex on `owner/repo`, e.g. `^acme/` |
 | Default template | Used when no matcher accepts the repository |
+| Auto-review | Reviews pull requests requesting you, or your team, as code owner |
+| Auto-approve | Approves [minimal risk](#auto-approve) reviews |
+| Require green CI | Auto-approves only once CI checks pass |
 
 Drag templates to reorder them. **Auto** picks the template used last time on that pull request, else the first one whose matcher accepts the repository, else the default one, else the built-in instructions.
+
+### Risk
+
+The agent rates the risk of merging the whole pull request, shown as a gauge next to the status. Hover it for the **Merge Risk Assessment**: the reasons, how sure the agent is, a rating per factor (blast radius, sensitive areas, test gaps, rollback difficulty) and the files driving the risk. Click a file to open it.
+
+![The merge risk assessment](../screenshots/review-merge-risk.png)
+
+| Risk | Meaning |
+| --- | --- |
+| Minimal | No runtime behavior change, e.g. documentation, comments or tests only |
+| Low | Small and isolated change, easy to revert |
+| Medium | Changes existing behavior or shared code |
+| High | Migrations, security, public APIs, infrastructure or large refactors |
+
+### Auto-approve
+
+With **Auto-approve** on, a review is approved when it ends if:
+
+- the risk is minimal, and the agent isn't unsure about it,
+- there are no error or warning comments, nor notes waiting to be submitted,
+- no commits were pushed during the review,
+- CI checks passed, unless **Require green CI** is off.
+
+Otherwise, hover the risk to see why it wasn't approved. With **Auto-review** on and [review request notifications](./settings#notifications) enabled, code owner review requests are reviewed as they arrive, so they can be approved without you.
 
 ### New commits
 
@@ -80,6 +108,7 @@ Existing review threads show in the diff. Open them on GitHub, ask the agent abo
 | Approved | You approved |
 | Change requested | You requested changes |
 | Feedback submitted | You commented |
+| Merged, Closed | Merged or closed on GitHub before you submitted a review |
 
 A new commit or a pending comment puts a submitted pull request back in progress.
 
