@@ -1,6 +1,11 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @custom-variant deep-purple (&:where([data-theme="deepPurple"], [data-theme="deepPurple"] *));
 
+/* native controls follow the theme, e.g. the textarea resize handle */
+:root.dark {
+  color-scheme: dark;
+}
+
 :root {
   --body-bg: #fcfcfc;
   --body-radius: 12px;
