@@ -58,22 +58,20 @@ const CONFIDENCE_LABELS: Record<Confidence, string> = {
 const SEGMENT_SIZES = {
   sm: "h-1 w-1.5",
   md: "h-1.5 w-3",
-  lg: "h-2 flex-1",
+  lg: "h-1.5 w-6",
 };
 
 function Segments({
   level,
   size,
-  className,
 }: {
   level: RiskLevel;
   size: keyof typeof SEGMENT_SIZES;
-  className?: string;
 }) {
   const filled = LEVELS.indexOf(level);
 
   return (
-    <span className={cn("flex items-center gap-0.5", className)} aria-hidden>
+    <span className="flex items-center gap-0.5" aria-hidden>
       {LEVELS.map((step, index) => (
         <span
           key={step}
@@ -127,29 +125,6 @@ export function RiskIcon({ level }: { level: RiskLevel }) {
       />
       <TooltipContent>{LEVEL_LABELS[level]} merge risk</TooltipContent>
     </Tooltip>
-  );
-}
-
-function Scale({ level }: { level: RiskLevel }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Segments level={level} size="lg" className="w-full" />
-      <div className="grid grid-cols-4 text-xs">
-        {LEVELS.map((step) => (
-          <span
-            key={step}
-            className={cn(
-              "text-center",
-              step === level
-                ? "font-medium text-foreground"
-                : "text-muted-foreground",
-            )}
-          >
-            {LEVEL_LABELS[step]}
-          </span>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -264,16 +239,18 @@ export function RiskBadge({
       />
       <PopoverContent align="end" className="w-[32rem]">
         <div className="flex flex-col gap-4 text-sm">
-          <div className="flex items-baseline justify-between gap-2">
+          <div className="flex items-center justify-between gap-3">
             <span className="font-medium">Merge Risk Assessment</span>
-            {risk.confidence && (
-              <span className="text-xs text-muted-foreground">
-                {CONFIDENCE_LABELS[risk.confidence]}
+            <span className="flex items-center gap-2 text-xs text-muted-foreground">
+              {/* the trigger already names the level */}
+              <span role="img" aria-label={`${LEVEL_LABELS[risk.level]} risk`}>
+                <Segments level={risk.level} size="lg" />
               </span>
-            )}
+              {risk.confidence && (
+                <span>· {CONFIDENCE_LABELS[risk.confidence]}</span>
+              )}
+            </span>
           </div>
-
-          <Scale level={risk.level} />
 
           {risk.reasons.length > 0 && <Reasons reasons={risk.reasons} />}
 
