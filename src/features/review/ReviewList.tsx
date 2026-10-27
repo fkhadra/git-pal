@@ -56,6 +56,7 @@ import {
   useSavedReviewsQuery,
 } from "./data-loader";
 import { PrUrlInput } from "./PrUrlInput";
+import { RiskIcon } from "./RiskBadge";
 import { LiveStatusBadge, StatusBadge } from "./StatusBadge";
 import { store, useCodeReviewSnapshot } from "./store";
 import { isSameReview, reviewJobId, reviewStatus } from "./utils";
@@ -148,6 +149,7 @@ function ReviewItem({
               </TooltipContent>
             </Tooltip>
           )}
+          {entry.reviewed && entry.risk && <RiskIcon level={entry.risk} />}
           {entry.errorCount > 0 && (
             <span className="flex items-center gap-1 text-destructive">
               <AlertCircle className="size-3" />

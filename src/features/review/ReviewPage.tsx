@@ -70,6 +70,7 @@ import { ReviewList } from "./ReviewList";
 import { LiveStatusBadge } from "./StatusBadge";
 import { ReviewSummarySheet } from "./ReviewSummarySheet";
 import { ReviewUpdateBanner } from "./ReviewUpdateBanner";
+import { RiskBadge } from "./RiskBadge";
 import { matchShortcut, useKeybind, useKeybindSync } from "./shortcuts";
 import { ShortcutsDialog } from "./ShortcutsDialog";
 import { fileDraftKey, fileScope, store, useCodeReviewSnapshot } from "./store";
@@ -468,6 +469,14 @@ export function ReviewPage() {
                       isReviewing,
                     }}
                   />
+                  {savedReview.risk && !isReviewing && (
+                    <RiskBadge
+                      risk={savedReview.risk}
+                      autoApproval={savedReview.autoApproval}
+                      changedFiles={allFiles.map((f) => f.filename)}
+                      onSelectFile={selectFile}
+                    />
+                  )}
                   {savedReview.reviewed &&
                     savedReview.harness &&
                     !isReviewing && (
