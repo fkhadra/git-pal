@@ -15,9 +15,10 @@ use git_pal_agent::models::PullRequestKey;
 use git_pal_code_review::{
     git,
     models::{
-        AutoApproval, CodeReview, GetSavedReviewRequest, PullRequestReview, PullRequestSummary,
-        ReviewComment, ReviewListEntry, ReviewPullRequestRequest, SetFileViewedRequest,
-        TemplateChoice, USER_SEVERITY, UpdateReviewCommentsRequest, ViewedFile,
+        AutoApproval, CodeReview, GetSavedReviewRequest, PullRequestReview, PullRequestState,
+        PullRequestSummary, ReviewComment, ReviewListEntry, ReviewPullRequestRequest,
+        SetFileViewedRequest, TemplateChoice, USER_SEVERITY, UpdateReviewCommentsRequest,
+        ViewedFile,
     },
     review, templates,
 };
@@ -141,6 +142,7 @@ pub async fn review_pull_request(
         reviewed,
         risk,
         auto_approval: None,
+        pr_state: None,
     };
     store.upsert_review(&placeholder).await?;
 
@@ -655,6 +657,13 @@ static BADGE_REFRESH: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(())
 
 /// In progress without a running agent, mirrors the frontend `reviewStatus`.
 fn is_waiting(review: &ReviewListEntry) -> bool {
+    if matches!(
+        review.pr_state,
+        Some(PullRequestState::Merged | PullRequestState::Closed)
+    ) {
+        return false;
+    }
+
     let is_submitted = review.submitted_head_sha.is_some()
         && review.submitted_event.is_some()
         && review.pending_count == 0;
@@ -794,6 +803,7 @@ pub async fn view_pull_request(
                 reviewed: false,
                 risk: None,
                 auto_approval: None,
+                pr_state: None,
             })
             .await?;
     }

@@ -83,6 +83,7 @@ export function useCodeReviewQuery(review?: GetSavedReviewRequest | null) {
 const BUILDING_REFETCH_MS = 30_000;
 
 export function usePullRequestStatusQuery(review: GetSavedReviewRequest) {
+  const queryClient = useQueryClient();
   const request = {
     owner: review.owner,
     repository: review.repository,
@@ -91,7 +92,13 @@ export function usePullRequestStatusQuery(review: GetSavedReviewRequest) {
 
   return useQuery({
     queryKey: ["pr-status", request],
-    queryFn: () => commands.getPullRequestStatus(request),
+    queryFn: async () => {
+      const pullRequest = await commands.getPullRequestStatus(request);
+      // the backend saved its state for the reviews list
+      queryClient.invalidateQueries({ queryKey: ["saved-reviews"] });
+
+      return pullRequest;
+    },
     refetchInterval: (query) => {
       const pr = query.state.data;
       if (!pr || getPullRequestStatus(pr) !== "Building") return false;

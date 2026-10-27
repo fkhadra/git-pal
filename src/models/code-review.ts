@@ -8,7 +8,7 @@ export type CodeReview = { id: number, owner: string, repository: string, prNumb
 /**
  * Harness running the AI review
  */
-harness: Harness | null, model: string | null, error: string | null, warning: string | null, cancelled: boolean, reviewed: boolean, risk: Risk | null, autoApproval: AutoApproval | null, };
+harness: Harness | null, model: string | null, error: string | null, warning: string | null, cancelled: boolean, reviewed: boolean, risk: Risk | null, autoApproval: AutoApproval | null, prState: PullRequestState | null, };
 
 /**
  * How sure the agent is of its risk assessment.
@@ -18,6 +18,11 @@ export type Confidence = "low" | "medium" | "high";
 export type GetSavedReviewRequest = { owner: string, repository: string, prNumber: number, };
 
 export type PullRequestReview = { comments: Array<ReviewComment>, summary: string, risk: Risk | null, };
+
+/**
+ * GitHub state, last seen when the pull request status was fetched.
+ */
+export type PullRequestState = "open" | "merged" | "closed";
 
 export type PullRequestSummary = { title: string, branch: string, headSha: string, };
 
@@ -47,7 +52,7 @@ reviewed: boolean, headSha: string, submittedHeadSha: string | null, submittedEv
 /**
  * Notes posted with the next submitted review
  */
-pendingCount: number, harness: Harness | null, model: string | null, risk: RiskLevel | null, };
+pendingCount: number, harness: Harness | null, model: string | null, risk: RiskLevel | null, prState: PullRequestState | null, };
 
 export type ReviewPullRequestRequest = { owner: string, repository: string, template: TemplateChoice, prNumber: number, 
 /**

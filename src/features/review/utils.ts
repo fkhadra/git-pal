@@ -1,6 +1,7 @@
 import type { CommentContext, ReviewEvent } from "~/models";
 import type {
   GetSavedReviewRequest,
+  PullRequestState,
   ReviewComment,
 } from "~/models/code-review";
 import type { InlineComment } from "~/models/conversation";
@@ -220,7 +221,9 @@ export type ReviewStatus =
   | "inProgress"
   | "approved"
   | "changesRequested"
-  | "commented";
+  | "commented"
+  | "merged"
+  | "closed";
 
 const SUBMITTED_STATUS: Record<ReviewEvent, ReviewStatus> = {
   APPROVE: "approved",
@@ -236,6 +239,7 @@ export interface ReviewProgress {
   noteCount: number;
   /** Notes not posted yet */
   pendingCount: number;
+  prState?: PullRequestState | null;
 }
 
 export function reviewStatus(
@@ -254,6 +258,9 @@ export function reviewStatus(
   ) {
     return SUBMITTED_STATUS[submittedEvent];
   }
+  // nothing left to review
+  if (review.prState === "merged") return "merged";
+  if (review.prState === "closed") return "closed";
   if (review.reviewed || review.noteCount > 0) return "inProgress";
 
   return "todo";

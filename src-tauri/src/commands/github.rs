@@ -1,5 +1,5 @@
-use git_pal_code_review::git;
-use tauri::State;
+use git_pal_code_review::{git, models::PullRequestState};
+use tauri::{AppHandle, State};
 
 use crate::core::AppState;
 
@@ -13,7 +13,7 @@ use git_pal_github::{
         MergeQueueRequest,
     },
     mentions::{MentionableUser, MentionableUsersRequest},
-    query::search_pull_request::SearchPullRequestSearchNodes::PullRequest,
+    query::{self, search_pull_request::SearchPullRequestSearchNodes::PullRequest},
     rest::{
         CommitComparison, CompareCommitsRequest, FileSourceRequest, GetPullRequestRequest,
         PullRequestDetails, PullRequestDiff,
@@ -22,6 +22,7 @@ use git_pal_github::{
 };
 
 use super::Result;
+use super::review::refresh_review_badge;
 
 #[tauri::command]
 pub async fn homepage(state: State<'_, AppState>) -> Result<Homepage> {
@@ -159,10 +160,39 @@ pub async fn compare_commits(
 
 #[tauri::command]
 pub async fn get_pull_request_status(
+    app: AppHandle,
     state: State<'_, AppState>,
     request: GetPullRequestRequest,
 ) -> Result<git_pal_github::graphql::PullRequest> {
-    Ok(state.github_client.find_pull_request(&request).await?)
+    let pr = state.github_client.find_pull_request(&request).await?;
+
+    // remembered for the reviews list, a merged pull request no longer waits on the user
+    if let Some(pr_state) = review_state(&pr.state)
+        && state
+            .code_review_store
+            .set_pr_state(
+                &request.owner,
+                &request.repository,
+                request.number,
+                pr_state,
+            )
+            .await?
+    {
+        refresh_review_badge(&app);
+    }
+
+    Ok(pr)
+}
+
+fn review_state(state: &query::get_pull_request::PullRequestState) -> Option<PullRequestState> {
+    use query::get_pull_request::PullRequestState as GithubState;
+
+    match state {
+        GithubState::OPEN => Some(PullRequestState::Open),
+        GithubState::MERGED => Some(PullRequestState::Merged),
+        GithubState::CLOSED => Some(PullRequestState::Closed),
+        GithubState::Other(_) => None,
+    }
 }
 
 #[tauri::command]

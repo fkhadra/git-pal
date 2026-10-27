@@ -1,8 +1,15 @@
 import { cn } from "cn";
 
-import type { GetSavedReviewRequest } from "~/models/code-review";
+import type {
+  GetSavedReviewRequest,
+  PullRequestState,
+} from "~/models/code-review";
+import type { PullRequestState as GithubPullRequestState } from "~/models/get-pull-request";
 
-import { useLatestHeadShaQuery } from "./data-loader";
+import {
+  useLatestHeadShaQuery,
+  usePullRequestStatusQuery,
+} from "./data-loader";
 import { type ReviewProgress, type ReviewStatus, reviewStatus } from "./utils";
 
 // tinted like the palette's review decision
@@ -35,7 +42,25 @@ const STATUS_CONFIG: Record<
     className: "bg-info/15 text-info",
     dotClassName: "bg-info",
   },
+  merged: {
+    label: "Merged",
+    className: "bg-agent/15 text-agent",
+    dotClassName: "bg-agent",
+  },
+  closed: {
+    label: "Closed",
+    className: "bg-muted text-muted-foreground",
+    dotClassName: "bg-muted-foreground",
+  },
 };
+
+function toPullRequestState(
+  state: GithubPullRequestState,
+): PullRequestState | undefined {
+  if (state === "OPEN") return "open";
+  if (state === "MERGED") return "merged";
+  if (state === "CLOSED") return "closed";
+}
 
 export function StatusBadge({
   status,
@@ -69,10 +94,14 @@ export function LiveStatusBadge({
   className?: string;
 }) {
   const { data: latestHeadSha } = useLatestHeadShaQuery(review);
+  const { data: pullRequest } = usePullRequestStatusQuery(review);
+  const prState = pullRequest
+    ? toPullRequestState(pullRequest.state)
+    : review.prState;
 
   return (
     <StatusBadge
-      status={reviewStatus(review, latestHeadSha)}
+      status={reviewStatus({ ...review, prState }, latestHeadSha)}
       className={className}
     />
   );

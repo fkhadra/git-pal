@@ -32,6 +32,7 @@ pub struct ReviewListEntry {
     pub harness: Option<Harness>,
     pub model: Option<String>,
     pub risk: Option<RiskLevel>,
+    pub pr_state: Option<PullRequestState>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, TS)]
@@ -75,6 +76,19 @@ pub struct CodeReview {
     #[serde(default)]
     #[sqlx(json(nullable))]
     pub auto_approval: Option<AutoApproval>,
+    #[serde(default)]
+    #[sqlx(json(nullable))]
+    pub pr_state: Option<PullRequestState>,
+}
+
+/// GitHub state, last seen when the pull request status was fetched.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "code-review.ts")]
+pub enum PullRequestState {
+    Open,
+    Merged,
+    Closed,
 }
 
 /// Risk of merging, ordered from the safest.

@@ -8,8 +8,8 @@ use git_pal_github::rest::ReviewEvent;
 use sqlx::{QueryBuilder, Row, Sqlite, SqlitePool};
 
 use crate::models::{
-    AutoApproval, CodeReview, GetSavedReviewRequest, ReviewComment, ReviewListEntry,
-    SetFileViewedRequest, ViewedFile,
+    AutoApproval, CodeReview, GetSavedReviewRequest, PullRequestState, ReviewComment,
+    ReviewListEntry, SetFileViewedRequest, ViewedFile,
 };
 
 impl CodeReview {
@@ -46,6 +46,7 @@ impl CodeReview {
             harness: self.harness,
             model: self.model.clone(),
             risk: self.risk.as_ref().map(|r| r.level),
+            pr_state: self.pr_state,
         }
     }
 }
@@ -70,7 +71,7 @@ impl CodeReviewStore {
 
     pub async fn list_reviews(&self) -> Result<Vec<ReviewListEntry>> {
         let rows = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval, pr_state \
              FROM code_reviews ORDER BY reviewed_at DESC",
         )
         .fetch_all(&self.pool)
@@ -86,7 +87,7 @@ impl CodeReviewStore {
         pr_number: i64,
     ) -> Result<Option<CodeReview>> {
         let row = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval, pr_state \
              FROM code_reviews WHERE owner = ? AND repository = ? AND pr_number = ?",
         )
         .bind(owner)
@@ -228,6 +229,28 @@ impl CodeReviewStore {
         .await?;
 
         Ok(())
+    }
+
+    /// Whether the state changed.
+    pub async fn set_pr_state(
+        &self,
+        owner: &str,
+        repository: &str,
+        pr_number: i64,
+        state: PullRequestState,
+    ) -> Result<bool> {
+        let result = sqlx::query(
+            "UPDATE code_reviews SET pr_state = ?1 \
+             WHERE owner = ?2 AND repository = ?3 AND pr_number = ?4 AND pr_state IS NOT ?1",
+        )
+        .bind(serde_json::to_string(&state)?)
+        .bind(owner)
+        .bind(repository)
+        .bind(pr_number)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(result.rows_affected() > 0)
     }
 
     pub async fn set_cancelled(&self, owner: &str, repository: &str, pr_number: i64) -> Result<()> {
