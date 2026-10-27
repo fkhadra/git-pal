@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useEffect } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { type Control, Controller, useForm } from "react-hook-form";
 
 import { ErrorMessage, FormControl, Input, Label } from "~/components/form";
 import { Button } from "~/components/ui/button";
@@ -17,6 +17,10 @@ interface FormValues {
   content: string;
   isDefault: boolean;
   skills: string[];
+  riskGuidelines: string;
+  autoReview: boolean;
+  autoApprove: boolean;
+  requireGreenCi: boolean;
 }
 
 interface FieldProps {
@@ -38,6 +42,42 @@ function Field({ label, hint, className, children }: FieldProps) {
   );
 }
 
+interface SwitchFieldProps {
+  control: Control<FormValues>;
+  name: "autoReview" | "autoApprove" | "requireGreenCi";
+  label: string;
+  hint: string;
+  disabled?: boolean;
+}
+
+function SwitchField({
+  control,
+  name,
+  label,
+  hint,
+  disabled,
+}: SwitchFieldProps) {
+  return (
+    <label className="flex cursor-pointer items-center gap-2">
+      <Controller
+        control={control}
+        name={name}
+        render={({ field }) => (
+          <Switch
+            checked={field.value}
+            onCheckedChange={field.onChange}
+            disabled={disabled}
+          />
+        )}
+      />
+      <span className="flex flex-col">
+        <span className="text-sm">{label}</span>
+        <span className="text-xs text-muted-foreground">{hint}</span>
+      </span>
+    </label>
+  );
+}
+
 interface Props {
   template?: ReviewTemplate;
   initialContent?: string;
@@ -52,8 +92,9 @@ export function TemplateForm({
   onDelete,
 }: Props) {
   const { mutateAsync } = useSaveTemplateMutation();
-  const { register, control, handleSubmit, reset, setError, formState } =
+  const { register, control, handleSubmit, reset, setError, watch, formState } =
     useForm<FormValues>();
+  const autoApprove = watch("autoApprove");
 
   useEffect(() => {
     reset({
@@ -62,6 +103,10 @@ export function TemplateForm({
       content: template?.content ?? initialContent,
       isDefault: template?.isDefault ?? false,
       skills: template?.skills ?? [],
+      riskGuidelines: template?.riskGuidelines ?? "",
+      autoReview: template?.autoReview ?? false,
+      autoApprove: template?.autoApprove ?? false,
+      requireGreenCi: template?.requireGreenCi ?? true,
     });
   }, [template, initialContent, reset]);
 
@@ -69,7 +114,11 @@ export function TemplateForm({
     try {
       const saved = await mutateAsync({
         id: template?.id,
-        input: { ...values, matcher: values.matcher || null },
+        input: {
+          ...values,
+          matcher: values.matcher || null,
+          riskGuidelines: values.riskGuidelines || null,
+        },
       });
       onSaved(saved);
     } catch (error) {
@@ -100,6 +149,18 @@ export function TemplateForm({
           })}
         />
         <ErrorMessage error={formState.errors.content?.message} />
+      </Field>
+
+      <Field
+        label="Risk guidelines"
+        hint="Rules for the risk of merging, they take precedence over the built-in levels."
+      >
+        <Textarea
+          rows={3}
+          className="resize-none"
+          placeholder="e.g. Database migrations are always high risk"
+          {...register("riskGuidelines")}
+        />
       </Field>
 
       <Field label="Skills" hint="Installed skills the review must use.">
@@ -143,6 +204,30 @@ export function TemplateForm({
               </span>
             </span>
           </label>
+        </div>
+      </Field>
+
+      <Field label="Automation">
+        <div className="grid grid-cols-3 items-center gap-4">
+          <SwitchField
+            control={control}
+            name="autoReview"
+            label="Auto-review"
+            hint="When requested as code owner"
+          />
+          <SwitchField
+            control={control}
+            name="autoApprove"
+            label="Auto-approve"
+            hint="Minimal risk, no errors or warnings"
+          />
+          <SwitchField
+            control={control}
+            name="requireGreenCi"
+            label="Require green CI"
+            hint="Before auto-approving"
+            disabled={!autoApprove}
+          />
         </div>
       </Field>
 
