@@ -5,7 +5,7 @@ use ts_rs::TS;
 
 use crate::api_client::{Client, Result};
 use crate::graphql::GraphQLResponse;
-use crate::rest::API_URL;
+use crate::rest::{API_URL, GetPullRequestRequest};
 
 const LOCATIONS: [&str; 3] = [".github/CODEOWNERS", "CODEOWNERS", "docs/CODEOWNERS"];
 
@@ -17,6 +17,25 @@ const QUERY: &str = "query Codeowners($owner: String!, $name: String!, $github: 
   }
 }";
 const OPERATION: &str = "Codeowners";
+
+const REVIEW_REQUESTS_QUERY: &str =
+    "query ReviewRequests($owner: String!, $name: String!, $number: Int!) {
+  repository(owner: $owner, name: $name) {
+    pullRequest(number: $number) {
+      reviewRequests(first: 100) {
+        nodes {
+          asCodeOwner
+          requestedReviewer {
+            __typename
+            ... on User { login }
+            ... on Team { slug organization { login } }
+          }
+        }
+      }
+    }
+  }
+}";
+const REVIEW_REQUESTS_OPERATION: &str = "ReviewRequests";
 
 #[derive(Debug, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -61,9 +80,70 @@ struct Team {
     organization: TeamOrganization,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 struct TeamOrganization {
     login: String,
+}
+
+#[derive(Serialize)]
+struct ReviewRequestsVariables {
+    owner: String,
+    name: String,
+    number: i64,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "__typename")]
+enum Reviewer {
+    User {
+        login: String,
+    },
+    Team {
+        slug: String,
+        organization: TeamOrganization,
+    },
+    #[serde(other)]
+    Other,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ReviewRequest {
+    as_code_owner: bool,
+    requested_reviewer: Option<Reviewer>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ReviewRequests {
+    nodes: Vec<ReviewRequest>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ReviewRequestsPullRequest {
+    review_requests: Option<ReviewRequests>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ReviewRequestsRepository {
+    pull_request: Option<ReviewRequestsPullRequest>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct ReviewRequestsData {
+    repository: Option<ReviewRequestsRepository>,
+}
+
+/// How CODEOWNERS writes the reviewer.
+fn reviewer_handle(reviewer: &Reviewer) -> Option<String> {
+    match reviewer {
+        Reviewer::User { login } => Some(format!("@{login}").to_lowercase()),
+        Reviewer::Team { slug, organization } => {
+            Some(format!("@{}/{slug}", organization.login).to_lowercase())
+        }
+        Reviewer::Other => None,
+    }
 }
 
 struct Rule {
@@ -197,5 +277,64 @@ impl Client {
         let handles = self.owner_handles().await?;
 
         Ok(Some(owned_by(&text, &request.files, &handles)))
+    }
+
+    /// Whether the viewer, or one of their teams, is requested to review as code owner.
+    pub async fn requested_as_code_owner(&self, request: &GetPullRequestRequest) -> Result<bool> {
+        let body = QueryBody {
+            variables: ReviewRequestsVariables {
+                owner: request.owner.clone(),
+                name: request.repository.clone(),
+                number: request.number,
+            },
+            query: REVIEW_REQUESTS_QUERY,
+            operation_name: REVIEW_REQUESTS_OPERATION,
+        };
+
+        let res: GraphQLResponse<ReviewRequestsData> = self.send_graphql(&body).await?;
+        let requests = res
+            .data
+            .and_then(|data| data.repository)
+            .and_then(|r| r.pull_request)
+            .and_then(|pr| pr.review_requests)
+            .map(|r| r.nodes)
+            .unwrap_or_default();
+
+        let code_owners: Vec<String> = requests
+            .iter()
+            .filter(|r| r.as_code_owner)
+            .filter_map(|r| r.requested_reviewer.as_ref().and_then(reviewer_handle))
+            .collect();
+
+        if code_owners.is_empty() {
+            return Ok(false);
+        }
+
+        let handles = self.owner_handles().await?;
+
+        Ok(code_owners.iter().any(|h| handles.contains(h)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reviewer_handles_match_codeowners() {
+        let reviewers: Vec<Reviewer> = serde_json::from_str(
+            r#"[
+                {"__typename": "User", "login": "Gugu"},
+                {"__typename": "Team", "slug": "web", "organization": {"login": "Acme"}},
+                {"__typename": "Bot"}
+            ]"#,
+        )
+        .unwrap();
+        let handles: Vec<_> = reviewers.iter().map(reviewer_handle).collect();
+
+        assert_eq!(
+            handles,
+            [Some("@gugu".into()), Some("@acme/web".into()), None]
+        );
     }
 }
