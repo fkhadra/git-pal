@@ -8,8 +8,8 @@ use git_pal_github::rest::ReviewEvent;
 use sqlx::{QueryBuilder, Row, Sqlite, SqlitePool};
 
 use crate::models::{
-    CodeReview, GetSavedReviewRequest, ReviewComment, ReviewListEntry, SetFileViewedRequest,
-    ViewedFile,
+    AutoApproval, CodeReview, GetSavedReviewRequest, ReviewComment, ReviewListEntry,
+    SetFileViewedRequest, ViewedFile,
 };
 
 impl CodeReview {
@@ -45,6 +45,7 @@ impl CodeReview {
             pending_count,
             harness: self.harness,
             model: self.model.clone(),
+            risk: self.risk.as_ref().map(|r| r.level),
         }
     }
 }
@@ -69,7 +70,7 @@ impl CodeReviewStore {
 
     pub async fn list_reviews(&self) -> Result<Vec<ReviewListEntry>> {
         let rows = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval \
              FROM code_reviews ORDER BY reviewed_at DESC",
         )
         .fetch_all(&self.pool)
@@ -85,7 +86,7 @@ impl CodeReviewStore {
         pr_number: i64,
     ) -> Result<Option<CodeReview>> {
         let row = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval \
              FROM code_reviews WHERE owner = ? AND repository = ? AND pr_number = ?",
         )
         .bind(owner)
@@ -101,8 +102,8 @@ impl CodeReviewStore {
         let comments_json = serde_json::to_string(&review.comments)?;
 
         let row = sqlx::query(
-            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed) \
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
+            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval) \
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
              ON CONFLICT(owner, repository, pr_number) DO UPDATE SET \
                 pr_title = excluded.pr_title, \
                 branch = excluded.branch, \
@@ -118,7 +119,9 @@ impl CodeReviewStore {
                 error = excluded.error, \
                 warning = excluded.warning, \
                 cancelled = excluded.cancelled, \
-                reviewed = excluded.reviewed \
+                reviewed = excluded.reviewed, \
+                risk = excluded.risk, \
+                auto_approval = excluded.auto_approval \
              RETURNING id",
         )
         .bind(&review.owner)
@@ -151,6 +154,14 @@ impl CodeReviewStore {
         .bind(&review.warning)
         .bind(review.cancelled)
         .bind(review.reviewed)
+        .bind(review.risk.as_ref().map(serde_json::to_string).transpose()?)
+        .bind(
+            review
+                .auto_approval
+                .as_ref()
+                .map(serde_json::to_string)
+                .transpose()?,
+        )
         .fetch_one(&self.pool)
         .await?;
 
@@ -190,6 +201,26 @@ impl CodeReviewStore {
             "UPDATE code_reviews SET error = ? WHERE owner = ? AND repository = ? AND pr_number = ?",
         )
         .bind(error)
+        .bind(owner)
+        .bind(repository)
+        .bind(pr_number)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn set_auto_approval(
+        &self,
+        owner: &str,
+        repository: &str,
+        pr_number: i64,
+        approval: &AutoApproval,
+    ) -> Result<()> {
+        sqlx::query(
+            "UPDATE code_reviews SET auto_approval = ? WHERE owner = ? AND repository = ? AND pr_number = ?",
+        )
+        .bind(serde_json::to_string(approval)?)
         .bind(owner)
         .bind(repository)
         .bind(pr_number)

@@ -1,10 +1,12 @@
 use git_pal_github::rest::ReviewEvent;
 use git_pal_harness::Harness;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, de::DeserializeOwned};
 use sqlx::prelude::FromRow;
 use ts_rs::TS;
 
 pub const USER_SEVERITY: &str = "user";
+pub const ERROR_SEVERITY: &str = "error";
+pub const WARNING_SEVERITY: &str = "warning";
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
 #[serde(rename_all = "camelCase")]
@@ -29,6 +31,7 @@ pub struct ReviewListEntry {
     pub pending_count: usize,
     pub harness: Option<Harness>,
     pub model: Option<String>,
+    pub risk: Option<RiskLevel>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, TS)]
@@ -66,6 +69,111 @@ pub struct CodeReview {
     pub cancelled: bool,
     #[serde(default)]
     pub reviewed: bool,
+    #[serde(default)]
+    #[sqlx(json(nullable))]
+    pub risk: Option<Risk>,
+    #[serde(default)]
+    #[sqlx(json(nullable))]
+    pub auto_approval: Option<AutoApproval>,
+}
+
+/// Risk of merging, ordered from the safest.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "code-review.ts")]
+pub enum RiskLevel {
+    Minimal,
+    Low,
+    Medium,
+    High,
+}
+
+impl RiskLevel {
+    pub fn label(&self) -> &'static str {
+        match self {
+            RiskLevel::Minimal => "minimal",
+            RiskLevel::Low => "low",
+            RiskLevel::Medium => "medium",
+            RiskLevel::High => "high",
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "code-review.ts")]
+pub struct Risk {
+    pub level: RiskLevel,
+    #[serde(default)]
+    pub reasons: Vec<String>,
+    #[serde(default)]
+    pub factors: Vec<RiskFactor>,
+    /// Files driving the risk
+    #[serde(default)]
+    pub files: Vec<RiskyFile>,
+    #[serde(default)]
+    pub confidence: Option<Confidence>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "code-review.ts")]
+pub enum RiskFactorKind {
+    BlastRadius,
+    SensitiveAreas,
+    TestCoverage,
+    Reversibility,
+    /// Named by the agent outside the list, ignored
+    #[serde(other)]
+    Unknown,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "code-review.ts")]
+pub struct RiskFactor {
+    pub kind: RiskFactorKind,
+    pub level: RiskLevel,
+    #[serde(default)]
+    pub note: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "code-review.ts")]
+pub struct RiskyFile {
+    pub file: String,
+    #[serde(default)]
+    pub reason: String,
+}
+
+/// How sure the agent is of its risk assessment.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, TS)]
+#[serde(rename_all = "camelCase")]
+#[ts(export, export_to = "code-review.ts")]
+pub enum Confidence {
+    Low,
+    Medium,
+    High,
+}
+
+/// `None` instead of an error, a malformed value must not discard the rest of the review.
+fn lenient<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: DeserializeOwned,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+
+    Ok(serde_json::from_value(value).ok())
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[serde(tag = "type", rename_all = "camelCase")]
+#[ts(export, export_to = "code-review.ts")]
+pub enum AutoApproval {
+    Approved,
+    Skipped { reason: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, TS)]
@@ -129,6 +237,8 @@ impl ReviewComment {
 pub struct PullRequestReview {
     pub comments: Vec<ReviewComment>,
     pub summary: String,
+    #[serde(default, deserialize_with = "lenient")]
+    pub risk: Option<Risk>,
 }
 
 #[derive(Debug, Serialize, Deserialize, TS)]
@@ -193,6 +303,13 @@ pub struct ReviewTemplate {
     /// Skills the review must use
     #[sqlx(json)]
     pub skills: Vec<String>,
+    /// Extra rules to assess the risk of merging
+    pub risk_guidelines: Option<String>,
+    /// Reviews requests to the viewer as code owner without asking
+    pub auto_review: bool,
+    /// Approves minimal risk reviews without asking
+    pub auto_approve: bool,
+    pub require_green_ci: bool,
     pub position: i64,
     pub created_at: String,
     pub updated_at: String,
@@ -207,4 +324,8 @@ pub struct ReviewTemplateInput {
     pub matcher: Option<String>,
     pub is_default: bool,
     pub skills: Vec<String>,
+    pub risk_guidelines: Option<String>,
+    pub auto_review: bool,
+    pub auto_approve: bool,
+    pub require_green_ci: bool,
 }

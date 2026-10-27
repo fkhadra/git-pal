@@ -2,15 +2,22 @@
 import type { Harness } from "./harness";
 import type { ReviewEvent } from "./rest";
 
+export type AutoApproval = { "type": "approved" } | { "type": "skipped", reason: string, };
+
 export type CodeReview = { id: number, owner: string, repository: string, prNumber: number, prTitle: string, branch: string, headSha: string, submittedHeadSha: string | null, submittedEvent: ReviewEvent | null, summary: string, comments: Array<ReviewComment>, reviewedAt: string, template: TemplateChoice | null, 
 /**
  * Harness running the AI review
  */
-harness: Harness | null, model: string | null, error: string | null, warning: string | null, cancelled: boolean, reviewed: boolean, };
+harness: Harness | null, model: string | null, error: string | null, warning: string | null, cancelled: boolean, reviewed: boolean, risk: Risk | null, autoApproval: AutoApproval | null, };
+
+/**
+ * How sure the agent is of its risk assessment.
+ */
+export type Confidence = "low" | "medium" | "high";
 
 export type GetSavedReviewRequest = { owner: string, repository: string, prNumber: number, };
 
-export type PullRequestReview = { comments: Array<ReviewComment>, summary: string, };
+export type PullRequestReview = { comments: Array<ReviewComment>, summary: string, risk: Risk | null, };
 
 export type PullRequestSummary = { title: string, branch: string, headSha: string, };
 
@@ -40,7 +47,7 @@ reviewed: boolean, headSha: string, submittedHeadSha: string | null, submittedEv
 /**
  * Notes posted with the next submitted review
  */
-pendingCount: number, harness: Harness | null, model: string | null, };
+pendingCount: number, harness: Harness | null, model: string | null, risk: RiskLevel | null, };
 
 export type ReviewPullRequestRequest = { owner: string, repository: string, template: TemplateChoice, prNumber: number, 
 /**
@@ -56,9 +63,38 @@ matcher: string | null, isDefault: boolean,
 /**
  * Skills the review must use
  */
-skills: Array<string>, position: number, createdAt: string, updatedAt: string, };
+skills: Array<string>, 
+/**
+ * Extra rules to assess the risk of merging
+ */
+riskGuidelines: string | null, 
+/**
+ * Reviews requests to the viewer as code owner without asking
+ */
+autoReview: boolean, 
+/**
+ * Approves minimal risk reviews without asking
+ */
+autoApprove: boolean, requireGreenCi: boolean, position: number, createdAt: string, updatedAt: string, };
 
-export type ReviewTemplateInput = { name: string, content: string, matcher: string | null, isDefault: boolean, skills: Array<string>, };
+export type ReviewTemplateInput = { name: string, content: string, matcher: string | null, isDefault: boolean, skills: Array<string>, riskGuidelines: string | null, autoReview: boolean, autoApprove: boolean, requireGreenCi: boolean, };
+
+export type Risk = { level: RiskLevel, reasons: Array<string>, factors: Array<RiskFactor>, 
+/**
+ * Files driving the risk
+ */
+files: Array<RiskyFile>, confidence: Confidence | null, };
+
+export type RiskFactor = { kind: RiskFactorKind, level: RiskLevel, note: string, };
+
+export type RiskFactorKind = "blastRadius" | "sensitiveAreas" | "testCoverage" | "reversibility" | "unknown";
+
+/**
+ * Risk of merging, ordered from the safest.
+ */
+export type RiskLevel = "minimal" | "low" | "medium" | "high";
+
+export type RiskyFile = { file: string, reason: string, };
 
 export type SetFileViewedRequest = { owner: string, repository: string, prNumber: number, filename: string, sha: string, viewed: boolean, };
 

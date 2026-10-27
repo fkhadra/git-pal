@@ -15,13 +15,17 @@ use git_pal_agent::models::PullRequestKey;
 use git_pal_code_review::{
     git,
     models::{
-        CodeReview, GetSavedReviewRequest, PullRequestReview, PullRequestSummary, ReviewComment,
-        ReviewListEntry, ReviewPullRequestRequest, SetFileViewedRequest, USER_SEVERITY,
-        UpdateReviewCommentsRequest, ViewedFile,
+        AutoApproval, CodeReview, GetSavedReviewRequest, PullRequestReview, PullRequestSummary,
+        ReviewComment, ReviewListEntry, ReviewPullRequestRequest, SetFileViewedRequest,
+        USER_SEVERITY, UpdateReviewCommentsRequest, ViewedFile,
     },
     review, templates,
 };
-use git_pal_github::rest::{GetPullRequestRequest, SubmitReviewRequest};
+use git_pal_github::{
+    graphql::PullRequest,
+    query::get_pull_request::StatusState,
+    rest::{GetPullRequestRequest, ReviewEvent, SubmitReviewRequest},
+};
 use git_pal_harness::{Harness, shell};
 use git_pal_job_runner::{Job, JobKind, JobStatus};
 
@@ -95,6 +99,8 @@ pub async fn review_pull_request(
             .map(|t| t.skills.clone())
             .unwrap_or_default(),
     );
+    let risk_guidelines = resolved.as_ref().and_then(|t| t.risk_guidelines.clone());
+    let approval_template = resolved.clone().filter(|t| t.auto_approve);
     let instructions = resolved
         .map(|t| t.content)
         .unwrap_or_else(|| review::BUILT_IN_INSTRUCTIONS.to_string());
@@ -103,6 +109,7 @@ pub async fn review_pull_request(
     // The reviewed commit only moves once the review succeeds.
     let head_sha = pr.head_sha;
     let reviewed = existing.as_ref().is_some_and(|r| r.reviewed);
+    let risk = existing.as_ref().and_then(|r| r.risk.clone());
     let placeholder = CodeReview {
         id: 0,
         owner,
@@ -132,6 +139,8 @@ pub async fn review_pull_request(
         warning,
         cancelled: false,
         reviewed,
+        risk,
+        auto_approval: None,
     };
     store.upsert_review(&placeholder).await?;
 
@@ -178,6 +187,7 @@ pub async fn review_pull_request(
                             &description,
                             &discussion,
                             scope.as_deref(),
+                            risk_guidelines.as_deref(),
                             model.as_deref(),
                         )
                     })
@@ -210,6 +220,7 @@ pub async fn review_pull_request(
                     head_sha,
                     reviewed_at: chrono::Utc::now().to_rfc3339(),
                     reviewed: true,
+                    risk: review.risk.clone(),
                     ..placeholder
                 };
                 store
@@ -228,7 +239,26 @@ pub async fn review_pull_request(
                 log::error!("Failed to save review error: {e}");
             }
 
+            let approved = match (&result, &approval_template) {
+                (Ok(_), Some(template)) => {
+                    let approval =
+                        auto_approve(&app, &owner, &repository, pr_number, template.require_green_ci)
+                            .await;
+
+                    if let Err(e) = store
+                        .set_auto_approval(&owner, &repository, pr_number, &approval)
+                        .await
+                    {
+                        log::error!("Failed to save auto approval: {e}");
+                    }
+
+                    matches!(approval, AutoApproval::Approved)
+                }
+                _ => false,
+            };
+
             let message = match &result {
+                Ok(_) if approved => format!("Pull request {pr_title} reviewed and approved"),
                 Ok(_) => format!("Pull request {pr_title} reviewed"),
                 Err(_) => format!("Pull request {pr_title} review failed"),
             };
@@ -243,6 +273,108 @@ pub async fn review_pull_request(
 }
 
 const REVIEWED_TITLE: &str = "Agent Review";
+
+const AUTO_APPROVAL_BODY: &str = "Approved automatically by Git Pal, minimal risk:";
+
+/// Approves the saved review when it qualifies, failures only skip it.
+async fn auto_approve(
+    app: &AppHandle,
+    owner: &str,
+    repository: &str,
+    pr_number: i64,
+    require_green_ci: bool,
+) -> AutoApproval {
+    match try_auto_approve(app, owner, repository, pr_number, require_green_ci).await {
+        Ok(None) => AutoApproval::Approved,
+        Ok(Some(reason)) => AutoApproval::Skipped { reason },
+        Err(e) => AutoApproval::Skipped {
+            reason: e.to_string(),
+        },
+    }
+}
+
+/// `None` once approved, else why it wasn't.
+async fn try_auto_approve(
+    app: &AppHandle,
+    owner: &str,
+    repository: &str,
+    pr_number: i64,
+    require_green_ci: bool,
+) -> anyhow::Result<Option<String>> {
+    let state: State<'_, AppState> = app.state();
+    let store = &state.code_review_store;
+    let review = store
+        .get_review(owner, repository, pr_number)
+        .await?
+        .ok_or_else(|| anyhow!("Review not found"))?;
+
+    if let Some(reason) = review::approval_blocker(review.risk.as_ref(), &review.comments) {
+        return Ok(Some(reason));
+    }
+
+    let request = GetPullRequestRequest {
+        owner: owner.to_string(),
+        repository: repository.to_string(),
+        number: pr_number,
+    };
+    let pr = state.github_client.find_pull_request(&request).await?;
+
+    if pr.head_ref_oid != review.head_sha {
+        return Ok(Some("New commits were pushed during the review".into()));
+    }
+
+    if require_green_ci && let Some(reason) = ci_blocker(&pr) {
+        return Ok(Some(reason.into()));
+    }
+
+    let reasons = review
+        .risk
+        .iter()
+        .flat_map(|r| &r.reasons)
+        .map(|reason| format!("- {reason}"));
+    let body = std::iter::once(AUTO_APPROVAL_BODY.to_string())
+        .chain(reasons)
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    state
+        .github_client
+        .submit_review(&SubmitReviewRequest {
+            owner: request.owner,
+            repository: request.repository,
+            number: pr_number,
+            commit_id: review.head_sha.clone(),
+            body,
+            event: ReviewEvent::Approve,
+            comments: vec![],
+        })
+        .await?;
+
+    store
+        .mark_submitted(
+            owner,
+            repository,
+            pr_number,
+            &review.head_sha,
+            &ReviewEvent::Approve,
+        )
+        .await?;
+    refresh_review_badge(app);
+
+    Ok(None)
+}
+
+fn ci_blocker(pr: &PullRequest) -> Option<&'static str> {
+    let Some(checks) = &pr.status_check_rollup else {
+        return Some("No CI checks");
+    };
+
+    match checks.state {
+        StatusState::SUCCESS => None,
+        StatusState::PENDING | StatusState::EXPECTED => Some("CI checks are pending"),
+        _ => Some("CI checks failed"),
+    }
+}
 
 async fn notify_review(app: &AppHandle, message: &str, metadata: HashMap<String, String>) {
     if window::is_review_focused(app) {
@@ -601,6 +733,8 @@ pub async fn view_pull_request(
                 warning: None,
                 cancelled: false,
                 reviewed: false,
+                risk: None,
+                auto_approval: None,
             })
             .await?;
     }
