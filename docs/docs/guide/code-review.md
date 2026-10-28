@@ -56,6 +56,28 @@ The agent rates the risk of merging the whole pull request, shown as a gauge nex
 | Medium | Changes existing behavior or shared code |
 | High | Migrations, security, public APIs, infrastructure or large refactors |
 
+Each factor uses the same levels, high always being the risky end:
+
+| Factor | High means |
+| --- | --- |
+| Blast radius | The change can affect much of the product and its users |
+| Sensitive areas | It touches security, authentication, payments, data or infrastructure |
+| Test gaps | Tests barely cover the change |
+| Rollback difficulty | Hard to undo, e.g. migrations or published APIs |
+
+Factors explain the level, auto-approve only looks at the level.
+
+A template's **Risk guidelines** adjust both, they take precedence over the levels above. For example:
+
+```md
+- Files under `migrations/` are always high risk, rollback difficulty is high.
+- `billing/` is a sensitive area.
+- Changes to `src/legacy/` have test gaps, it has no tests.
+- Copy changes in `locales/` are minimal risk.
+```
+
+A pull request adding a migration is then rated high with a high rollback difficulty, even if it's small. A translation fix stays minimal, so it can be auto-approved.
+
 ### Auto-approve
 
 With **Auto-approve** on, a review is approved when it ends if:
