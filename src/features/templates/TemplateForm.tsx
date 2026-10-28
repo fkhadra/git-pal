@@ -115,7 +115,7 @@ export function TemplateForm({
 
   return (
     <form
-      className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto"
+      className="flex h-full min-h-0 flex-col gap-4 overflow-y-auto px-1"
       onSubmit={onSubmit}
     >
       <Field label="Name">
