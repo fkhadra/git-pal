@@ -38,7 +38,8 @@ Click **Manage templates…** at the bottom of the reviews list to create one:
 | When to use | A regex on `owner/repo`, e.g. `^acme/` |
 | Default template | Used when no matcher accepts the repository |
 | Auto-review | Reviews pull requests requesting you, or your team, as code owner |
-| Auto-approve | Approves [minimal risk](#auto-approve) reviews |
+| Auto-approve | Approves [clean reviews](#auto-approve) without asking |
+| Max risk | Highest risk auto-approved: minimal (default), low or medium |
 | Require green CI | Auto-approves only once CI checks pass |
 
 Drag templates to reorder them. **Auto** picks the template used last time on that pull request, else the first one whose matcher accepts the repository, else the default one, else the built-in instructions.
@@ -82,7 +83,7 @@ A pull request adding a migration is then rated high with a high rollback diffic
 
 With **Auto-approve** on, a review is approved when it ends if:
 
-- the risk is minimal, and the agent isn't unsure about it,
+- the risk is at most the template's **Max risk**, and the agent isn't unsure about it,
 - there are no error or warning comments, nor notes waiting to be submitted,
 - no commits were pushed during the review,
 - CI checks passed, unless **Require green CI** is off.
