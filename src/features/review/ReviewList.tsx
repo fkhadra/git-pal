@@ -92,7 +92,7 @@ function ReviewItem({
       onClick={() => store.selectReview(entry)}
       onKeyDown={(e) => e.key === "Enter" && store.selectReview(entry)}
       className={cn(
-        "group/item flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent/60 overflow-hidden",
+        "group/item flex w-full shrink-0 cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent/60 overflow-hidden",
         isSelected && "bg-accent hover:bg-accent",
       )}
     >
