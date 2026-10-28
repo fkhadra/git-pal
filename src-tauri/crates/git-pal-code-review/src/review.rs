@@ -192,13 +192,21 @@ pub fn review(
 }
 
 /// Why the review can't be approved without asking, `None` when it can.
-pub fn approval_blocker(risk: Option<&Risk>, comments: &[ReviewComment]) -> Option<String> {
+pub fn approval_blocker(
+    risk: Option<&Risk>,
+    comments: &[ReviewComment],
+    max_risk: RiskLevel,
+) -> Option<String> {
     let Some(risk) = risk else {
         return Some("Risk not assessed".into());
     };
 
-    if risk.level != RiskLevel::Minimal {
-        return Some(format!("Risk is {}", risk.level.label()));
+    if risk.level > max_risk {
+        return Some(format!(
+            "Risk is {}, above {}",
+            risk.level.label(),
+            max_risk.label()
+        ));
     }
 
     if risk.confidence == Some(Confidence::Low) {
@@ -282,21 +290,26 @@ mod tests {
     }
 
     #[test]
-    fn approves_only_clean_minimal_risk() {
+    fn approves_only_clean_reviews_within_max_risk() {
+        let max = RiskLevel::Minimal;
         let minimal = risk(RiskLevel::Minimal);
+        let low = risk(RiskLevel::Low);
 
-        assert!(approval_blocker(Some(&minimal), &[comment("info", false)]).is_none());
-        assert!(approval_blocker(Some(&minimal), &[comment(USER_SEVERITY, true)]).is_none());
-        assert!(approval_blocker(None, &[]).is_some());
-        assert!(approval_blocker(Some(&risk(RiskLevel::Low)), &[]).is_some());
-        assert!(approval_blocker(Some(&minimal), &[comment(WARNING_SEVERITY, false)]).is_some());
-        assert!(approval_blocker(Some(&minimal), &[comment(USER_SEVERITY, false)]).is_some());
+        assert!(approval_blocker(Some(&minimal), &[comment("info", false)], max).is_none());
+        assert!(approval_blocker(Some(&minimal), &[comment(USER_SEVERITY, true)], max).is_none());
+        assert!(approval_blocker(Some(&low), &[], RiskLevel::Low).is_none());
+        assert!(approval_blocker(None, &[], max).is_some());
+        assert!(approval_blocker(Some(&low), &[], max).is_some());
+        assert!(
+            approval_blocker(Some(&minimal), &[comment(WARNING_SEVERITY, false)], max).is_some()
+        );
+        assert!(approval_blocker(Some(&minimal), &[comment(USER_SEVERITY, false)], max).is_some());
 
         let unsure = Risk {
             confidence: Some(Confidence::Low),
             ..minimal
         };
-        assert!(approval_blocker(Some(&unsure), &[]).is_some());
+        assert!(approval_blocker(Some(&unsure), &[], max).is_some());
     }
 
     #[test]

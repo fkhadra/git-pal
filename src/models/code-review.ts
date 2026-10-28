@@ -78,11 +78,11 @@ riskGuidelines: string | null,
  */
 autoReview: boolean, 
 /**
- * Approves minimal risk reviews without asking
+ * Approves reviews up to `auto_approve_max_risk` without asking
  */
-autoApprove: boolean, requireGreenCi: boolean, position: number, createdAt: string, updatedAt: string, };
+autoApprove: boolean, autoApproveMaxRisk: RiskLevel, requireGreenCi: boolean, position: number, createdAt: string, updatedAt: string, };
 
-export type ReviewTemplateInput = { name: string, content: string, matcher: string | null, isDefault: boolean, skills: Array<string>, riskGuidelines: string | null, autoReview: boolean, autoApprove: boolean, requireGreenCi: boolean, };
+export type ReviewTemplateInput = { name: string, content: string, matcher: string | null, isDefault: boolean, skills: Array<string>, riskGuidelines: string | null, autoReview: boolean, autoApprove: boolean, autoApproveMaxRisk: RiskLevel, requireGreenCi: boolean, };
 
 export type Risk = { level: RiskLevel, reasons: Array<string>, factors: Array<RiskFactor>, 
 /**

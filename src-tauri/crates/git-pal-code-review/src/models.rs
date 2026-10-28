@@ -321,8 +321,10 @@ pub struct ReviewTemplate {
     pub risk_guidelines: Option<String>,
     /// Reviews requests to the viewer as code owner without asking
     pub auto_review: bool,
-    /// Approves minimal risk reviews without asking
+    /// Approves reviews up to `auto_approve_max_risk` without asking
     pub auto_approve: bool,
+    #[sqlx(json)]
+    pub auto_approve_max_risk: RiskLevel,
     pub require_green_ci: bool,
     pub position: i64,
     pub created_at: String,
@@ -341,5 +343,6 @@ pub struct ReviewTemplateInput {
     pub risk_guidelines: Option<String>,
     pub auto_review: bool,
     pub auto_approve: bool,
+    pub auto_approve_max_risk: RiskLevel,
     pub require_green_ci: bool,
 }

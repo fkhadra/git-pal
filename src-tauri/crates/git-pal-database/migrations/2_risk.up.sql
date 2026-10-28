@@ -11,4 +11,6 @@ ALTER TABLE review_templates ADD COLUMN risk_guidelines TEXT;
 ALTER TABLE review_templates ADD COLUMN auto_review INTEGER NOT NULL DEFAULT 0;
 -- minimal risk reviews are approved without asking
 ALTER TABLE review_templates ADD COLUMN auto_approve INTEGER NOT NULL DEFAULT 0;
+-- highest risk approved without asking, "minimal", "low" or "medium"
+ALTER TABLE review_templates ADD COLUMN auto_approve_max_risk TEXT NOT NULL DEFAULT '"minimal"';
 ALTER TABLE review_templates ADD COLUMN require_green_ci INTEGER NOT NULL DEFAULT 1;

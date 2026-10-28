@@ -1,12 +1,19 @@
 import { Trash2 } from "lucide-react";
 import { useEffect } from "react";
-import { type Control, Controller, useForm } from "react-hook-form";
+import { type Control, Controller, useForm, useWatch } from "react-hook-form";
 
 import { ErrorMessage, FormControl, Input, Label } from "~/components/form";
 import { Button } from "~/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 import { Switch } from "~/components/ui/switch";
 import { Textarea } from "~/components/ui/textarea";
-import type { ReviewTemplate } from "~/models/code-review";
+import type { ReviewTemplate, RiskLevel } from "~/models/code-review";
 
 import { useSaveTemplateMutation } from "./data-loader";
 import { SkillsField } from "./SkillsField";
@@ -20,8 +27,16 @@ interface FormValues {
   riskGuidelines: string;
   autoReview: boolean;
   autoApprove: boolean;
+  autoApproveMaxRisk: RiskLevel;
   requireGreenCi: boolean;
 }
+
+// high would approve whatever the risk
+const MAX_RISKS: { value: RiskLevel; label: string }[] = [
+  { value: "minimal", label: "Minimal" },
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+];
 
 interface FieldProps {
   label: string;
@@ -79,9 +94,9 @@ export function TemplateForm({
   onDelete,
 }: Props) {
   const { mutateAsync } = useSaveTemplateMutation();
-  const { register, control, handleSubmit, reset, setError, watch, formState } =
+  const { register, control, handleSubmit, reset, setError, formState } =
     useForm<FormValues>();
-  const autoApprove = watch("autoApprove");
+  const autoApprove = useWatch({ control, name: "autoApprove" });
 
   useEffect(() => {
     reset({
@@ -93,6 +108,7 @@ export function TemplateForm({
       riskGuidelines: template?.riskGuidelines ?? "",
       autoReview: template?.autoReview ?? false,
       autoApprove: template?.autoApprove ?? false,
+      autoApproveMaxRisk: template?.autoApproveMaxRisk ?? "minimal",
       requireGreenCi: template?.requireGreenCi ?? true,
     });
   }, [template, initialContent, reset]);
@@ -208,15 +224,53 @@ export function TemplateForm({
             control={control}
             name="autoApprove"
             label="Auto-approve"
-            hint="Approve minimal risk reviews without errors or warnings"
+            hint="Approve reviews without errors or warnings, up to a max risk"
           />
           {autoApprove && (
-            <SwitchField
-              control={control}
-              name="requireGreenCi"
-              label="Require green CI"
-              hint="Approve only once CI checks pass"
-            />
+            <>
+              <div className="col-span-3 grid grid-cols-subgrid items-center">
+                <span />
+                <span className="text-sm">Max risk</span>
+                <Controller
+                  control={control}
+                  name="autoApproveMaxRisk"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={(value) =>
+                        field.onChange(value as RiskLevel)
+                      }
+                    >
+                      <SelectTrigger
+                        size="sm"
+                        aria-label="Max risk"
+                        className="w-32"
+                      >
+                        <SelectValue>
+                          {
+                            MAX_RISKS.find((r) => r.value === field.value)
+                              ?.label
+                          }
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MAX_RISKS.map(({ value, label }) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <SwitchField
+                control={control}
+                name="requireGreenCi"
+                label="Require green CI"
+                hint="Approve only once CI checks pass"
+              />
+            </>
           )}
         </div>
       </Field>

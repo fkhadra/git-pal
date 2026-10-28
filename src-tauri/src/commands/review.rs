@@ -17,8 +17,8 @@ use git_pal_code_review::{
     models::{
         AutoApproval, CodeReview, GetSavedReviewRequest, PullRequestReview, PullRequestState,
         PullRequestSummary, ReviewComment, ReviewListEntry, ReviewPullRequestRequest,
-        SetFileViewedRequest, TemplateChoice, USER_SEVERITY, UpdateReviewCommentsRequest,
-        ViewedFile,
+        ReviewTemplate, SetFileViewedRequest, TemplateChoice, USER_SEVERITY,
+        UpdateReviewCommentsRequest, ViewedFile,
     },
     review, templates,
 };
@@ -244,7 +244,7 @@ pub async fn review_pull_request(
             let approved = match (&result, &approval_template) {
                 (Ok(_), Some(template)) => {
                     let approval =
-                        auto_approve(&app, &owner, &repository, pr_number, template.require_green_ci)
+                        auto_approve(&app, &owner, &repository, pr_number, template)
                             .await;
 
                     if let Err(e) = store
@@ -276,7 +276,7 @@ pub async fn review_pull_request(
 
 const REVIEWED_TITLE: &str = "Agent Review";
 
-const AUTO_APPROVAL_BODY: &str = "Approved automatically by Git Pal, minimal risk:";
+const AUTO_APPROVAL_BODY: &str = "Approved automatically by Git Pal";
 
 /// Approves the saved review when it qualifies, failures only skip it.
 async fn auto_approve(
@@ -284,9 +284,9 @@ async fn auto_approve(
     owner: &str,
     repository: &str,
     pr_number: i64,
-    require_green_ci: bool,
+    template: &ReviewTemplate,
 ) -> AutoApproval {
-    match try_auto_approve(app, owner, repository, pr_number, require_green_ci).await {
+    match try_auto_approve(app, owner, repository, pr_number, template).await {
         Ok(None) => AutoApproval::Approved,
         Ok(Some(reason)) => AutoApproval::Skipped { reason },
         Err(e) => AutoApproval::Skipped {
@@ -301,7 +301,7 @@ async fn try_auto_approve(
     owner: &str,
     repository: &str,
     pr_number: i64,
-    require_green_ci: bool,
+    template: &ReviewTemplate,
 ) -> anyhow::Result<Option<String>> {
     let state: State<'_, AppState> = app.state();
     let store = &state.code_review_store;
@@ -310,7 +310,11 @@ async fn try_auto_approve(
         .await?
         .ok_or_else(|| anyhow!("Review not found"))?;
 
-    if let Some(reason) = review::approval_blocker(review.risk.as_ref(), &review.comments) {
+    if let Some(reason) = review::approval_blocker(
+        review.risk.as_ref(),
+        &review.comments,
+        template.auto_approve_max_risk,
+    ) {
         return Ok(Some(reason));
     }
 
@@ -325,16 +329,19 @@ async fn try_auto_approve(
         return Ok(Some("New commits were pushed during the review".into()));
     }
 
-    if require_green_ci && let Some(reason) = ci_blocker(&pr) {
+    if template.require_green_ci
+        && let Some(reason) = ci_blocker(&pr)
+    {
         return Ok(Some(reason.into()));
     }
 
-    let reasons = review
+    let risk = review
         .risk
-        .iter()
-        .flat_map(|r| &r.reasons)
-        .map(|reason| format!("- {reason}"));
-    let body = std::iter::once(AUTO_APPROVAL_BODY.to_string())
+        .as_ref()
+        .ok_or_else(|| anyhow!("Risk not assessed"))?;
+    let reasons = risk.reasons.iter().map(|reason| format!("- {reason}"));
+    let heading = format!("{AUTO_APPROVAL_BODY}, {} risk:", risk.level.label());
+    let body = std::iter::once(heading)
         .chain(reasons)
         .collect::<Vec<_>>()
         .join("\n");
