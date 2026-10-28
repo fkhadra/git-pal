@@ -49,6 +49,41 @@ export function findGap(
   return gap;
 }
 
+/**
+ * Undoes `hunks` on the new source, react-diff-view wants the old one to highlight whole files:
+ * a comment or string opened in a hidden line is then still closed.
+ */
+export function toOldSource(newSource: string, hunks: HunkData[]) {
+  const lines = newSource.split("\n");
+  // tokens replace the diff text, a source from another commit would show the wrong code
+  const isSameCommit = hunks.every((hunk) =>
+    hunk.changes.every(
+      (change) =>
+        change.type === "delete" ||
+        lines[
+          (change.type === "insert"
+            ? change.lineNumber
+            : change.newLineNumber) - 1
+        ] === change.content,
+    ),
+  );
+  if (!isSameCommit) return undefined;
+
+  for (const { oldStart, changes } of hunks) {
+    let cursor = oldStart - 1;
+    for (const change of changes) {
+      if (change.type === "insert") {
+        lines.splice(cursor, 1);
+        continue;
+      }
+      if (change.type === "delete") lines.splice(cursor, 0, change.content);
+      cursor++;
+    }
+  }
+
+  return lines.join("\n");
+}
+
 export function toLines(source: string) {
   const lines = source.split("\n");
   if (lines[lines.length - 1] === "") lines.pop();

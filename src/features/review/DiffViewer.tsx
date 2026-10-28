@@ -33,6 +33,7 @@ import {
   expandGap,
   findGap,
   toLines,
+  toOldSource,
 } from "./diff-expansion";
 import { DiffExpander } from "./DiffExpander";
 import { GithubThreadWidget } from "./GithubThreadWidget";
@@ -194,8 +195,11 @@ export function DiffViewer({
     path: file.filename,
     gitRef: headSha,
   });
-  // cached once expanded, tells how many lines follow the last hunk
-  const { data: source } = useQuery(sourceOptions);
+  // tells how many lines follow the last hunk, and lets a modified file highlight as a whole
+  const { data: source } = useQuery({
+    ...sourceOptions,
+    enabled: diffType === "modify",
+  });
   const [expansion, setExpansion] = useState<{
     base: HunkData[];
     hunks: HunkData[];
@@ -252,11 +256,15 @@ export function DiffViewer({
       const enhancers = [markEdits(shownHunks, { type: "block" })];
 
       if (language !== "text" && refractor.registered(language)) {
+        const oldSource =
+          source == null ? undefined : toOldSource(source, shownHunks);
+
         return tokenize(shownHunks, {
           highlight: true,
           refractor,
           language,
           enhancers,
+          oldSource,
         });
       }
 
@@ -265,7 +273,7 @@ export function DiffViewer({
       console.warn("Tokenization failed for", file.filename, e);
       return null;
     }
-  }, [shownHunks, language, file.filename]);
+  }, [shownHunks, language, file.filename, source]);
 
   // new-side line number -> change rendering it
   const lines = useMemo(() => {
