@@ -1,4 +1,5 @@
 import {
+  type QueryClient,
   queryOptions,
   useMutation,
   useQueries,
@@ -81,16 +82,20 @@ export function useCodeReviewQuery(review?: GetSavedReviewRequest | null) {
 }
 
 const BUILDING_REFETCH_MS = 30_000;
+/** Approvals and pushes elsewhere show without selecting the review */
+const STATUS_REFETCH_MS = minutesToMilliseconds(5);
 
-export function usePullRequestStatusQuery(review: GetSavedReviewRequest) {
-  const queryClient = useQueryClient();
+function pullRequestStatusOptions(
+  review: GetSavedReviewRequest,
+  queryClient: QueryClient,
+) {
   const request = {
     owner: review.owner,
     repository: review.repository,
     number: review.prNumber,
   };
 
-  return useQuery({
+  return queryOptions({
     queryKey: ["pr-status", request],
     queryFn: async () => {
       const pullRequest = await commands.getPullRequestStatus(request);
@@ -101,10 +106,28 @@ export function usePullRequestStatusQuery(review: GetSavedReviewRequest) {
     },
     refetchInterval: (query) => {
       const pr = query.state.data;
-      if (!pr || getPullRequestStatus(pr) !== "Building") return false;
+      if (pr && getPullRequestStatus(pr) === "Building") {
+        return BUILDING_REFETCH_MS;
+      }
 
-      return BUILDING_REFETCH_MS;
+      return STATUS_REFETCH_MS;
     },
+  });
+}
+
+export function usePullRequestStatusQuery(review: GetSavedReviewRequest) {
+  const queryClient = useQueryClient();
+
+  return useQuery(pullRequestStatusOptions(review, queryClient));
+}
+
+export function usePullRequestStatusQueries(reviews: GetSavedReviewRequest[]) {
+  const queryClient = useQueryClient();
+
+  return useQueries({
+    queries: reviews.map((review) =>
+      pullRequestStatusOptions(review, queryClient),
+    ),
   });
 }
 

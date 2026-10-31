@@ -577,7 +577,8 @@ export function ReviewPage() {
         <ResizablePanel
           panelRef={reviewsPanelRef}
           defaultSize="20%"
-          minSize="15%"
+          // fits the review filters
+          minSize="19rem"
           collapsible
           collapsedSize={0}
           onResize={(size) => setShowList(size.asPercentage > 0)}

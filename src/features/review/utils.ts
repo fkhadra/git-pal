@@ -1,4 +1,4 @@
-import type { CommentContext, ReviewEvent } from "~/models";
+import type { CommentContext, PullRequest, ReviewEvent } from "~/models";
 import type {
   GetSavedReviewRequest,
   PullRequestState,
@@ -269,6 +269,44 @@ export function reviewStatus(
   if (review.reviewed || review.noteCount > 0) return "inProgress";
 
   return "todo";
+}
+
+export type ReviewQueue = "toReview" | "notReady" | "done";
+
+const DONE_STATUSES: ReviewStatus[] = [
+  "approved",
+  "changesRequested",
+  "commented",
+  "merged",
+  "closed",
+];
+
+/** Whether the pull request still needs the viewer, to review until GitHub tells otherwise */
+export function reviewQueue(
+  review: ReviewProgress,
+  pullRequest?: PullRequest,
+): ReviewQueue {
+  if (
+    pullRequest?.state === "MERGED" ||
+    pullRequest?.state === "CLOSED" ||
+    pullRequest?.reviewDecision === "APPROVED"
+  ) {
+    return "done";
+  }
+  if (DONE_STATUSES.includes(reviewStatus(review, pullRequest?.headRefOid))) {
+    return "done";
+  }
+  const checks = pullRequest?.statusCheckRollup?.state;
+  if (
+    pullRequest?.isDraft ||
+    checks === "FAILURE" ||
+    checks === "ERROR" ||
+    pullRequest?.mergeable === "CONFLICTING"
+  ) {
+    return "notReady";
+  }
+
+  return "toReview";
 }
 
 export function isPendingComment(comment: ReviewComment) {

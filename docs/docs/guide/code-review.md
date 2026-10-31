@@ -13,6 +13,13 @@ The review window, Review Pal, is where you read pull requests, have an agent re
 
 Every pull request you open stays in the **Reviews** list on the left, with its status.
 
+Toggle a filter next to **Reviews** to show only part of the list, or toggle it off to show everything:
+
+- **To review**: still needs your review and nothing blocks it.
+- **Not ready**: a draft, failing checks or merge conflicts.
+
+Pull requests approved on GitHub, merged, closed, or that you reviewed with no new commits since are in neither. Statuses refresh every 5 minutes.
+
 ## AI reviews
 
 Git Pal clones the repository, checks out the pull request in its own worktree and asks your agent to review it. The agent gets the description and the existing discussion, so it doesn't repeat what's already been said.

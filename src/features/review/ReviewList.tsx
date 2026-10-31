@@ -10,7 +10,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { ThinkingOrb } from "thinking-orbs";
 
@@ -47,11 +47,13 @@ import {
   TooltipTrigger,
 } from "~/components/ui/tooltip";
 import { templateManager } from "~/features/templates/store";
+import type { PullRequest } from "~/models";
 import type { ReviewListEntry } from "~/models/code-review";
 
 import {
   useDeleteReviewsMutation,
   useIsReviewing,
+  usePullRequestStatusQueries,
   useReviewingJobIds,
   useSavedReviewsQuery,
 } from "./data-loader";
@@ -59,7 +61,13 @@ import { PrUrlInput } from "./PrUrlInput";
 import { RiskIcon } from "./RiskBadge";
 import { LiveStatusBadge, StatusBadge } from "./StatusBadge";
 import { store, useCodeReviewSnapshot } from "./store";
-import { isSameReview, reviewJobId, reviewStatus } from "./utils";
+import {
+  isSameReview,
+  type ReviewQueue,
+  reviewJobId,
+  reviewQueue,
+  reviewStatus,
+} from "./utils";
 
 function commentLabel(count: number) {
   const noun = count === 1 ? "comment" : "comments";
@@ -67,14 +75,33 @@ function commentLabel(count: number) {
   return `${count} ${noun}`;
 }
 
+/** Toggled queue, every review shows while none is */
+const QUEUE_KEY = "reviews.queue";
+
+const QUEUE_FILTERS: { value: ReviewQueue; label: string; hint: string }[] = [
+  {
+    value: "toReview",
+    label: "To review",
+    hint: "Needs your review, nothing blocks it",
+  },
+  {
+    value: "notReady",
+    label: "Not ready",
+    hint: "Draft, failing checks or merge conflicts",
+  },
+];
+
 function ReviewItem({
   entry,
+  pullRequest,
   isSelected,
   isChecked,
   isSelecting,
   onCheck,
 }: {
   entry: ReviewListEntry;
+  /** Latest from GitHub, a push after the submitted review takes it back to review */
+  pullRequest?: PullRequest;
   isSelected: boolean;
   isChecked: boolean;
   /** Some reviews are checked, every checkbox shows */
@@ -117,7 +144,12 @@ function ReviewItem({
           {isSelected ? (
             <LiveStatusBadge review={progress} />
           ) : (
-            <StatusBadge status={reviewStatus(progress)} />
+            <StatusBadge
+              status={reviewStatus(
+                { ...progress, reviewDecision: pullRequest?.reviewDecision },
+                pullRequest?.headRefOid,
+              )}
+            />
           )}
           {/* <span>
             {entry.reviewed
@@ -202,19 +234,43 @@ export function ReviewList({ prUrlRef }: Props) {
     if (data) store.syncReviews(data);
   }, [data, snapshot.requestedReview]);
 
-  const filteredReviews = useMemo(() => {
-    const reviews = data ?? [];
-    if (!reviewFilter.trim()) return reviews;
+  const [shownQueue, setShownQueue] = useState(
+    () =>
+      QUEUE_FILTERS.find((f) => f.value === localStorage.getItem(QUEUE_KEY))
+        ?.value ?? null,
+  );
+  const statusQueries = usePullRequestStatusQueries(data ?? []);
+  const pullRequests = new Map(
+    (data ?? []).map((entry, i) => [reviewKey(entry), statusQueries[i]?.data]),
+  );
 
-    const q = reviewFilter.toLowerCase();
-    return reviews.filter(
-      (e) =>
+  const queues = (data ?? []).map((entry) =>
+    reviewQueue(
+      {
+        ...entry,
+        noteCount: entry.commentCount,
+        isReviewing: reviewingJobIds.has(reviewJobId(entry)),
+      },
+      pullRequests.get(reviewKey(entry)),
+    ),
+  );
+  const toggleQueue = (value: ReviewQueue) => {
+    const next = shownQueue === value ? null : value;
+    setShownQueue(next);
+    if (next) localStorage.setItem(QUEUE_KEY, next);
+    else localStorage.removeItem(QUEUE_KEY);
+  };
+
+  const q = reviewFilter.trim().toLowerCase();
+  const filteredReviews = (data ?? []).filter(
+    (e, i) =>
+      (!shownQueue || queues[i] === shownQueue) &&
+      (!q ||
         e.prTitle.toLowerCase().includes(q) ||
         e.repository.toLowerCase().includes(q) ||
         e.owner.toLowerCase().includes(q) ||
-        String(e.prNumber).includes(q),
-    );
-  }, [data, reviewFilter]);
+        String(e.prNumber).includes(q)),
+  );
 
   // only visible reviews count, a filter hides the others from bulk actions
   const checkedReviews = filteredReviews.filter((e) =>
@@ -252,9 +308,46 @@ export function ReviewList({ prUrlRef }: Props) {
       ) : (
         <div className="flex items-center gap-2 px-4 pt-3 pb-1">
           <List className="size-3.5 text-muted-foreground" />
-          <span className="flex-1 text-xs font-medium text-muted-foreground">
+          <span className="text-xs font-medium text-muted-foreground">
             Reviews
           </span>
+          <div
+            role="group"
+            aria-label="Show only"
+            className="flex flex-1 gap-0.5"
+          >
+            {QUEUE_FILTERS.map(({ value, label, hint }) => {
+              const isShown = shownQueue === value;
+              const hintId = `review-queue-hint-${value}`;
+              return (
+                <Fragment key={value}>
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <Button
+                          size="xs"
+                          variant={isShown ? "secondary" : "ghost"}
+                          aria-pressed={isShown}
+                          aria-describedby={hintId}
+                          onClick={() => toggleQueue(value)}
+                        >
+                          {label}
+                          <span className="text-muted-foreground">
+                            {queues.filter((q) => q === value).length}
+                          </span>
+                        </Button>
+                      }
+                    />
+                    <TooltipContent>{hint}</TooltipContent>
+                  </Tooltip>
+                  {/* the tooltip only mounts while open */}
+                  <span id={hintId} className="sr-only">
+                    {hint}
+                  </span>
+                </Fragment>
+              );
+            })}
+          </div>
         </div>
       )}
       <div className="px-3 py-2">
@@ -294,6 +387,7 @@ export function ReviewList({ prUrlRef }: Props) {
           <ReviewItem
             key={reviewKey(entry)}
             entry={entry}
+            pullRequest={pullRequests.get(reviewKey(entry))}
             isSelected={
               !!snapshot.selectedReview &&
               isSameReview(entry, snapshot.selectedReview)
