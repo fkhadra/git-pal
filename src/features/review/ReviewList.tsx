@@ -146,7 +146,11 @@ function ReviewItem({
           ) : (
             <StatusBadge
               status={reviewStatus(
-                { ...progress, reviewDecision: pullRequest?.reviewDecision },
+                {
+                  ...progress,
+                  reviewDecision: pullRequest?.reviewDecision,
+                  viewerLatestReview: pullRequest?.viewerLatestReview,
+                },
                 pullRequest?.headRefOid,
               )}
             />

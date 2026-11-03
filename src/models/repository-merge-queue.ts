@@ -4,7 +4,7 @@ export type MergeQueueEntryState = "AWAITING_CHECKS" | "LOCKED" | "MERGEABLE" | 
 
 export type MergeableState = "CONFLICTING" | "MERGEABLE" | "UNKNOWN" | { "Other": string };
 
-export type PullRequest = { id: string, number: number, title: string, url: string, isDraft: boolean, isInMergeQueue: boolean, mergeable: MergeableState, state: PullRequestState, reviewDecision: PullRequestReviewDecision | null, totalCommentsCount: number | null, statusCheckRollup: PullRequestStatusCheckRollup | null, autoMergeRequest: PullRequestAutoMergeRequest | null, author: PullRequestAuthor | null, repository: PullRequestRepository, baseRefName: string, headRefName: string, headRefOid: string, createdAt: string, mergedAt: string | null, };
+export type PullRequest = { id: string, number: number, title: string, url: string, isDraft: boolean, isInMergeQueue: boolean, mergeable: MergeableState, state: PullRequestState, reviewDecision: PullRequestReviewDecision | null, totalCommentsCount: number | null, statusCheckRollup: PullRequestStatusCheckRollup | null, autoMergeRequest: PullRequestAutoMergeRequest | null, author: PullRequestAuthor | null, repository: PullRequestRepository, baseRefName: string, headRefName: string, headRefOid: string, viewerLatestReview: PullRequestViewerLatestReview | null, createdAt: string, mergedAt: string | null, };
 
 export type PullRequestAuthor = { login: string, url: string, avatarUrl: string, } & ({ "__typename": "Bot" } | { "__typename": "EnterpriseUserAccount" } | { "__typename": "Mannequin" } | { "__typename": "Organization" } | { "__typename": "User" });
 
@@ -20,6 +20,8 @@ export type PullRequestRepositoryOwnerOn = { "__typename": "Organization" } | { 
 
 export type PullRequestReviewDecision = "APPROVED" | "CHANGES_REQUESTED" | "REVIEW_REQUIRED" | { "Other": string };
 
+export type PullRequestReviewState = "APPROVED" | "CHANGES_REQUESTED" | "COMMENTED" | "DISMISSED" | "PENDING" | { "Other": string };
+
 export type PullRequestState = "CLOSED" | "MERGED" | "OPEN" | { "Other": string };
 
 export type PullRequestStatusCheckRollup = { state: StatusState, commit: PullRequestStatusCheckRollupCommit | null, };
@@ -29,6 +31,10 @@ export type PullRequestStatusCheckRollupCommit = { status: PullRequestStatusChec
 export type PullRequestStatusCheckRollupCommitStatus = { state: StatusState, contexts: Array<PullRequestStatusCheckRollupCommitStatusContexts>, };
 
 export type PullRequestStatusCheckRollupCommitStatusContexts = { state: StatusState, context: string, description: string | null, targetUrl: string | null, };
+
+export type PullRequestViewerLatestReview = { state: PullRequestReviewState, commit: PullRequestViewerLatestReviewCommit | null, };
+
+export type PullRequestViewerLatestReviewCommit = { oid: string, };
 
 export type RepositoryMergeQueueRepository = { mergeQueue: RepositoryMergeQueueRepositoryMergeQueue | null, };
 

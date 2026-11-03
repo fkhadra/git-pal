@@ -5,7 +5,7 @@ pub mod user_profile {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "UserProfile";
-    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
+    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  viewerLatestReview {\n    state\n    commit {\n      oid\n    }\n  }\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -71,7 +71,7 @@ pub mod homepage {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "Homepage";
-    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
+    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  viewerLatestReview {\n    state\n    commit {\n      oid\n    }\n  }\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -140,6 +140,41 @@ pub mod homepage {
                 "CHANGES_REQUESTED" => Ok(PullRequestReviewDecision::CHANGES_REQUESTED),
                 "REVIEW_REQUIRED" => Ok(PullRequestReviewDecision::REVIEW_REQUIRED),
                 _ => Ok(PullRequestReviewDecision::Other(s)),
+            }
+        }
+    }
+    #[derive(Clone, Debug, TS)]
+    #[ts(export, export_to = "homepage.ts")]
+    pub enum PullRequestReviewState {
+        APPROVED,
+        CHANGES_REQUESTED,
+        COMMENTED,
+        DISMISSED,
+        PENDING,
+        Other(String),
+    }
+    impl ::serde::Serialize for PullRequestReviewState {
+        fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+            ser.serialize_str(match *self {
+                PullRequestReviewState::APPROVED => "APPROVED",
+                PullRequestReviewState::CHANGES_REQUESTED => "CHANGES_REQUESTED",
+                PullRequestReviewState::COMMENTED => "COMMENTED",
+                PullRequestReviewState::DISMISSED => "DISMISSED",
+                PullRequestReviewState::PENDING => "PENDING",
+                PullRequestReviewState::Other(ref s) => &s,
+            })
+        }
+    }
+    impl<'de> ::serde::Deserialize<'de> for PullRequestReviewState {
+        fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let s: String = ::serde::Deserialize::deserialize(deserializer)?;
+            match s.as_str() {
+                "APPROVED" => Ok(PullRequestReviewState::APPROVED),
+                "CHANGES_REQUESTED" => Ok(PullRequestReviewState::CHANGES_REQUESTED),
+                "COMMENTED" => Ok(PullRequestReviewState::COMMENTED),
+                "DISMISSED" => Ok(PullRequestReviewState::DISMISSED),
+                "PENDING" => Ok(PullRequestReviewState::PENDING),
+                _ => Ok(PullRequestReviewState::Other(s)),
             }
         }
     }
@@ -244,6 +279,8 @@ pub mod homepage {
         pub head_ref_name: String,
         #[serde(rename = "headRefOid")]
         pub head_ref_oid: GitObjectID,
+        #[serde(rename = "viewerLatestReview")]
+        pub viewer_latest_review: Option<PullRequestViewerLatestReview>,
         #[serde(rename = "createdAt")]
         pub created_at: DateTime,
         #[serde(rename = "mergedAt")]
@@ -321,6 +358,17 @@ pub mod homepage {
     pub enum PullRequestRepositoryOwnerOn {
         Organization,
         User,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+    #[ts(export, export_to = "homepage.ts")]
+    pub struct PullRequestViewerLatestReview {
+        pub state: PullRequestReviewState,
+        pub commit: Option<PullRequestViewerLatestReviewCommit>,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+    #[ts(export, export_to = "homepage.ts")]
+    pub struct PullRequestViewerLatestReviewCommit {
+        pub oid: GitObjectID,
     }
     #[derive(Deserialize, TS, Debug, Clone, Serialize)]
     #[ts(export, export_to = "homepage.ts")]
@@ -443,7 +491,7 @@ pub mod search_pull_request {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "SearchPullRequest";
-    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
+    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  viewerLatestReview {\n    state\n    commit {\n      oid\n    }\n  }\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -512,6 +560,41 @@ pub mod search_pull_request {
                 "CHANGES_REQUESTED" => Ok(PullRequestReviewDecision::CHANGES_REQUESTED),
                 "REVIEW_REQUIRED" => Ok(PullRequestReviewDecision::REVIEW_REQUIRED),
                 _ => Ok(PullRequestReviewDecision::Other(s)),
+            }
+        }
+    }
+    #[derive(Clone, Debug, TS)]
+    #[ts(export, export_to = "search-pull-request.ts")]
+    pub enum PullRequestReviewState {
+        APPROVED,
+        CHANGES_REQUESTED,
+        COMMENTED,
+        DISMISSED,
+        PENDING,
+        Other(String),
+    }
+    impl ::serde::Serialize for PullRequestReviewState {
+        fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+            ser.serialize_str(match *self {
+                PullRequestReviewState::APPROVED => "APPROVED",
+                PullRequestReviewState::CHANGES_REQUESTED => "CHANGES_REQUESTED",
+                PullRequestReviewState::COMMENTED => "COMMENTED",
+                PullRequestReviewState::DISMISSED => "DISMISSED",
+                PullRequestReviewState::PENDING => "PENDING",
+                PullRequestReviewState::Other(ref s) => &s,
+            })
+        }
+    }
+    impl<'de> ::serde::Deserialize<'de> for PullRequestReviewState {
+        fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let s: String = ::serde::Deserialize::deserialize(deserializer)?;
+            match s.as_str() {
+                "APPROVED" => Ok(PullRequestReviewState::APPROVED),
+                "CHANGES_REQUESTED" => Ok(PullRequestReviewState::CHANGES_REQUESTED),
+                "COMMENTED" => Ok(PullRequestReviewState::COMMENTED),
+                "DISMISSED" => Ok(PullRequestReviewState::DISMISSED),
+                "PENDING" => Ok(PullRequestReviewState::PENDING),
+                _ => Ok(PullRequestReviewState::Other(s)),
             }
         }
     }
@@ -614,6 +697,8 @@ pub mod search_pull_request {
         pub head_ref_name: String,
         #[serde(rename = "headRefOid")]
         pub head_ref_oid: GitObjectID,
+        #[serde(rename = "viewerLatestReview")]
+        pub viewer_latest_review: Option<PullRequestViewerLatestReview>,
         #[serde(rename = "createdAt")]
         pub created_at: DateTime,
         #[serde(rename = "mergedAt")]
@@ -694,6 +779,17 @@ pub mod search_pull_request {
     }
     #[derive(Deserialize, TS, Debug, Clone, Serialize)]
     #[ts(export, export_to = "search-pull-request.ts")]
+    pub struct PullRequestViewerLatestReview {
+        pub state: PullRequestReviewState,
+        pub commit: Option<PullRequestViewerLatestReviewCommit>,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+    #[ts(export, export_to = "search-pull-request.ts")]
+    pub struct PullRequestViewerLatestReviewCommit {
+        pub oid: GitObjectID,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+    #[ts(export, export_to = "search-pull-request.ts")]
     pub struct ResponseData {
         pub search: SearchPullRequestSearch,
     }
@@ -733,7 +829,7 @@ pub mod find_repositories {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "FindRepositories";
-    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
+    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  viewerLatestReview {\n    state\n    commit {\n      oid\n    }\n  }\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -861,7 +957,7 @@ pub mod get_pull_request {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "GetPullRequest";
-    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
+    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  viewerLatestReview {\n    state\n    commit {\n      oid\n    }\n  }\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -930,6 +1026,41 @@ pub mod get_pull_request {
                 "CHANGES_REQUESTED" => Ok(PullRequestReviewDecision::CHANGES_REQUESTED),
                 "REVIEW_REQUIRED" => Ok(PullRequestReviewDecision::REVIEW_REQUIRED),
                 _ => Ok(PullRequestReviewDecision::Other(s)),
+            }
+        }
+    }
+    #[derive(Clone, Debug, TS)]
+    #[ts(export, export_to = "get-pull-request.ts")]
+    pub enum PullRequestReviewState {
+        APPROVED,
+        CHANGES_REQUESTED,
+        COMMENTED,
+        DISMISSED,
+        PENDING,
+        Other(String),
+    }
+    impl ::serde::Serialize for PullRequestReviewState {
+        fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+            ser.serialize_str(match *self {
+                PullRequestReviewState::APPROVED => "APPROVED",
+                PullRequestReviewState::CHANGES_REQUESTED => "CHANGES_REQUESTED",
+                PullRequestReviewState::COMMENTED => "COMMENTED",
+                PullRequestReviewState::DISMISSED => "DISMISSED",
+                PullRequestReviewState::PENDING => "PENDING",
+                PullRequestReviewState::Other(ref s) => &s,
+            })
+        }
+    }
+    impl<'de> ::serde::Deserialize<'de> for PullRequestReviewState {
+        fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let s: String = ::serde::Deserialize::deserialize(deserializer)?;
+            match s.as_str() {
+                "APPROVED" => Ok(PullRequestReviewState::APPROVED),
+                "CHANGES_REQUESTED" => Ok(PullRequestReviewState::CHANGES_REQUESTED),
+                "COMMENTED" => Ok(PullRequestReviewState::COMMENTED),
+                "DISMISSED" => Ok(PullRequestReviewState::DISMISSED),
+                "PENDING" => Ok(PullRequestReviewState::PENDING),
+                _ => Ok(PullRequestReviewState::Other(s)),
             }
         }
     }
@@ -1033,6 +1164,8 @@ pub mod get_pull_request {
         pub head_ref_name: String,
         #[serde(rename = "headRefOid")]
         pub head_ref_oid: GitObjectID,
+        #[serde(rename = "viewerLatestReview")]
+        pub viewer_latest_review: Option<PullRequestViewerLatestReview>,
         #[serde(rename = "createdAt")]
         pub created_at: DateTime,
         #[serde(rename = "mergedAt")]
@@ -1113,6 +1246,17 @@ pub mod get_pull_request {
     }
     #[derive(Deserialize, TS, Debug, Clone, Serialize)]
     #[ts(export, export_to = "get-pull-request.ts")]
+    pub struct PullRequestViewerLatestReview {
+        pub state: PullRequestReviewState,
+        pub commit: Option<PullRequestViewerLatestReviewCommit>,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+    #[ts(export, export_to = "get-pull-request.ts")]
+    pub struct PullRequestViewerLatestReviewCommit {
+        pub oid: GitObjectID,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+    #[ts(export, export_to = "get-pull-request.ts")]
     pub struct ResponseData {
         pub repository: Option<GetPullRequestRepository>,
     }
@@ -1140,7 +1284,7 @@ pub mod repository_merge_queue {
     #![allow(dead_code)]
     use std::result::Result;
     pub const OPERATION_NAME: &str = "RepositoryMergeQueue";
-    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
+    pub const QUERY: &str = "fragment PullRequest on PullRequest {\n  id\n  number\n  title\n  url\n  isDraft\n  isInMergeQueue\n  mergeable\n  state\n  reviewDecision\n  totalCommentsCount\n  statusCheckRollup {\n    state\n    commit {\n      status {\n        state\n        contexts {\n          state\n          context\n          description\n          targetUrl\n        }\n      }\n    }\n  }\n  autoMergeRequest {\n    enabledAt\n  }\n  author {\n    __typename\n    login\n    url\n    avatarUrl\n  }\n  repository {\n    owner {\n      __typename\n      login\n    }\n    name\n    url\n  }\n  baseRefName\n  headRefName\n  headRefOid\n  viewerLatestReview {\n    state\n    commit {\n      oid\n    }\n  }\n  createdAt\n  mergedAt\n}\n\n# fragment Issue on Issue {\n#   id\n#   url\n#   title\n#   number\n#   state\n#   comments {\n#     totalCount\n#   }\n#   author {\n#     __typename\n#     login\n#     url\n#     avatarUrl\n#   }\n#   repository {\n#     owner {\n#       __typename\n#       login\n#       avatarUrl\n#     }\n#     name\n#     url\n#   }\n#   createdAt\n#   updatedAt\n# }\n#\nfragment Repository on Repository {\n  id\n  name\n  url\n  isPrivate\n  isInOrganization\n  stargazerCount\n  pullRequests(states: OPEN) {\n    totalCount\n  }\n  hasIssuesEnabled\n  hasDiscussionsEnabled\n  hasProjectsEnabled\n  hasWikiEnabled\n  homepageUrl\n  defaultBranchRef {\n    name\n  }\n  issues(states: OPEN) {\n    totalCount\n  }\n  discussions(states: OPEN) {\n    totalCount\n  }\n  owner {\n    __typename\n    login\n    avatarUrl\n  }\n}\n\nfragment Organization on Organization {\n  login\n  name\n  avatarUrl\n  url\n}\n\nquery UserProfile {\n  viewer {\n    login\n    avatarUrl\n    email\n    url\n    organizations(first: 5) {\n      nodes {\n        __typename\n        ...Organization\n      }\n    }\n  }\n}\n\nquery Homepage($pullRequestCount: Int!, $topRepositoryCount: Int!) {\n  viewer {\n    pullRequests(\n      states: OPEN\n      first: $pullRequestCount\n      orderBy: { direction: DESC, field: CREATED_AT }\n    ) {\n      nodes {\n        __typename\n        ...PullRequest\n      }\n    }\n    topRepositories(\n      first: $topRepositoryCount\n      orderBy: { field: STARGAZERS, direction: DESC }\n    ) {\n      nodes {\n        __typename\n        ...Repository\n      }\n    }\n  }\n}\n\nquery SearchPullRequest($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: ISSUE) {\n    nodes {\n      __typename\n      ...PullRequest\n    }\n  }\n}\n\nquery FindRepositories($count: Int!, $query: String!) {\n  search(first: $count, query: $query, type: REPOSITORY) {\n    nodes {\n      __typename\n      ...Repository\n    }\n  }\n}\n\nquery GetPullRequest($owner: String!, $name: String!, $number: Int!) {\n  repository(owner: $owner, name: $name) {\n    pullRequest(number: $number) {\n      ...PullRequest\n    }\n  }\n}\n\nquery RepositoryMergeQueue($owner: String!, $name: String!, $count: Int!) {\n  repository(owner: $owner, name: $name) {\n    mergeQueue {\n      url\n      entries(first: $count) {\n        totalCount\n        nodes {\n          id\n          position\n          state\n          estimatedTimeToMerge\n          pullRequest {\n            ...PullRequest\n          }\n        }\n      }\n    }\n  }\n}\n";
     use super::*;
     use serde::{Deserialize, Serialize};
     #[allow(dead_code)]
@@ -1249,6 +1393,41 @@ pub mod repository_merge_queue {
     }
     #[derive(Clone, Debug, TS)]
     #[ts(export, export_to = "repository-merge-queue.ts")]
+    pub enum PullRequestReviewState {
+        APPROVED,
+        CHANGES_REQUESTED,
+        COMMENTED,
+        DISMISSED,
+        PENDING,
+        Other(String),
+    }
+    impl ::serde::Serialize for PullRequestReviewState {
+        fn serialize<S: serde::Serializer>(&self, ser: S) -> Result<S::Ok, S::Error> {
+            ser.serialize_str(match *self {
+                PullRequestReviewState::APPROVED => "APPROVED",
+                PullRequestReviewState::CHANGES_REQUESTED => "CHANGES_REQUESTED",
+                PullRequestReviewState::COMMENTED => "COMMENTED",
+                PullRequestReviewState::DISMISSED => "DISMISSED",
+                PullRequestReviewState::PENDING => "PENDING",
+                PullRequestReviewState::Other(ref s) => &s,
+            })
+        }
+    }
+    impl<'de> ::serde::Deserialize<'de> for PullRequestReviewState {
+        fn deserialize<D: ::serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+            let s: String = ::serde::Deserialize::deserialize(deserializer)?;
+            match s.as_str() {
+                "APPROVED" => Ok(PullRequestReviewState::APPROVED),
+                "CHANGES_REQUESTED" => Ok(PullRequestReviewState::CHANGES_REQUESTED),
+                "COMMENTED" => Ok(PullRequestReviewState::COMMENTED),
+                "DISMISSED" => Ok(PullRequestReviewState::DISMISSED),
+                "PENDING" => Ok(PullRequestReviewState::PENDING),
+                _ => Ok(PullRequestReviewState::Other(s)),
+            }
+        }
+    }
+    #[derive(Clone, Debug, TS)]
+    #[ts(export, export_to = "repository-merge-queue.ts")]
     pub enum PullRequestState {
         CLOSED,
         MERGED,
@@ -1347,6 +1526,8 @@ pub mod repository_merge_queue {
         pub head_ref_name: String,
         #[serde(rename = "headRefOid")]
         pub head_ref_oid: GitObjectID,
+        #[serde(rename = "viewerLatestReview")]
+        pub viewer_latest_review: Option<PullRequestViewerLatestReview>,
         #[serde(rename = "createdAt")]
         pub created_at: DateTime,
         #[serde(rename = "mergedAt")]
@@ -1424,6 +1605,17 @@ pub mod repository_merge_queue {
     pub enum PullRequestRepositoryOwnerOn {
         Organization,
         User,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+    #[ts(export, export_to = "repository-merge-queue.ts")]
+    pub struct PullRequestViewerLatestReview {
+        pub state: PullRequestReviewState,
+        pub commit: Option<PullRequestViewerLatestReviewCommit>,
+    }
+    #[derive(Deserialize, TS, Debug, Clone, Serialize)]
+    #[ts(export, export_to = "repository-merge-queue.ts")]
+    pub struct PullRequestViewerLatestReviewCommit {
+        pub oid: GitObjectID,
     }
     #[derive(Deserialize, TS, Debug, Clone, Serialize)]
     #[ts(export, export_to = "repository-merge-queue.ts")]

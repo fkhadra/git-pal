@@ -43,6 +43,12 @@ fragment PullRequest on PullRequest {
   baseRefName
   headRefName
   headRefOid
+  viewerLatestReview {
+    state
+    commit {
+      oid
+    }
+  }
   createdAt
   mergedAt
 }

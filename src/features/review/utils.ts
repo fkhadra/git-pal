@@ -5,7 +5,10 @@ import type {
   ReviewComment,
 } from "~/models/code-review";
 import type { InlineComment } from "~/models/conversation";
-import type { PullRequestReviewDecision } from "~/models/get-pull-request";
+import type {
+  PullRequestReviewDecision,
+  PullRequestViewerLatestReview,
+} from "~/models/get-pull-request";
 
 // URL schemes and hosts are case-insensitive
 const PR_URL_REGEX = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/i;
@@ -243,6 +246,7 @@ export interface ReviewProgress {
   prState?: PullRequestState | null;
   /** GitHub's, whether the branch's required reviews are met */
   reviewDecision?: PullRequestReviewDecision | null;
+  viewerLatestReview?: PullRequestViewerLatestReview | null;
 }
 
 export function reviewStatus(
@@ -260,6 +264,17 @@ export function reviewStatus(
     review.pendingCount === 0
   ) {
     return SUBMITTED_STATUS[submittedEvent];
+  }
+  // also reviewed on GitHub, outside Git Pal
+  const viewerReview = review.viewerLatestReview;
+  if (
+    viewerReview?.commit &&
+    viewerReview.commit.oid === latestHeadSha &&
+    review.pendingCount === 0
+  ) {
+    if (viewerReview.state === "APPROVED") return "approved";
+    if (viewerReview.state === "CHANGES_REQUESTED") return "changesRequested";
+    if (viewerReview.state === "COMMENTED") return "commented";
   }
   // nothing left to review
   if (review.prState === "merged") return "merged";
@@ -293,7 +308,11 @@ export function reviewQueue(
   ) {
     return "done";
   }
-  if (DONE_STATUSES.includes(reviewStatus(review, pullRequest?.headRefOid))) {
+  const status = reviewStatus(
+    { ...review, viewerLatestReview: pullRequest?.viewerLatestReview },
+    pullRequest?.headRefOid,
+  );
+  if (DONE_STATUSES.includes(status)) {
     return "done";
   }
   const checks = pullRequest?.statusCheckRollup?.state;

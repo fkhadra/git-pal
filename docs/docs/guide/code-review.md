@@ -142,7 +142,7 @@ Existing review threads show in the diff. Open them on GitHub, ask the agent abo
 | Feedback submitted | You commented |
 | Merged, Closed | Merged or closed on GitHub before you submitted a review |
 
-A new commit or a pending comment puts a submitted pull request back in progress.
+Your reviews count whether submitted from Git Pal or on GitHub. A new commit or a pending comment puts a submitted pull request back in progress.
 
 ## Files and diff
 
