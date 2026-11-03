@@ -54,6 +54,7 @@ fn validate(input: &ReviewTemplateInput) -> Result<ReviewTemplateInput> {
         auto_review: input.auto_review,
         skip_labels,
         skip_approved: input.skip_approved,
+        claim_for_team: input.claim_for_team,
         auto_approve: input.auto_approve,
         auto_approve_max_risk: input.auto_approve_max_risk,
         require_green_ci: input.require_green_ci,
@@ -96,7 +97,7 @@ async fn clear_default(tx: &mut Transaction<'_, Sqlite>) -> Result<()> {
 impl CodeReviewStore {
     pub async fn list_templates(&self) -> Result<Vec<ReviewTemplate>> {
         let rows = sqlx::query_as::<_, ReviewTemplate>(
-            "SELECT id, name, content, matcher, is_default, skills, risk_guidelines, auto_review, skip_labels, skip_approved, auto_approve, auto_approve_max_risk, require_green_ci, position, created_at, updated_at \
+            "SELECT id, name, content, matcher, is_default, skills, risk_guidelines, auto_review, skip_labels, skip_approved, claim_for_team, auto_approve, auto_approve_max_risk, require_green_ci, position, created_at, updated_at \
              FROM review_templates ORDER BY position, id",
         )
         .fetch_all(&self.pool)
@@ -107,7 +108,7 @@ impl CodeReviewStore {
 
     pub async fn get_template(&self, id: i64) -> Result<Option<ReviewTemplate>> {
         let row = sqlx::query_as::<_, ReviewTemplate>(
-            "SELECT id, name, content, matcher, is_default, skills, risk_guidelines, auto_review, skip_labels, skip_approved, auto_approve, auto_approve_max_risk, require_green_ci, position, created_at, updated_at \
+            "SELECT id, name, content, matcher, is_default, skills, risk_guidelines, auto_review, skip_labels, skip_approved, claim_for_team, auto_approve, auto_approve_max_risk, require_green_ci, position, created_at, updated_at \
              FROM review_templates WHERE id = ?",
         )
         .bind(id)
@@ -127,8 +128,8 @@ impl CodeReviewStore {
         }
 
         let row = sqlx::query(
-            "INSERT INTO review_templates (name, content, matcher, is_default, skills, risk_guidelines, auto_review, skip_labels, skip_approved, auto_approve, auto_approve_max_risk, require_green_ci, position, created_at, updated_at) \
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(position) + 1, 0) FROM review_templates), ?, ?) \
+            "INSERT INTO review_templates (name, content, matcher, is_default, skills, risk_guidelines, auto_review, skip_labels, skip_approved, claim_for_team, auto_approve, auto_approve_max_risk, require_green_ci, position, created_at, updated_at) \
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, (SELECT COALESCE(MAX(position) + 1, 0) FROM review_templates), ?, ?) \
              RETURNING id",
         )
         .bind(&input.name)
@@ -140,6 +141,7 @@ impl CodeReviewStore {
         .bind(input.auto_review)
         .bind(serde_json::to_string(&input.skip_labels)?)
         .bind(input.skip_approved)
+        .bind(input.claim_for_team)
         .bind(input.auto_approve)
         .bind(serde_json::to_string(&input.auto_approve_max_risk)?)
         .bind(input.require_green_ci)
@@ -169,7 +171,7 @@ impl CodeReviewStore {
 
         sqlx::query(
             "UPDATE review_templates \
-             SET name = ?, content = ?, matcher = ?, is_default = ?, skills = ?, risk_guidelines = ?, auto_review = ?, skip_labels = ?, skip_approved = ?, auto_approve = ?, auto_approve_max_risk = ?, require_green_ci = ?, updated_at = ? WHERE id = ?",
+             SET name = ?, content = ?, matcher = ?, is_default = ?, skills = ?, risk_guidelines = ?, auto_review = ?, skip_labels = ?, skip_approved = ?, claim_for_team = ?, auto_approve = ?, auto_approve_max_risk = ?, require_green_ci = ?, updated_at = ? WHERE id = ?",
         )
         .bind(&input.name)
         .bind(&input.content)
@@ -180,6 +182,7 @@ impl CodeReviewStore {
         .bind(input.auto_review)
         .bind(serde_json::to_string(&input.skip_labels)?)
         .bind(input.skip_approved)
+        .bind(input.claim_for_team)
         .bind(input.auto_approve)
         .bind(serde_json::to_string(&input.auto_approve_max_risk)?)
         .bind(input.require_green_ci)
@@ -276,6 +279,7 @@ mod tests {
             auto_review: false,
             skip_labels: vec![],
             skip_approved: true,
+            claim_for_team: false,
             auto_approve: false,
             auto_approve_max_risk: RiskLevel::Minimal,
             require_green_ci: true,
@@ -316,6 +320,7 @@ mod tests {
             auto_review: false,
             skip_labels: vec![],
             skip_approved: true,
+            claim_for_team: false,
             auto_approve: false,
             auto_approve_max_risk: RiskLevel::Minimal,
             require_green_ci: true,

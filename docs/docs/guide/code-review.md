@@ -46,6 +46,7 @@ Click **Manage templates…** at the bottom of the reviews list to create one:
 | Default template | Used when no matcher accepts the repository |
 | Auto-review | Reviews pull requests requesting you, or your team, as code owner |
 | Skip approved | Doesn't auto-review pull requests whose required reviews are already met, on by default |
+| Claim for team | Assigns you when auto-reviewing, so teammates in the requested code owner team skip it. The author is ignored, and you're unassigned if the review fails or is cancelled. Off by default |
 | Skip labels | Labels keeping a pull request from being auto-reviewed, `do not merge` and `do not review` by default. Case, spaces, dashes and underscores are ignored |
 | Auto-approve | Approves [clean reviews](#auto-approve) without asking |
 | Max risk | Highest risk auto-approved: minimal (default), low or medium |

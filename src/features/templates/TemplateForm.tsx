@@ -29,6 +29,7 @@ interface FormValues {
   autoReview: boolean;
   skipLabels: string[];
   skipApproved: boolean;
+  claimForTeam: boolean;
   autoApprove: boolean;
   autoApproveMaxRisk: RiskLevel;
   requireGreenCi: boolean;
@@ -64,7 +65,12 @@ function Field({ label, hint, className, children }: FieldProps) {
 
 interface SwitchFieldProps {
   control: Control<FormValues>;
-  name: "autoReview" | "skipApproved" | "autoApprove" | "requireGreenCi";
+  name:
+    | "autoReview"
+    | "skipApproved"
+    | "claimForTeam"
+    | "autoApprove"
+    | "requireGreenCi";
   label: string;
   hint: string;
 }
@@ -99,6 +105,7 @@ function toFormValues(
     autoReview: template?.autoReview ?? false,
     skipLabels: template?.skipLabels ?? DEFAULT_SKIP_LABELS,
     skipApproved: template?.skipApproved ?? true,
+    claimForTeam: template?.claimForTeam ?? false,
     autoApprove: template?.autoApprove ?? false,
     autoApproveMaxRisk: template?.autoApproveMaxRisk ?? "minimal",
     requireGreenCi: template?.requireGreenCi ?? true,
@@ -245,6 +252,12 @@ export function TemplateForm({
                 name="skipApproved"
                 label="Skip approved"
                 hint="Pull requests whose required reviews are already met"
+              />
+              <SwitchField
+                control={control}
+                name="claimForTeam"
+                label="Claim for team"
+                hint="Assigns you so code owner teammates skip it"
               />
               <div className="col-span-3 grid grid-cols-subgrid items-center">
                 <span />

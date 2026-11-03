@@ -24,6 +24,8 @@ const REVIEW_REQUESTS_QUERY: &str =
     pullRequest(number: $number) {
       isDraft
       reviewDecision
+      author { login }
+      assignees(first: 100) { nodes { login } }
       labels(first: 100) { nodes { name } }
       reviewRequests(first: 100) {
         nodes {
@@ -84,6 +86,13 @@ struct Team {
     organization: TeamOrganization,
 }
 
+/// A team, as `GET /orgs/{organization}/teams/{slug}` names it.
+#[derive(Debug, Clone)]
+pub struct TeamRef {
+    pub organization: String,
+    pub slug: String,
+}
+
 #[derive(Debug, Clone, Deserialize)]
 struct TeamOrganization {
     login: String,
@@ -133,10 +142,22 @@ struct Labels {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub(crate) struct Login {
+    pub login: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub(crate) struct Logins {
+    pub nodes: Vec<Login>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct ReviewRequestsPullRequest {
     is_draft: bool,
     review_decision: Option<String>,
+    author: Option<Login>,
+    assignees: Option<Logins>,
     labels: Option<Labels>,
     review_requests: Option<ReviewRequests>,
 }
@@ -150,6 +171,11 @@ pub struct ReviewRequestStatus {
     /// The base branch's required reviews are met
     pub is_approved: bool,
     pub labels: Vec<String>,
+    /// Empty when the author's account is gone
+    pub author: String,
+    pub assignees: Vec<String>,
+    /// The viewer's teams requested as code owner
+    pub code_owner_teams: Vec<TeamRef>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -278,12 +304,16 @@ impl Client {
         Ok(text)
     }
 
+    pub async fn viewer_login(&self) -> Result<String> {
+        match self.get_user() {
+            Some(user) => Ok(user.login),
+            None => Ok(self.load_user_profile().await?.login),
+        }
+    }
+
     /// The viewer's login and teams, as CODEOWNERS writes them.
     async fn owner_handles(&self) -> Result<Vec<String>> {
-        let login = match self.get_user() {
-            Some(user) => user.login,
-            None => self.load_user_profile().await?.login,
-        };
+        let login = self.viewer_login().await?;
         let teams: Vec<Team> = self.get_all_pages(&format!("{API_URL}user/teams")).await?;
 
         let mut handles = vec![format!("@{login}")];
@@ -334,12 +364,16 @@ impl Client {
             .labels
             .map(|l| l.nodes.into_iter().map(|label| label.name).collect())
             .unwrap_or_default();
+        let assignees = pr
+            .assignees
+            .map(|a| a.nodes.into_iter().map(|user| user.login).collect())
+            .unwrap_or_default();
         let requests = pr.review_requests.map(|r| r.nodes).unwrap_or_default();
 
-        let code_owners: Vec<String> = requests
+        let code_owners: Vec<&Reviewer> = requests
             .iter()
             .filter(|r| r.as_code_owner)
-            .filter_map(|r| r.requested_reviewer.as_ref().and_then(reviewer_handle))
+            .filter_map(|r| r.requested_reviewer.as_ref())
             .collect();
 
         let mut status = ReviewRequestStatus {
@@ -347,6 +381,9 @@ impl Client {
             is_draft: pr.is_draft,
             is_approved: pr.review_decision.as_deref() == Some(APPROVED),
             labels,
+            author: pr.author.map(|a| a.login).unwrap_or_default(),
+            assignees,
+            code_owner_teams: vec![],
         };
 
         if code_owners.is_empty() {
@@ -354,7 +391,22 @@ impl Client {
         }
 
         let handles = self.owner_handles().await?;
-        status.as_code_owner = code_owners.iter().any(|h| handles.contains(h));
+        let mine: Vec<&Reviewer> = code_owners
+            .into_iter()
+            .filter(|r| reviewer_handle(r).is_some_and(|h| handles.contains(&h)))
+            .collect();
+
+        status.as_code_owner = !mine.is_empty();
+        status.code_owner_teams = mine
+            .into_iter()
+            .filter_map(|r| match r {
+                Reviewer::Team { slug, organization } => Some(TeamRef {
+                    organization: organization.login.clone(),
+                    slug: slug.clone(),
+                }),
+                _ => None,
+            })
+            .collect();
 
         Ok(status)
     }

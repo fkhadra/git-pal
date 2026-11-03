@@ -80,6 +80,8 @@ pub struct AppState {
     pub requested_review: Mutex<Option<GetSavedReviewRequest>>,
     /// Auto reviews skipped for a draft or a skip label, retried while still requested
     pub skipped_auto_reviews: Mutex<HashSet<GetSavedReviewRequest>>,
+    /// Auto reviews the viewer assigned themself to, unassigned if they don't finish
+    pub claimed_reviews: Mutex<HashSet<GetSavedReviewRequest>>,
     pub pending_update: Mutex<Option<PendingUpdate>>,
     app_dir: PathBuf,
 }
@@ -113,6 +115,7 @@ impl AppState {
             agent_runs: Mutex::new(HashMap::new()),
             requested_review: Mutex::new(None),
             skipped_auto_reviews: Mutex::new(HashSet::new()),
+            claimed_reviews: Mutex::new(HashSet::new()),
             pending_update: Mutex::new(None),
         }
     }

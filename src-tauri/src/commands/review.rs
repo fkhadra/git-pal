@@ -28,6 +28,7 @@ use git_pal_code_review::{
     review, templates,
 };
 use git_pal_github::{
+    codeowners::ReviewRequestStatus,
     graphql::PullRequest,
     query::get_pull_request::StatusState,
     rest::{GetPullRequestRequest, ReviewEvent, SubmitReviewRequest},
@@ -242,6 +243,16 @@ pub async fn review_pull_request(
             }
             .await;
 
+            let key = GetSavedReviewRequest {
+                owner: owner.clone(),
+                repository: repository.clone(),
+                pr_number,
+            };
+            match &result {
+                Ok(_) => forget_claim(&app, &key),
+                Err(_) => release_claim(&app, &key).await,
+            }
+
             // shown on the review until the next one starts
             if let Err(error) = &result
                 && let Err(e) = store.set_error(&owner, &repository, pr_number, error).await
@@ -441,7 +452,20 @@ pub(crate) async fn auto_review(
         return Ok(true);
     }
 
-    review_pull_request(
+    let key = GetSavedReviewRequest {
+        owner: owner.clone(),
+        repository: repository.clone(),
+        pr_number,
+    };
+
+    if template.claim_for_team
+        && let Some(holder) = claim(app, &key, &pr, &status).await?
+    {
+        log::info!("Auto review of {owner}/{repository}#{pr_number} skipped: Claimed by {holder}");
+        return Ok(true);
+    }
+
+    let reviewed = review_pull_request(
         app.clone(),
         ReviewPullRequestRequest {
             owner,
@@ -451,12 +475,93 @@ pub(crate) async fn auto_review(
             incremental: false,
         },
     )
-    .await
-    .map_err(|e| anyhow!(e.to_string()))?;
+    .await;
+
+    if let Err(e) = reviewed {
+        release_claim(app, &key).await;
+        return Err(anyhow!(e.to_string()));
+    }
 
     refresh_review_badge(app);
 
     Ok(false)
+}
+
+/// Assigns the viewer so their code owner teammates skip the pull request,
+/// `Some(teammate)` when one holds it already.
+async fn claim(
+    app: &AppHandle,
+    key: &GetSavedReviewRequest,
+    pr: &GetPullRequestRequest,
+    status: &ReviewRequestStatus,
+) -> anyhow::Result<Option<String>> {
+    let state: State<'_, AppState> = app.state();
+    let client = &state.github_client;
+    let members = client.team_members(&status.code_owner_teams).await?;
+    let viewer = client.viewer_login().await?;
+
+    if let Some(holder) = review::claim_holder(&status.assignees, &members, &status.author, &viewer)
+    {
+        return Ok(Some(holder.clone()));
+    }
+
+    // requested as code owner directly, or already assigned by someone else
+    if members.is_empty() || status.assignees.contains(&viewer) {
+        return Ok(None);
+    }
+
+    client.assign(pr, &viewer).await?;
+
+    let assignments = client.assignments(pr).await?;
+    let winner = review::claim_winner(
+        &assignments.assigned,
+        &assignments.assignees,
+        &members,
+        &status.author,
+    );
+
+    if let Some(winner) = winner.filter(|w| **w != viewer) {
+        client.unassign(pr, &viewer).await?;
+        return Ok(Some(winner.clone()));
+    }
+
+    state.claimed_reviews.lock().unwrap().insert(key.clone());
+
+    Ok(None)
+}
+
+/// Keeps the viewer assigned, the review is done.
+fn forget_claim(app: &AppHandle, key: &GetSavedReviewRequest) {
+    let state: State<'_, AppState> = app.state();
+    state.claimed_reviews.lock().unwrap().remove(key);
+}
+
+/// Unassigns the viewer from a pull request they claimed, so teammates pick it up.
+async fn release_claim(app: &AppHandle, key: &GetSavedReviewRequest) {
+    let state: State<'_, AppState> = app.state();
+    if !state.claimed_reviews.lock().unwrap().remove(key) {
+        return;
+    }
+
+    let client = &state.github_client;
+    let pr = GetPullRequestRequest {
+        owner: key.owner.clone(),
+        repository: key.repository.clone(),
+        number: key.pr_number,
+    };
+    let released = match client.viewer_login().await {
+        Ok(viewer) => client.unassign(&pr, &viewer).await,
+        Err(e) => Err(e),
+    };
+
+    if let Err(e) = released {
+        log::error!(
+            "Failed to unassign {}/{}#{}: {e}",
+            key.owner,
+            key.repository,
+            key.pr_number
+        );
+    }
 }
 
 async fn notify_review(app: &AppHandle, message: &str, metadata: HashMap<String, String>) {
@@ -980,6 +1085,7 @@ fn review_job_id(owner: &str, repository: &str, pr_number: i64) -> String {
 /// Stops the running review, the review remembers it so it can be started again.
 #[tauri::command]
 pub async fn cancel_review(
+    app_handle: AppHandle,
     state: State<'_, AppState>,
     request: GetSavedReviewRequest,
 ) -> Result<()> {
@@ -987,6 +1093,8 @@ pub async fn cancel_review(
     if !state.job_runner.cancel(&job_id) {
         return Ok(());
     }
+
+    release_claim(&app_handle, &request).await;
 
     state
         .code_review_store

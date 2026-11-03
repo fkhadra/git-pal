@@ -260,6 +260,31 @@ pub fn auto_review_blocker(
         .map(|label| format!("Labeled {label}"))
 }
 
+/// Teammate other than the author and the viewer assigned to the pull request.
+pub fn claim_holder<'a>(
+    assignees: &'a [String],
+    members: &[String],
+    author: &str,
+    viewer: &str,
+) -> Option<&'a String> {
+    assignees
+        .iter()
+        .find(|a| *a != author && *a != viewer && members.contains(a))
+}
+
+/// First teammate assigned who still holds the pull request, the author excluded.
+/// Every client reads the same history, so they agree on who wins a simultaneous claim.
+pub fn claim_winner<'a>(
+    assigned: &'a [String],
+    assignees: &[String],
+    members: &[String],
+    author: &str,
+) -> Option<&'a String> {
+    assigned
+        .iter()
+        .find(|a| *a != author && members.contains(a) && assignees.contains(a))
+}
+
 /// Extract JSON from text that may be wrapped in markdown code blocks.
 fn extract_json(text: &str) -> &str {
     let trimmed = text.trim();
@@ -343,6 +368,28 @@ mod tests {
         assert!(auto_review_blocker(&labeled("DO_NOT-Merge"), &skip, true).is_some());
         assert!(auto_review_blocker(&labeled("do not merge yet"), &skip, true).is_none());
         assert!(auto_review_blocker(&labeled("bug"), &skip, true).is_none());
+    }
+
+    #[test]
+    fn claim_ignores_author_viewer_and_outsiders() {
+        let logins =
+            |names: &[&str]| -> Vec<String> { names.iter().map(|n| n.to_string()).collect() };
+        let members = logins(&["ann", "bob", "eve"]);
+
+        let holder =
+            |assignees: &[&str]| claim_holder(&logins(assignees), &members, "eve", "ann").cloned();
+        assert_eq!(holder(&["eve", "ann", "zoe"]), None);
+        assert_eq!(holder(&["zoe", "bob"]), Some("bob".into()));
+
+        let winner = |assigned: &[&str], assignees: &[&str]| {
+            claim_winner(&logins(assigned), &logins(assignees), &members, "eve").cloned()
+        };
+        assert_eq!(
+            winner(&["eve", "bob", "ann"], &["eve", "bob", "ann"]),
+            Some("bob".into())
+        );
+        assert_eq!(winner(&["bob", "ann"], &["ann"]), Some("ann".into()));
+        assert_eq!(winner(&["zoe"], &["zoe"]), None);
     }
 
     #[test]
