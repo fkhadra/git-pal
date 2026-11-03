@@ -32,6 +32,13 @@ fragment PullRequest on PullRequest {
     url
     avatarUrl
   }
+  assignees(first: 10) {
+    nodes {
+      login
+      url
+      avatarUrl
+    }
+  }
   repository {
     owner {
       __typename

@@ -78,6 +78,35 @@ function commentLabel(count: number) {
 /** Toggled queue, every review shows while none is */
 const QUEUE_KEY = "reviews.queue";
 
+function Assignees({ pullRequest }: { pullRequest?: PullRequest }) {
+  const assignees = (pullRequest?.assignees.nodes ?? []).filter(
+    (user) => user !== null,
+  );
+  if (assignees.length === 0) return null;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <span className="flex -space-x-1">
+            {assignees.map((user) => (
+              <img
+                key={user.login}
+                alt={user.login}
+                src={user.avatarUrl}
+                className="size-4 rounded-full ring-1 ring-background"
+              />
+            ))}
+          </span>
+        }
+      />
+      <TooltipContent>
+        Assigned to {assignees.map((user) => user.login).join(", ")}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 const QUEUE_FILTERS: { value: ReviewQueue; label: string; hint: string }[] = [
   {
     value: "toReview",
@@ -120,7 +149,7 @@ function ReviewItem({
       onClick={() => store.selectReview(entry)}
       onKeyDown={(e) => e.key === "Enter" && store.selectReview(entry)}
       className={cn(
-        "group/item flex w-full shrink-0 cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent/60 overflow-hidden",
+        "group/item flex w-full shrink-0 cursor-pointer items-center gap-3 overflow-hidden rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent/60",
         isSelected && "bg-accent hover:bg-accent",
       )}
     >
@@ -198,6 +227,7 @@ function ReviewItem({
               {entry.warningCount}
             </span>
           )}
+          <Assignees pullRequest={pullRequest} />
         </div>
       </div>
       <SlidingContent
