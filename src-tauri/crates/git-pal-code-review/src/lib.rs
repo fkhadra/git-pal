@@ -1,5 +1,6 @@
 pub mod git;
 pub mod models;
+pub mod policy;
 pub mod review;
 pub mod templates;
 
@@ -81,7 +82,7 @@ impl CodeReviewStore {
 
     pub async fn list_reviews(&self) -> Result<Vec<ReviewListEntry>> {
         let rows = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval, pr_state \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval, pr_state, policy \
              FROM code_reviews ORDER BY reviewed_at DESC",
         )
         .fetch_all(&self.pool)
@@ -97,7 +98,7 @@ impl CodeReviewStore {
         pr_number: i64,
     ) -> Result<Option<CodeReview>> {
         let row = sqlx::query_as::<_, CodeReview>(
-            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval, pr_state \
+            "SELECT id, owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval, pr_state, policy \
              FROM code_reviews WHERE owner = ? AND repository = ? AND pr_number = ?",
         )
         .bind(owner)
@@ -113,8 +114,8 @@ impl CodeReviewStore {
         let comments_json = serde_json::to_string(&review.comments)?;
 
         let row = sqlx::query(
-            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval) \
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
+            "INSERT INTO code_reviews (owner, repository, pr_number, pr_title, branch, head_sha, submitted_head_sha, submitted_event, summary, comments, reviewed_at, template, harness, model, error, warning, cancelled, reviewed, risk, auto_approval, policy) \
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) \
              ON CONFLICT(owner, repository, pr_number) DO UPDATE SET \
                 pr_title = excluded.pr_title, \
                 branch = excluded.branch, \
@@ -132,7 +133,8 @@ impl CodeReviewStore {
                 cancelled = excluded.cancelled, \
                 reviewed = excluded.reviewed, \
                 risk = excluded.risk, \
-                auto_approval = excluded.auto_approval \
+                auto_approval = excluded.auto_approval, \
+                policy = excluded.policy \
              RETURNING id",
         )
         .bind(&review.owner)
@@ -173,6 +175,7 @@ impl CodeReviewStore {
                 .map(serde_json::to_string)
                 .transpose()?,
         )
+        .bind(review.policy.map(|p| serde_json::to_string(&p)).transpose()?)
         .fetch_one(&self.pool)
         .await?;
 

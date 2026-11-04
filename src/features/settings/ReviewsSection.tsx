@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { Switch } from "~/components/ui/switch";
 import { useAppContext } from "~/features/shared";
 import type { settings } from "~/models";
 
@@ -27,6 +28,9 @@ export function ReviewsSection() {
   const appContext = useAppContext();
   const [reviewCleanup, setReviewCleanup] = useState(
     appContext.settings.reviewCleanup,
+  );
+  const [followPolicies, setFollowPolicies] = useState(
+    appContext.settings.followRepositoryPolicies,
   );
 
   return (
@@ -54,6 +58,18 @@ export function ReviewsSection() {
             ))}
           </SelectContent>
         </Select>
+      </SettingRow>
+      <SettingRow
+        label="Follow repository policies"
+        description="Auto review and approve with a repository's git-pal.yml when no template matches it."
+      >
+        <Switch
+          checked={followPolicies}
+          onCheckedChange={async (checked) => {
+            setFollowPolicies(checked);
+            await commands.updateSetting({ followRepositoryPolicies: checked });
+          }}
+        />
       </SettingRow>
     </Section>
   );
