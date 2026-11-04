@@ -24,6 +24,7 @@ const REVIEW_REQUESTS_QUERY: &str =
     pullRequest(number: $number) {
       isDraft
       reviewDecision
+      baseRefName
       author { login }
       assignees(first: 100) { nodes { login } }
       labels(first: 100) { nodes { name } }
@@ -156,6 +157,7 @@ pub(crate) struct Logins {
 struct ReviewRequestsPullRequest {
     is_draft: bool,
     review_decision: Option<String>,
+    base_ref_name: String,
     author: Option<Login>,
     assignees: Option<Logins>,
     labels: Option<Labels>,
@@ -171,6 +173,7 @@ pub struct ReviewRequestStatus {
     /// The base branch's required reviews are met
     pub is_approved: bool,
     pub labels: Vec<String>,
+    pub base_ref: String,
     /// Empty when the author's account is gone
     pub author: String,
     pub assignees: Vec<String>,
@@ -381,6 +384,7 @@ impl Client {
             is_draft: pr.is_draft,
             is_approved: pr.review_decision.as_deref() == Some(APPROVED),
             labels,
+            base_ref: pr.base_ref_name,
             author: pr.author.map(|a| a.login).unwrap_or_default(),
             assignees,
             code_owner_teams: vec![],

@@ -16,3 +16,5 @@ log = { workspace = true }
 regex = { workspace = true }
 git-pal-github = { path = "../git-pal-github" }
 git-pal-harness = { path = "../git-pal-harness" }
+serde-saphyr = { version = "2.1.0", default-features = false, features = ["deserialize"] }
+globset = "0.4.20"

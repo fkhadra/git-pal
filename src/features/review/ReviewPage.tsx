@@ -59,6 +59,7 @@ import { DiffViewer, type NewComment } from "./DiffViewer";
 import { LargeDiffNotice } from "./LargeDiffNotice";
 
 import "./pr-review.css";
+import { PolicyBadge } from "./PolicyBadge";
 import { PullRequestAuthor } from "./PullRequestAuthor";
 import { PullRequestStatusBadge } from "./PullRequestStatusBadge";
 import { RefreshPullRequestButton } from "./RefreshPullRequestButton";
@@ -445,6 +446,7 @@ export function ReviewPage() {
               {selectedReview && (
                 <PullRequestStatusBadge review={selectedReview} />
               )}
+              <PolicyBadge source={savedReview?.policy ?? null} />
             </div>
           )}
         </div>

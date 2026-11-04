@@ -4,6 +4,8 @@ use serde::{Deserialize, Deserializer, Serialize, de::DeserializeOwned};
 use sqlx::prelude::FromRow;
 use ts_rs::TS;
 
+use crate::policy::PolicySource;
+
 pub const USER_SEVERITY: &str = "user";
 pub const ERROR_SEVERITY: &str = "error";
 pub const WARNING_SEVERITY: &str = "warning";
@@ -79,6 +81,9 @@ pub struct CodeReview {
     #[serde(default)]
     #[sqlx(json(nullable))]
     pub pr_state: Option<PullRequestState>,
+    #[serde(default)]
+    #[sqlx(json(nullable))]
+    pub policy: Option<PolicySource>,
 }
 
 /// GitHub state, last seen when the pull request status was fetched.
@@ -328,6 +333,8 @@ pub struct ReviewTemplate {
     pub skip_approved: bool,
     /// Assigns the viewer when auto reviewing so code owner teammates skip it
     pub claim_for_team: bool,
+    /// Ignores the repository's `git-pal.yml`
+    pub override_repository: bool,
     /// Approves reviews up to `auto_approve_max_risk` without asking
     pub auto_approve: bool,
     #[sqlx(json)]
@@ -352,6 +359,7 @@ pub struct ReviewTemplateInput {
     pub skip_labels: Vec<String>,
     pub skip_approved: bool,
     pub claim_for_team: bool,
+    pub override_repository: bool,
     pub auto_approve: bool,
     pub auto_approve_max_risk: RiskLevel,
     pub require_green_ci: bool,

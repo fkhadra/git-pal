@@ -51,6 +51,7 @@ Click **Manage templates…** at the bottom of the reviews list to create one:
 | Auto-approve | Approves [clean reviews](#auto-approve) without asking |
 | Max risk | Highest risk auto-approved: minimal (default), low or medium |
 | Require green CI | Auto-approves only once CI checks pass |
+| Override repository preferences | Ignores the repository's [policy](#repository-policy), approvals mention it. Off by default |
 
 Drag templates to reorder them. **Auto** picks the template used last time on that pull request, else the first one whose matcher accepts the repository, else the default one, else the built-in instructions.
 
@@ -99,6 +100,41 @@ With **Auto-approve** on, a review is approved when it ends if:
 - CI checks passed, unless **Require green CI** is off.
 
 Otherwise, hover the risk to see why it wasn't approved. With **Auto-review** on and [review request notifications](./settings#notifications) enabled, code owner review requests are reviewed as they arrive, so they can be approved without you. Drafts, approved pull requests and those with a skip label wait until marked ready, no longer approved or unlabeled.
+
+### Repository policy
+
+Share auto review and approval rules with everyone reviewing a repository by committing `.github/git-pal.yml`, or `.git-pal.yml` at the root. It's read from the pull request's base branch, so a pull request can't loosen the rules it's reviewed with.
+
+```yaml
+# yaml-language-server: $schema=https://fkhadra.github.io/git-pal/git-pal.schema.json
+version: 1
+auto_review:
+  skip_labels: [do not merge]
+  skip_approved: true
+  claim_for_team: true
+auto_approve:
+  max_risk: low
+  require_green_ci: true
+  skip_paths: [".github/workflows/**", "**/migrations/**"]
+```
+
+The [schema](https://fkhadra.github.io/git-pal/git-pal.schema.json) brings completion and validation to editors supporting it.
+
+With a matching template, the stricter of the two applies:
+
+| Field | Applied |
+| --- | --- |
+| `enabled` | `false` turns auto review or approval off, `true` never turns on what the template leaves off |
+| `skip_labels` | Both lists |
+| `skip_approved`, `claim_for_team`, `require_green_ci` | On when either is |
+| `max_risk` | The lower one |
+| `skip_paths` | A pull request changing a matching file isn't auto-approved |
+
+Turn on **Override repository preferences** in a template to ignore the policy, auto approvals then say so. Without a matching template, the policy applies on its own only with [Follow repository policies](./settings#reviews) on, using the built-in instructions. Unset fields then take a new template's defaults, and `enabled: true` is needed to auto review or approve.
+
+The review shows **Repository policy** or **Overriding repository policy** next to the status. An invalid file is ignored, with a warning on the review.
+
+The policy is shared defaults, not enforcement: anyone can override it. Rely on branch protection and code owners to enforce reviews.
 
 ### New commits
 

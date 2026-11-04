@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://fkhadra.github.io/git-pal/git-pal.schema.json",
+  "title": "Git Pal repository policy",
+  "description": "Auto review and approval rules shared by everyone reviewing this repository with Git Pal.",
+  "type": "object",
+  "required": ["version"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "description": "Policy format version.",
+      "const": 1
+    },
+    "auto_review": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Set to false to stop auto reviews. Only turns them on for users following repository policies without a matching template.",
+          "type": "boolean"
+        },
+        "skip_labels": {
+          "description": "Labels keeping a pull request from being auto reviewed, added to the template's. Case, spaces, dashes and underscores are ignored.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "skip_approved": {
+          "description": "Skip pull requests whose required reviews are already met.",
+          "type": "boolean"
+        },
+        "claim_for_team": {
+          "description": "Assign the reviewer so teammates in the requested code owner team skip the pull request.",
+          "type": "boolean"
+        }
+      }
+    },
+    "auto_approve": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "description": "Set to false to stop auto approvals. Never turns them on for a template with auto-approve off.",
+          "type": "boolean"
+        },
+        "max_risk": {
+          "description": "Highest risk auto approved, the lower of this and the template's applies.",
+          "enum": ["minimal", "low", "medium"]
+        },
+        "require_green_ci": {
+          "description": "Approve only once CI checks pass.",
+          "type": "boolean"
+        },
+        "skip_paths": {
+          "description": "Globs from the repository root. A pull request changing a matching file is never auto approved. `*` stays within a folder, `**` crosses folders.",
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

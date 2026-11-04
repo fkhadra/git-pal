@@ -8,7 +8,7 @@ export type CodeReview = { id: number, owner: string, repository: string, prNumb
 /**
  * Harness running the AI review
  */
-harness: Harness | null, model: string | null, error: string | null, warning: string | null, cancelled: boolean, reviewed: boolean, risk: Risk | null, autoApproval: AutoApproval | null, prState: PullRequestState | null, };
+harness: Harness | null, model: string | null, error: string | null, warning: string | null, cancelled: boolean, reviewed: boolean, risk: Risk | null, autoApproval: AutoApproval | null, prState: PullRequestState | null, policy: PolicySource | null, };
 
 /**
  * How sure the agent is of its risk assessment.
@@ -16,6 +16,11 @@ harness: Harness | null, model: string | null, error: string | null, warning: st
 export type Confidence = "low" | "medium" | "high";
 
 export type GetSavedReviewRequest = { owner: string, repository: string, prNumber: number, };
+
+/**
+ * Why the repository policy shaped the review.
+ */
+export type PolicySource = "repository" | "overridden";
 
 export type PullRequestReview = { comments: Array<ReviewComment>, summary: string, risk: Risk | null, };
 
@@ -90,11 +95,15 @@ skipApproved: boolean,
  */
 claimForTeam: boolean, 
 /**
+ * Ignores the repository's `git-pal.yml`
+ */
+overrideRepository: boolean, 
+/**
  * Approves reviews up to `auto_approve_max_risk` without asking
  */
 autoApprove: boolean, autoApproveMaxRisk: RiskLevel, requireGreenCi: boolean, position: number, createdAt: string, updatedAt: string, };
 
-export type ReviewTemplateInput = { name: string, content: string, matcher: string | null, isDefault: boolean, skills: Array<string>, riskGuidelines: string | null, autoReview: boolean, skipLabels: Array<string>, skipApproved: boolean, claimForTeam: boolean, autoApprove: boolean, autoApproveMaxRisk: RiskLevel, requireGreenCi: boolean, };
+export type ReviewTemplateInput = { name: string, content: string, matcher: string | null, isDefault: boolean, skills: Array<string>, riskGuidelines: string | null, autoReview: boolean, skipLabels: Array<string>, skipApproved: boolean, claimForTeam: boolean, overrideRepository: boolean, autoApprove: boolean, autoApproveMaxRisk: RiskLevel, requireGreenCi: boolean, };
 
 export type Risk = { level: RiskLevel, reasons: Array<string>, factors: Array<RiskFactor>, 
 /**
