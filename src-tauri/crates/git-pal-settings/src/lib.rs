@@ -45,6 +45,9 @@ pub struct Settings {
     pub pull_request_limit: u32,
     #[serde(default)]
     pub review_cleanup: ReviewCleanup,
+    /// A repository's `git-pal.yml` applies on its own when no template matches
+    #[serde(default)]
+    pub follow_repository_policies: bool,
 }
 
 const DEFAULT_PULL_REQUEST_LIMIT: u32 = 30;
@@ -285,6 +288,7 @@ impl Default for Settings {
             repository_filter: RepositoryFilter::default(),
             pull_request_limit: DEFAULT_PULL_REQUEST_LIMIT,
             review_cleanup: ReviewCleanup::default(),
+            follow_repository_policies: false,
         }
     }
 }
@@ -305,6 +309,7 @@ pub enum SettingValue {
     RepositoryFilter(RepositoryFilter),
     PullRequestLimit(u32),
     ReviewCleanup(ReviewCleanup),
+    FollowRepositoryPolicies(bool),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -322,6 +327,7 @@ pub enum SettingKey {
     RepositoryFilter,
     PullRequestLimit,
     ReviewCleanup,
+    FollowRepositoryPolicies,
 }
 
 pub struct SettingManager {
@@ -377,6 +383,9 @@ impl SettingManager {
                 SettingValue::PullRequestLimit(self.settings.pull_request_limit)
             }
             SettingKey::ReviewCleanup => SettingValue::ReviewCleanup(self.settings.review_cleanup),
+            SettingKey::FollowRepositoryPolicies => {
+                SettingValue::FollowRepositoryPolicies(self.settings.follow_repository_policies)
+            }
         }
     }
 
@@ -394,6 +403,9 @@ impl SettingManager {
             SettingValue::RepositoryFilter(val) => self.settings.repository_filter = val,
             SettingValue::PullRequestLimit(val) => self.settings.pull_request_limit = val,
             SettingValue::ReviewCleanup(val) => self.settings.review_cleanup = val,
+            SettingValue::FollowRepositoryPolicies(val) => {
+                self.settings.follow_repository_policies = val
+            }
         }
     }
 

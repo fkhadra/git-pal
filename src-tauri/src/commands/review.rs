@@ -22,9 +22,10 @@ use git_pal_code_review::{
     models::{
         AutoApproval, CodeReview, GetSavedReviewRequest, PullRequestReview, PullRequestState,
         PullRequestSummary, ReviewComment, ReviewListEntry, ReviewPullRequestRequest,
-        ReviewTemplate, SetFileViewedRequest, TemplateChoice, USER_SEVERITY,
-        UpdateReviewCommentsRequest, ViewedFile,
+        SetFileViewedRequest, TemplateChoice, USER_SEVERITY, UpdateReviewCommentsRequest,
+        ViewedFile,
     },
+    policy::{self, Policy, PolicySource, RepoPolicy},
     review, templates,
 };
 use git_pal_github::{
@@ -100,15 +101,23 @@ pub async fn review_pull_request(
     let settings = state.get_settings();
     let harness = settings.harness;
     let model = settings.model(harness);
-    let (skills, warning) = installed_skills(
+    let (skills, skills_warning) = installed_skills(
         harness,
         resolved
             .as_ref()
             .map(|t| t.skills.clone())
             .unwrap_or_default(),
     );
+    let (repo, policy_warning) = repo_policy(&state, &owner, &repository, &base_ref).await?;
+    let policy = policy::effective(
+        resolved.as_ref(),
+        repo.as_ref(),
+        settings.follow_repository_policies,
+    );
+    let policy_source = policy.as_ref().and_then(|p| p.source);
+    let approval_policy = policy.filter(|p| p.auto_approve);
+    let warning = join_warnings([skills_warning, policy_warning]);
     let risk_guidelines = resolved.as_ref().and_then(|t| t.risk_guidelines.clone());
-    let approval_template = resolved.clone().filter(|t| t.auto_approve);
     let instructions = resolved
         .map(|t| t.content)
         .unwrap_or_else(|| review::BUILT_IN_INSTRUCTIONS.to_string());
@@ -150,6 +159,7 @@ pub async fn review_pull_request(
         risk,
         auto_approval: None,
         pr_state: None,
+        policy: policy_source,
     };
     store.upsert_review(&placeholder).await?;
 
@@ -260,11 +270,10 @@ pub async fn review_pull_request(
                 log::error!("Failed to save review error: {e}");
             }
 
-            let approved = match (&result, &approval_template) {
-                (Ok(_), Some(template)) => {
+            let approved = match (&result, &approval_policy) {
+                (Ok(_), Some(policy)) => {
                     let approval =
-                        auto_approve(&app, &owner, &repository, pr_number, template)
-                            .await;
+                        auto_approve(&app, &owner, &repository, pr_number, policy).await;
 
                     if let Err(e) = store
                         .set_auto_approval(&owner, &repository, pr_number, &approval)
@@ -297,15 +306,17 @@ const REVIEWED_TITLE: &str = "Agent Review";
 
 const AUTO_APPROVAL_BODY: &str = "Approved automatically by Git Pal";
 
+const OVERRIDDEN_NOTE: &str = " (repository policy overridden)";
+
 /// Approves the saved review when it qualifies, failures only skip it.
 async fn auto_approve(
     app: &AppHandle,
     owner: &str,
     repository: &str,
     pr_number: i64,
-    template: &ReviewTemplate,
+    policy: &Policy,
 ) -> AutoApproval {
-    match try_auto_approve(app, owner, repository, pr_number, template).await {
+    match try_auto_approve(app, owner, repository, pr_number, policy).await {
         Ok(None) => AutoApproval::Approved,
         Ok(Some(reason)) => AutoApproval::Skipped { reason },
         Err(e) => AutoApproval::Skipped {
@@ -320,7 +331,7 @@ async fn try_auto_approve(
     owner: &str,
     repository: &str,
     pr_number: i64,
-    template: &ReviewTemplate,
+    policy: &Policy,
 ) -> anyhow::Result<Option<String>> {
     let state: State<'_, AppState> = app.state();
     let store = &state.code_review_store;
@@ -329,11 +340,9 @@ async fn try_auto_approve(
         .await?
         .ok_or_else(|| anyhow!("Review not found"))?;
 
-    if let Some(reason) = review::approval_blocker(
-        review.risk.as_ref(),
-        &review.comments,
-        template.auto_approve_max_risk,
-    ) {
+    if let Some(reason) =
+        review::approval_blocker(review.risk.as_ref(), &review.comments, policy.max_risk)
+    {
         return Ok(Some(reason));
     }
 
@@ -348,10 +357,24 @@ async fn try_auto_approve(
         return Ok(Some("New commits were pushed during the review".into()));
     }
 
-    if template.require_green_ci
+    if policy.require_green_ci
         && let Some(reason) = ci_blocker(&pr)
     {
         return Ok(Some(reason.into()));
+    }
+
+    if !policy.skip_paths.is_empty() {
+        let files: Vec<String> = state
+            .github_client
+            .get_pull_request_files(&request)
+            .await?
+            .into_iter()
+            .map(|f| f.filename)
+            .collect();
+
+        if let Some(path) = policy::skipped_path(&policy.skip_paths, &files) {
+            return Ok(Some(format!("Changes {path}, a skip path")));
+        }
     }
 
     let risk = review
@@ -359,7 +382,11 @@ async fn try_auto_approve(
         .as_ref()
         .ok_or_else(|| anyhow!("Risk not assessed"))?;
     let reasons = risk.reasons.iter().map(|reason| format!("- {reason}"));
-    let heading = format!("{AUTO_APPROVAL_BODY}, {} risk:", risk.level.label());
+    let note = match policy.source {
+        Some(PolicySource::Overridden) => OVERRIDDEN_NOTE,
+        _ => "",
+    };
+    let heading = format!("{AUTO_APPROVAL_BODY}{note}, {} risk:", risk.level.label());
     let body = std::iter::once(heading)
         .chain(reasons)
         .collect::<Vec<_>>()
@@ -431,9 +458,16 @@ pub(crate) async fn auto_review(
             &format!("{owner}/{repository}"),
         )
         .await?;
-    let Some(template) = template.filter(|t| t.auto_review) else {
-        return Ok(false);
+    let follow_repo = state.get_settings().follow_repository_policies;
+
+    // without a template, only a followed repository policy can auto review
+    let may_auto_review = match &template {
+        Some(template) => template.auto_review,
+        None => follow_repo,
     };
+    if !may_auto_review {
+        return Ok(false);
+    }
 
     let pr = GetPullRequestRequest {
         owner: owner.clone(),
@@ -445,8 +479,15 @@ pub(crate) async fn auto_review(
         return Ok(false);
     }
 
+    let (repo, _) = repo_policy(&state, &owner, &repository, &status.base_ref).await?;
+    let Some(policy) =
+        policy::effective(template.as_ref(), repo.as_ref(), follow_repo).filter(|p| p.auto_review)
+    else {
+        return Ok(false);
+    };
+
     if let Some(reason) =
-        review::auto_review_blocker(&status, &template.skip_labels, template.skip_approved)
+        review::auto_review_blocker(&status, &policy.skip_labels, policy.skip_approved)
     {
         log::info!("Auto review of {owner}/{repository}#{pr_number} skipped: {reason}");
         return Ok(true);
@@ -458,7 +499,7 @@ pub(crate) async fn auto_review(
         pr_number,
     };
 
-    if template.claim_for_team
+    if policy.claim_for_team
         && let Some(holder) = claim(app, &key, &pr, &status).await?
     {
         log::info!("Auto review of {owner}/{repository}#{pr_number} skipped: Claimed by {holder}");
@@ -470,7 +511,9 @@ pub(crate) async fn auto_review(
         ReviewPullRequestRequest {
             owner,
             repository,
-            template: TemplateChoice::Template { id: template.id },
+            template: template.map_or(TemplateChoice::BuiltIn, |t| TemplateChoice::Template {
+                id: t.id,
+            }),
             pr_number,
             incremental: false,
         },
@@ -485,6 +528,41 @@ pub(crate) async fn auto_review(
     refresh_review_badge(app);
 
     Ok(false)
+}
+
+/// `git-pal.yml` on `base_ref`, an invalid one is skipped with a warning.
+async fn repo_policy(
+    state: &AppState,
+    owner: &str,
+    repository: &str,
+    base_ref: &str,
+) -> anyhow::Result<(Option<RepoPolicy>, Option<String>)> {
+    let Some(text) = state
+        .github_client
+        .policy_file(owner, repository, base_ref)
+        .await?
+    else {
+        return Ok((None, None));
+    };
+
+    match policy::parse(&text) {
+        Ok(repo) => Ok((Some(repo), None)),
+        Err(e) => {
+            let warning = format!("Invalid git-pal.yml in {owner}/{repository}, ignored: {e}");
+            log::warn!("{warning}");
+
+            Ok((None, Some(warning)))
+        }
+    }
+}
+
+fn join_warnings<const N: usize>(warnings: [Option<String>; N]) -> Option<String> {
+    let warnings: Vec<String> = warnings.into_iter().flatten().collect();
+    if warnings.is_empty() {
+        return None;
+    }
+
+    Some(warnings.join(". "))
 }
 
 /// Assigns the viewer so their code owner teammates skip the pull request,
@@ -1163,6 +1241,7 @@ pub async fn view_pull_request(
                 risk: None,
                 auto_approval: None,
                 pr_state: None,
+                policy: None,
             })
             .await?;
     }

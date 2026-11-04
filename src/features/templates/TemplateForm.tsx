@@ -30,6 +30,7 @@ interface FormValues {
   skipLabels: string[];
   skipApproved: boolean;
   claimForTeam: boolean;
+  overrideRepository: boolean;
   autoApprove: boolean;
   autoApproveMaxRisk: RiskLevel;
   requireGreenCi: boolean;
@@ -69,6 +70,7 @@ interface SwitchFieldProps {
     | "autoReview"
     | "skipApproved"
     | "claimForTeam"
+    | "overrideRepository"
     | "autoApprove"
     | "requireGreenCi";
   label: string;
@@ -106,6 +108,7 @@ function toFormValues(
     skipLabels: template?.skipLabels ?? DEFAULT_SKIP_LABELS,
     skipApproved: template?.skipApproved ?? true,
     claimForTeam: template?.claimForTeam ?? false,
+    overrideRepository: template?.overrideRepository ?? false,
     autoApprove: template?.autoApprove ?? false,
     autoApproveMaxRisk: template?.autoApproveMaxRisk ?? "minimal",
     requireGreenCi: template?.requireGreenCi ?? true,
@@ -332,6 +335,14 @@ export function TemplateForm({
                 hint="Approve only once CI checks pass"
               />
             </>
+          )}
+          {(autoReview || autoApprove) && (
+            <SwitchField
+              control={control}
+              name="overrideRepository"
+              label="Override repository preferences"
+              hint="Ignore the repository's git-pal.yml, approvals say so"
+            />
           )}
         </div>
       </Field>

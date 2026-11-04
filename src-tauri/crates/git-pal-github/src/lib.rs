@@ -8,6 +8,7 @@ pub mod conversation;
 pub mod graphql;
 pub mod mentions;
 pub mod oauth;
+pub mod policy;
 pub mod query;
 pub mod rest;
 pub mod scope;
